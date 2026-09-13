@@ -1953,9 +1953,10 @@ export function usePolicyRates(
   refreshMs = 6 * 60 * 60_000,
 ): { rates: PolicyRate[]; isLoading: boolean } {
   const provider = useProviderFor("policy-rates");
-  // Sorted for the same reason as useDayStatsState's symbols: order-variant
-  // tuples collapse to one effect identity and one provider cache key.
-  const key = countries ? [...countries].sort().join(",") : "*";
+  // NOT sorted, unlike useDayStatsState's symbols: the order is the board's
+  // display order (Thailand first on a Thai board), and the provider already
+  // caches under the sorted set, so an order-variant basket costs no extra fetch.
+  const key = countries ? countries.join(",") : "*";
   const wanted = key === "*" ? undefined : key.split(",").filter(Boolean);
   const { data: rates, isLoading } = usePolled<PolicyRate[]>(
     provider?.getPolicyRates ? () => provider.getPolicyRates!(wanted) : null,

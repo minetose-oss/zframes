@@ -305,6 +305,7 @@ These are published statistics, not market prices: they are revised, they lag, a
     seriesId: z
       .string()
       .min(1)
+      .default("CPIAUCSL")
       .describe(
         'The publisher\'s series id. FRED (default): "CPIAUCSL" (CPI), "DFII10" (10Y TIPS real yield), "DTWEXBGS" (broad dollar), "T10YIE" (10Y breakeven), "REAINTRATREARAT10Y". BIS: "BIS:CBPOL:TH" (a central bank\'s policy rate), "BIS:EER:N:TH" / "BIS:EER:R:TH" (nominal / real effective exchange rate), "BIS:SPP:N:TH" / "BIS:SPP:R:TH" (residential property prices), "BIS:XRU:TH:THB" (units of the currency per USD). World Bank: "WB:<INDICATOR>:<ISO3>", e.g. "WB:NY.GDP.MKTP.CD:THA" (GDP in current US$) or "WB:FP.CPI.TOTL.ZG:THA" (annual inflation). The id must match the pinned source.',
       ),
