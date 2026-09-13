@@ -1,4 +1,4 @@
-// The keyless market-data provider set — the 36 free, no-key providers, as ONE
+// The keyless market-data provider set — the 35 free, no-key providers, as ONE
 // factory both apps share. Runtime and explorer used to each keep an identical
 // copy of this list (apps/runtime/src/App.tsx, apps/explorer/app/lib/frames.ts);
 // adding a provider meant editing both and they drifted. Centralising it here
@@ -47,7 +47,6 @@ import { GoldTradersProvider } from "@zframes/provider-goldtraders";
 import { NasdaqProvider } from "@zframes/provider-nasdaq";
 import { CboeProvider } from "@zframes/provider-cboe";
 import { TreasuryProvider } from "@zframes/provider-treasury";
-import { ThaibmaProvider } from "@zframes/provider-thaibma";
 import { BisProvider } from "@zframes/provider-bis";
 import { WorldBankProvider } from "@zframes/provider-worldbank";
 import { SettradeProvider } from "@zframes/provider-settrade";
@@ -91,16 +90,15 @@ const KEYLESS_PROVIDERS = [
   DeribitProvider,
   BitkubProvider,
   // The national official-data cluster, all after the US publishers they sit
-  // beside: ThaibmaProvider also fulfils `yield-curve`, MofThProvider
-  // `national-debt`, and WorldBankProvider `macro-reference-series`, so placing
-  // any of them earlier would repoint every existing US card at a foreign
-  // series. Here each stays reachable by pinning `source`, which is what a card
-  // wanting the Thai curve, Thai debt or a World Bank indicator asks for.
+  // beside: MofThProvider also fulfils `national-debt` and WorldBankProvider
+  // `macro-reference-series`, so placing either earlier would repoint every
+  // existing US card at a foreign series. Here each stays reachable by pinning
+  // `source`, which is what a card wanting Thai debt or a World Bank indicator
+  // asks for.
   // BisProvider (`policy-rates`), SettradeProvider (`market-snapshot`),
   // SecThProvider (`industry-market-cap`, `fund-industry-allocation`) and
   // GoldTradersProvider (`retail-gold-price`) are the only sources for their
   // capabilities, so their positions are free.
-  ThaibmaProvider,
   BisProvider,
   WorldBankProvider,
   SettradeProvider,

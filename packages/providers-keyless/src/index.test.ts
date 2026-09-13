@@ -77,7 +77,6 @@ const EXPECTED_ORDER = [
   "mempool",
   "deribit",
   "bitkub",
-  "thaibma",
   "bis",
   "worldbank",
   "settrade",

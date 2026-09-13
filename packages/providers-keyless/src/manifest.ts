@@ -12,7 +12,7 @@
  * is transcribed from the code that does the fetching, never from
  * documentation about it.
  *
- * `termsUrl` is deliberately absent. The 37 independent upstreams credited here
+ * `termsUrl` is deliberately absent. The 36 independent upstreams credited here
  * have no single terms page, and pointing the install-time notice at one (or at
  * a zframes page pretending to speak for them) would be worse than showing the
  * operator nothing: the host omits the notice rather than misstating it. Per-
@@ -23,7 +23,7 @@ import type { Capability, ProviderPluginManifest } from "@zframes/spec";
 // PURE DATA — no `./index` import. This module is what the Node mounts (the
 // CLI's serve, the dev Vite plugin via its host, Storybook's middleware, the
 // explorer's Next relay route) read to derive their allowlists, and what the
-// plugin registry lists: none of them should load 36 provider classes to read
+// plugin registry lists: none of them should load 35 provider classes to read
 // a description. The runnable half (`manifest` + `createProviders`) is
 // `./plugin`, which imports both this file and `./index`.
 
@@ -144,7 +144,6 @@ const CAPABILITIES: readonly Capability[] = [
   // provider-bitkub (also day-stats + ohlcv, reached by pinning
   // `source: "bitkub"`)
   "order-book",
-  // provider-thaibma (yield-curve, reachable by pinning source: "thaibma")
   // provider-bis (also macro-reference-series, reachable by pinning source: "bis")
   "policy-rates",
   // provider-worldbank (macro-reference-series, pin source: "worldbank")
@@ -311,11 +310,6 @@ const HOSTS = [
       "Two families off one host: delayed option chains with greeks, and the commodity implied-volatility index history (GVZ, VXSLV, VXGDX, OVX).",
   },
   // Thai official publishers. All CORS-blocked, hence relayed.
-  {
-    host: "www.thaibma.or.th",
-    proxied: true,
-    reason: "The Thai government bond yield curve, published daily.",
-  },
   {
     host: "api.settrade.com",
     proxied: true,
@@ -568,13 +562,6 @@ const SOURCES: ProviderPluginManifest["sources"] = [
       'The real consolidated tape for US-listed stocks, DAILY bars only: no intraday, no crypto. Wants a plain US ticker like "NVDA". Pin it when a stock card should show the actual listing rather than its perp, since the HIP-3 perp tracks direction but its volume and open interest are Hyperliquid\'s book. It only answers for symbols a card names, so it cannot back a card that scans a whole universe.',
   },
   { id: "cboe", name: "Cboe", url: "https://www.cboe.com" },
-  {
-    id: "thaibma",
-    name: "ThaiBMA",
-    url: "https://www.thaibma.or.th",
-    notes:
-      "Thai government bond yield curve, daily; pin on a yield-curve card.",
-  },
   {
     id: "settrade",
     name: "Settrade",

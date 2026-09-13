@@ -144,7 +144,6 @@ export const SOURCES = withSourceIds({
   },
   nasdaq: { name: "Nasdaq", url: "https://www.nasdaq.com" },
   cboe: { name: "Cboe", url: "https://www.cboe.com" },
-  thaibma: { name: "ThaiBMA", url: "https://www.thaibma.or.th" },
   settrade: { name: "Settrade", url: "https://www.settrade.com" },
   bis: { name: "BIS", url: "https://data.bis.org" },
   mofTh: {

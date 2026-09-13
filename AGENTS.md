@@ -42,7 +42,7 @@ facade is gone (2026-07-03): **every consumer imports the leaf package directly.
 | `@zframes/charts` | D3 base chart layer | nothing |
 | `@zframes/unicorn` | shared Unicorn Studio scene loader + backdrop gates | nothing |
 | `@zframes/frames` | the frames | charts, core, spec |
-| `provider-*` (39) | React-free data adapters | spec, data-primitives |
+| `provider-*` (38) | React-free data adapters | spec, data-primitives |
 | `@zframes/provider-demo` | the synthetic default source: seeded data for every capability, zero network | spec |
 | `@zframes/providers-keyless` | composition leaf: the shipping keyless fleet | the providers, spec |
 | `@zframes/plugins` | composition leaf: the built-in plugin registry (`/registry`, manifests, Node) + browser loader (`/load`, one lazy chunk per plugin) | providers-keyless, provider-demo, provider-binance, provider-wallet, spec |
@@ -82,7 +82,7 @@ import siblings by **package subpath**, never relative.
 ## Scope
 
 - **Data providers are operator-installed plugins.** The runtime imports no provider: it asks its server which plugins the installation mounts (`/__zframes/providers`) and loads exactly those, each as its own lazy chunk (`@zframes/plugins`). Under `zframes serve` the set is `zframes providers add/remove` (persisted in the store config); under in-repo `pnpm dev` it is the host composition in `apps/runtime/vite.config.ts` (fleet + keyed tier, so frame development sees live data). Every mount's relay allowlist derives from the mounted manifests. (NOTE: this changes published-CLI behaviour at the next npm release — a bare install then renders demo data until the operator runs `zframes providers add keyless`.)
-- Keyless remains the flagship tier — all 36 market-data providers in `packages/providers-keyless` are keyless (free public APIs, no key required), one `zframes providers add keyless` away. The keyed/account tier (`provider-binance`, `provider-wallet`) is installable the same way. (39 provider packages total: 36 keyless + 2 keyed + `provider-demo`; the keyless set is composed in one place, `packages/providers-keyless` — trust that file over any count written here.)
+- Keyless remains the flagship tier — all 35 market-data providers in `packages/providers-keyless` are keyless (free public APIs, no key required), one `zframes providers add keyless` away. The keyed/account tier (`provider-binance`, `provider-wallet`) is installable the same way. (38 provider packages total: 35 keyless + 2 keyed + `provider-demo`; the keyless set is composed in one place, `packages/providers-keyless` — trust that file over any count written here.)
 - **`@zframes/provider-demo` is not a data source, it is the synthetic one.** It answers every capability with deterministic seeded data and touches no network. It is what the frame smoke suites, Storybook and every explorer surface run on, and **the bare-install default**: an installation with no plugins mounts it (and only it), the header badges "demo data", and `serve` says so at startup. The moment any real plugin is installed it drops out — simulated numbers never silently backfill a chosen composition. It must never be added to `packages/providers-keyless`: that list is the *live* fleet, and `tests/dep-dag.test.ts` + `tests/capability-coverage.test.ts` both read it as such.
 - Stocks-first — equity perps via Hyperliquid HIP-3 builder dexes (`dex` param, e.g. `xyz:TSLA`), with crypto alongside.
 
@@ -95,7 +95,7 @@ Each is self-contained; read the one for the directory you are working in.
 | [packages/spec/AGENTS.md](packages/spec/AGENTS.md) | the kernel: event markers, nested frame groups, the route contract |
 | [packages/core/AGENTS.md](packages/core/AGENTS.md) | renderer, frame chrome, capability hooks, the full display-currency rule |
 | [packages/frames/AGENTS.md](packages/frames/AGENTS.md) | adding a frame (four lists), size envelopes, the shared primitives, frame footguns |
-| [packages/providers-keyless/AGENTS.md](packages/providers-keyless/AGENTS.md) | the 36-provider keyless fleet with per-provider footguns, caching, the proxy, `source` pinning |
+| [packages/providers-keyless/AGENTS.md](packages/providers-keyless/AGENTS.md) | the 35-provider keyless fleet with per-provider footguns, caching, the proxy, `source` pinning |
 | [packages/editor/AGENTS.md](packages/editor/AGENTS.md) | the authoring UI, default-config seeding, nested GridStack |
 | [packages/charts/AGENTS.md](packages/charts/AGENTS.md) | the D3 base chart layer |
 | [packages/cli/AGENTS.md](packages/cli/AGENTS.md) | CLI commands, the XDG global store, releasing |

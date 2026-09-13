@@ -83,7 +83,6 @@ const DAG: Record<string, string[]> = {
     "@zframes/provider-sec",
     "@zframes/provider-sec-th",
     "@zframes/provider-settrade",
-    "@zframes/provider-thaibma",
     "@zframes/provider-treasury",
     "@zframes/provider-ultrasound",
     "@zframes/provider-worldbank",

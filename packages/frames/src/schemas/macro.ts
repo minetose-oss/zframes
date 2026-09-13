@@ -245,19 +245,15 @@ export const yieldCurveMeta = defineFrameMeta({
   iconUrl: widgetIcon("yield-curve"),
   layout: { w: 4, h: 3, minW: 3, minH: 2, maxH: 4 },
   description:
-    'A sovereign daily par yield curve — a line from 1-month to 30-year yields, the headline 2s10s spread (10Y minus 2Y; negative = inverted, the classic recession signal), and a configurable row of key maturities. Defaults to the U.S. Treasury curve; set `source: "thaibma"` for the Thai government bond curve. Keyless official data, updated each business day; not a live intraday feed.',
-  interpretation: `The yield curve plots the interest rate a government pays to borrow at each maturity, from 1 month out to 30 years — one line, short maturities on the left, long on the right. The card reads the U.S. Treasury curve by default, and the Thai government bond curve when it pins the Thai Bond Market Association as its source.
+    "The U.S. Treasury daily par yield curve — a line from 1-month to 30-year yields, the headline 2s10s spread (10Y minus 2Y; negative = inverted, the classic recession signal), and a configurable row of key maturities. Keyless official data from the U.S. Treasury, updated each business day; not a live intraday feed.",
+  interpretation: `The yield curve plots the interest rate the U.S. government pays to borrow at each maturity, from 1 month out to 30 years — one line, short maturities on the left, long on the right.
 
 Normally the line slopes upward: lenders demand more to lock their money up longer. The headline 2s10s spread is the 10-year yield minus the 2-year; when it is negative the curve is inverted, meaning short-term rates sit above long-term ones.
 
-An inversion is the classic recession warning, but the common misreading is timing: recessions have historically followed inversions by a year or more, and often begin as the curve steepens back to normal — the inversion itself is not the crash moment. Two curves are also not comparable level for level: a Thai 10-year and a US 10-year price different currencies and different policy rates. Updates each business day.`,
+An inversion is the classic recession warning, but the common misreading is timing: recessions have historically followed inversions by a year or more, and often begin as the curve steepens back to normal — the inversion itself is not the crash moment. Updates each business day.`,
   capabilities: ["yield-curve"],
-  source: [SOURCES.treasury, SOURCES.thaibma],
+  source: SOURCES.treasury,
   schema: z.object({
-    source: sourceField(
-      ["treasury", "thaibma"],
-      'Whose curve to draw — "treasury" (default, the U.S. Treasury par yield curve) or "thaibma" (the Thai government bond curve published by the Thai Bond Market Association). Omit for the US.',
-    ),
     maturities: z
       .array(
         z.enum([

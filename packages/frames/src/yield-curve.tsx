@@ -74,19 +74,9 @@ function CurveSvg({ points }: { points: { label: string; rate: number }[] }) {
   );
 }
 
-/** Whose curve this is, so the head never states a publisher the card isn't reading. */
-const ISSUERS: Record<string, { title: string; publisher: string }> = {
-  thaibma: {
-    title: "Thai government bond curve",
-    publisher: "Thai government bonds",
-  },
-  treasury: { title: "Treasury yield curve", publisher: "U.S. Treasury" },
-};
-
 function YieldCurve({ config }: { config: z.output<typeof schema> }) {
-  const { curve, isLoading } = useYieldCurve(undefined, config.source);
+  const { curve, isLoading } = useYieldCurve();
   useHideTipOnUnmount();
-  const issuer = ISSUERS[config.source ?? "treasury"] ?? ISSUERS.treasury;
 
   if (isLoading) return <FrameStatus loading>loading yield curve…</FrameStatus>;
   if (!curve || curve.points.length < 2)
@@ -106,11 +96,11 @@ function YieldCurve({ config }: { config: z.output<typeof schema> }) {
     <div className="flex h-full min-h-0 flex-col gap-2">
       <CardHeader align="start">
         <CardHeader.Main>
-          <CardHeader.Eyebrow>{issuer.title}</CardHeader.Eyebrow>
+          <CardHeader.Eyebrow>Treasury yield curve</CardHeader.Eyebrow>
           {/* `ink="normal"`, not the sub-line's default `soft`: the
               publisher's own print date reads as data here. */}
           <CardHeader.Sub ink="normal">
-            {issuer.publisher} · {curve.date}
+            U.S. Treasury · {curve.date}
           </CardHeader.Sub>
         </CardHeader.Main>
         <CardHeader.Aside>
