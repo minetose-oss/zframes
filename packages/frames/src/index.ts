@@ -266,6 +266,8 @@ export { indexLevelFrame } from "./index-level";
 export { indexDrawdownFrame } from "./index-drawdown";
 export { indexAnnualReturnsFrame } from "./index-annual-returns";
 export { vixGaugeFrame } from "./vix-gauge";
+export { marketIndexBoardFrame } from "./market-index-board";
+export { marketBreadthFrame } from "./market-breadth";
 export { creditQualityGapFrame } from "./credit-quality-gap";
 export { mortgagePaymentFrame } from "./mortgage-payment";
 export { homeValueBarsFrame } from "./home-value-bars";
@@ -539,6 +541,8 @@ import { indexLevelFrame } from "./index-level";
 import { indexDrawdownFrame } from "./index-drawdown";
 import { indexAnnualReturnsFrame } from "./index-annual-returns";
 import { vixGaugeFrame } from "./vix-gauge";
+import { marketIndexBoardFrame } from "./market-index-board";
+import { marketBreadthFrame } from "./market-breadth";
 import { creditQualityGapFrame } from "./credit-quality-gap";
 import { mortgagePaymentFrame } from "./mortgage-payment";
 import { homeValueBarsFrame } from "./home-value-bars";
@@ -685,9 +689,11 @@ export const allFrames: AnyFrameDefinition[] = [
   maMultiplierFrame,
   macroCalendarFrame,
   marginTrendFrame,
+  marketBreadthFrame,
   marketBubblesFrame,
   marketCapTreemapFrame,
   marketHoursFrame,
+  marketIndexBoardFrame,
   marketScatterFrame,
   marqueeFrame,
   mayerMultipleFrame,

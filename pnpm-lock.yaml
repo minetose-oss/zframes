@@ -876,6 +876,19 @@ importers:
         specifier: ^5.8.0
         version: 5.9.3
 
+  packages/provider-mof-th:
+    dependencies:
+      '@zframes/data-primitives':
+        specifier: workspace:*
+        version: link:../data-primitives
+      '@zframes/spec':
+        specifier: workspace:*
+        version: link:../spec
+    devDependencies:
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
   packages/provider-nasdaq:
     dependencies:
       '@zframes/data-primitives':
@@ -949,6 +962,22 @@ importers:
       '@zframes/spec':
         specifier: workspace:*
         version: link:../spec
+    devDependencies:
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
+  packages/provider-settrade:
+    dependencies:
+      '@zframes/data-primitives':
+        specifier: workspace:*
+        version: link:../data-primitives
+      '@zframes/spec':
+        specifier: workspace:*
+        version: link:../spec
+      zod:
+        specifier: ^4.1.0
+        version: 4.4.3
     devDependencies:
       typescript:
         specifier: ^5.8.0
@@ -1103,6 +1132,9 @@ importers:
       '@zframes/provider-metals':
         specifier: workspace:*
         version: link:../provider-metals
+      '@zframes/provider-mof-th':
+        specifier: workspace:*
+        version: link:../provider-mof-th
       '@zframes/provider-nasdaq':
         specifier: workspace:*
         version: link:../provider-nasdaq
@@ -1121,6 +1153,9 @@ importers:
       '@zframes/provider-sec':
         specifier: workspace:*
         version: link:../provider-sec
+      '@zframes/provider-settrade':
+        specifier: workspace:*
+        version: link:../provider-settrade
       '@zframes/provider-thaibma':
         specifier: workspace:*
         version: link:../provider-thaibma

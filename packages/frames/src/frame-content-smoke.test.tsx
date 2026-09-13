@@ -96,6 +96,8 @@ const CONVERTS: Record<string, string> = {
   "etf-issuer-treemap": "per-issuer net flow per tile",
   "market-bubbles": "coin market caps",
   "market-cap-treemap": "coin market caps",
+  "market-index-board":
+    "the venue's traded value; the index levels themselves are unit-less",
   "market-scatter": "market-cap axis",
   "metal-ath": "the all-time-high London fix",
   "metal-fix-table":
@@ -295,6 +297,7 @@ const NO_MONEY: Record<string, string> = {
   "liquidity-basis-bars": "spread % and basis in bps",
   "ma-multiplier": "price / moving-average ratio",
   "macro-calendar": "event dates",
+  "market-breadth": "advancing/declining/unchanged counts and their shares",
   "market-hours": "exchange session clocks",
   marquee: "user-authored scrolling text",
   "mayer-multiple": "price / 200DMA ratio",

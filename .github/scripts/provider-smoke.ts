@@ -660,6 +660,24 @@ const PROBES: Probe[] = [
     expect: "object",
   },
 
+  // ── Thai official publishers (proxied → direct in Node) ───────────────
+  {
+    pkg: "provider-settrade",
+    cls: "SettradeProvider",
+    method: "getMarketSnapshot",
+    args: ["SET"],
+    expect: "object",
+    proxied: true,
+  },
+  {
+    pkg: "provider-mof-th",
+    cls: "MofThProvider",
+    method: "getNationalDebt",
+    args: [],
+    expect: "object",
+    proxied: true,
+  },
+
   // ── Keyed tier that needs no key ──────────────────────────────────────
   // The only keyed-tier provider probeable without credentials (see
   // WALLET_PROBE_ADDRESS above). This is the drift signal for the public-RPC

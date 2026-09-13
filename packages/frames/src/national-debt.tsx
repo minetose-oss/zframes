@@ -3,14 +3,49 @@ import { defineFrame, useNationalDebt } from "@zframes/core";
 import { useMemo } from "react";
 import type { z } from "zod";
 import { CardHeader } from "./card-header";
-import { formatCompactUsd } from "./format";
+import { formatCompactUsd, formatPct } from "./format";
 import { nationalDebtMeta } from "./schemas";
+import { Stat } from "./stat";
 import { FrameStatus } from "./ui";
 
 const schema = nationalDebtMeta.schema;
 
+const DAY_MS = 86_400_000;
+
+/**
+ * How often this publisher prints, read off the trend rather than hardcoded:
+ * the US Treasury posts each business day, a finance ministry monthly, and the
+ * caption must not claim a freshness the data does not have.
+ */
+function cadenceOf(times: number[]): string {
+  if (times.length < 2) return "";
+  const span = times[times.length - 1] - times[0];
+  return span / (times.length - 1) / DAY_MS > 20 ? "monthly" : "daily";
+}
+
+function SplitTiles({ lines }: { lines: { label: string; value: number }[] }) {
+  return (
+    <Stat.Strip
+      cols={2}
+      gap={1.5}
+      className="border-t border-white/[0.08] pt-2"
+    >
+      {lines.map((line) => (
+        <Stat key={line.label} surface="tile">
+          <Stat.Label>{line.label}</Stat.Label>
+          <Stat.Value>{formatCompactUsd(line.value)}</Stat.Value>
+        </Stat>
+      ))}
+    </Stat.Strip>
+  );
+}
+
 function NationalDebt({ config }: { config: z.output<typeof schema> }) {
-  const { debt, isLoading } = useNationalDebt(config.trendDays);
+  const { debt, isLoading } = useNationalDebt(
+    config.trendDays,
+    undefined,
+    config.source,
+  );
 
   const sparkline = useMemo(
     () =>
@@ -27,6 +62,19 @@ function NationalDebt({ config }: { config: z.output<typeof schema> }) {
 
   const first = debt.trend[0];
   const change = first ? debt.total - first.total : null;
+  const cadence = cadenceOf(debt.trend.map((point) => point.time));
+  // The publisher's own split, whichever shape it takes: the US pair, or the
+  // components a ministry that splits its debt some other way reports. A
+  // publisher with neither drops the row rather than printing two dashes.
+  const split: { label: string; value: number }[] =
+    debt.breakdown && debt.breakdown.length > 0
+      ? debt.breakdown.slice(0, 5)
+      : debt.heldByPublic !== undefined && debt.intragovernmental !== undefined
+        ? [
+            { label: "Held by public", value: debt.heldByPublic },
+            { label: "Intragovernmental", value: debt.intragovernmental },
+          ]
+        : [];
 
   return (
     <div className="flex h-full min-h-0 flex-col justify-center gap-3">
@@ -38,7 +86,14 @@ function NationalDebt({ config }: { config: z.output<typeof schema> }) {
           <CardHeader.Sub ink="normal">as of {debt.date}</CardHeader.Sub>
         </CardHeader.Main>
         <CardHeader.Aside>
-          <CardHeader.Sub>daily</CardHeader.Sub>
+          {debt.debtToGdpPct !== undefined && (
+            <CardHeader.Value>
+              {formatPct(debt.debtToGdpPct, 1)}
+            </CardHeader.Value>
+          )}
+          <CardHeader.Sub>
+            {debt.debtToGdpPct !== undefined ? `of GDP · ${cadence}` : cadence}
+          </CardHeader.Sub>
         </CardHeader.Aside>
       </CardHeader>
 
@@ -64,29 +119,7 @@ function NationalDebt({ config }: { config: z.output<typeof schema> }) {
         color="hsl(var(--zf-accent-hue, 242) 85% 72%)"
       />
 
-      {/* The split is the US Treasury's; a publisher that splits its debt some
-          other way leaves both halves undefined, and the card drops the row
-          rather than printing two dashes. */}
-      {config.showSplit &&
-        debt.heldByPublic !== undefined &&
-        debt.intragovernmental !== undefined && (
-          <div className="grid grid-cols-2 gap-1.5 border-t border-white/[0.08] pt-2">
-            <div className="rounded bg-white/[0.04] px-2 py-1.5">
-              <div className="caption text-soft truncate">Held by public</div>
-              <div className="body-sm text-strong font-bold tabular-nums">
-                {formatCompactUsd(debt.heldByPublic)}
-              </div>
-            </div>
-            <div className="rounded bg-white/[0.04] px-2 py-1.5">
-              <div className="caption text-soft truncate">
-                Intragovernmental
-              </div>
-              <div className="body-sm text-strong font-bold tabular-nums">
-                {formatCompactUsd(debt.intragovernmental)}
-              </div>
-            </div>
-          </div>
-        )}
+      {config.showSplit && split.length > 0 && <SplitTiles lines={split} />}
     </div>
   );
 }

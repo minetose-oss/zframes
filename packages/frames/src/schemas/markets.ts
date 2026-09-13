@@ -693,3 +693,68 @@ A high VIX is not a forecast that the market will fall — it says the market ex
       ),
   }),
 });
+
+export const marketIndexBoardMeta = defineFrameMeta({
+  name: "market-index-board",
+  label: "Market Index Board",
+  category: "markets",
+  iconUrl: widgetIcon("market-index-board"),
+  layout: { w: 4, h: 4, minW: 3, minH: 3 },
+  description:
+    "One Thai venue's whole index family on a single board — SET, SET50, SET100, sSET and the ESG/high-dividend cuts, each with its level, its move on the session, and optionally the session's high and low — under the venue's status and the exchange's own Bangkok timestamp. Published by the exchange itself (keyless, Settrade), so it is the official board rather than a derived quote. Proxied: needs a running runtime.",
+  interpretation: `Every index the exchange publishes for one venue, in the order the exchange itself ranks them: the broad SET index first, then the large-cap cuts (SET50, SET100), the small-cap sSET, and the themed families — high dividend, ESG, well-being.
+
+Each row carries the index's latest level, its move from the previous close in percent, and — when the card is tall enough to ask for them — the session's high and low. An index level is a unitless score rather than a price, so the percent move is the number that carries meaning.
+
+Read the family rather than one line: when SET50 outruns sSET the session belongs to the big caps, and a broad index diverging from its large-cap cut means the move is narrower than the headline suggests. The header states whether the market is open and stamps the exchange's own time in Bangkok, so a motionless board reads as "closed" rather than as "broken".`,
+  capabilities: ["market-snapshot"],
+  source: SOURCES.settrade,
+  schema: z.object({
+    market: z
+      .enum(["SET", "mai"])
+      .default("SET")
+      .describe(
+        "Which venue's index family to show: SET (main board) or mai (Market for Alternative Investment, the growth board).",
+      ),
+    maxIndices: z
+      .number()
+      .int()
+      .min(1)
+      .max(12)
+      .default(6)
+      .describe(
+        "How many of the venue's indices to list, in the exchange's own order (the broad index first). SET publishes ten.",
+      ),
+    showHighLow: z
+      .boolean()
+      .default(true)
+      .describe(
+        "Show each index's session high and low beside its level. Turn it off for a denser list on a short card.",
+      ),
+  }),
+});
+
+export const marketBreadthMeta = defineFrameMeta({
+  name: "market-breadth",
+  label: "Market Breadth",
+  category: "markets",
+  iconUrl: widgetIcon("market-breadth"),
+  layout: { w: 3, h: 2, minW: 2, minH: 2, maxH: 3 },
+  description:
+    "How a Thai venue's listings split on the session — advancing, declining and unchanged — as one proportional bar with the three counts and each one's share of the board. Market-wide aggregation the exchange publishes itself (keyless, Settrade); no index level, no per-stock data. Proxied: needs a running runtime.",
+  interpretation: `One bar split three ways: the share of the venue's listed securities that rose on the session, the share that fell, and the share that closed unchanged.
+
+Breadth answers a question an index cannot — how many stocks actually took part. An index can rise on a handful of heavyweights while most of the board falls, and this is where that shows up: a green index over a red bar is a narrow rally, and the reverse is a broad advance masked by a few large decliners.
+
+The unchanged slice runs wider here than on a deep US venue, because many Thai listings trade thinly enough to close flat. The counts are the exchange's own tally, so the caption names the venue's status and the exchange's Bangkok timestamp rather than implying a live tick.`,
+  capabilities: ["market-snapshot"],
+  source: SOURCES.settrade,
+  schema: z.object({
+    market: z
+      .enum(["SET", "mai"])
+      .default("SET")
+      .describe(
+        "Which venue's breadth to show: SET (main board) or mai (Market for Alternative Investment, the growth board).",
+      ),
+  }),
+});

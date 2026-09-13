@@ -2,10 +2,10 @@ import { defineFrameMeta } from "@zframes/spec/frame";
 import { z } from "zod";
 import {
   widgetIcon,
+  sourceField,
   SOURCES,
   US_STATES,
   ZHVI_REGIONS,
-  sourceField,
 } from "./shared";
 
 export const ratesBoardMeta = defineFrameMeta({
@@ -147,21 +147,22 @@ Big spikes coincide with crises (2008, March 2020), while long negative stretche
 
 export const nationalDebtMeta = defineFrameMeta({
   name: "national-debt",
-  // Stays in USD whatever the board asks for: US-macro: nobody quotes the U.S. national debt in another currency.
+  // Stays in USD whatever the board asks for: a sovereign's debt is reported in
+  // USD here whichever ministry published it, so the figure never converts.
   usdOnly: true,
   label: "National Debt",
   category: "macro",
   iconUrl: widgetIcon("national-debt"),
   layout: { w: 4, h: 3, minW: 3, minH: 3, maxH: 4 },
   description:
-    "U.S. total public debt outstanding from the Treasury's keyless 'Debt to the Penny' dataset — the headline total in trillions, the change over the chosen window, an optional split into debt held by the public vs intragovernmental holdings, and a trend line. Official data updated each business day; CORS-safe (no proxy needed). Macro context, not a live price feed.",
-  interpretation: `This is the total amount the U.S. federal government owes — every outstanding Treasury bill, note and bond added up, in dollars (measured in trillions), from the Treasury's own daily ledger.
+    "A sovereign's total public debt outstanding — by default the U.S. Treasury's keyless 'Debt to the Penny' (daily), or Thailand's Ministry of Finance release (monthly) by pinning source: \"mof-th\". Shows the headline total in trillions, the change over the chosen window, an optional split (the U.S. public/intragovernmental pair, or the publisher's own components), and a trend line. Official data, not a live price feed.",
+  interpretation: `This is the total amount a national government owes — every outstanding bill, note and bond added up, in dollars, from the finance ministry's own ledger.
 
-The card shows the headline total, how much it changed over the chosen window, and a trend line. The optional split separates debt held by the public (investors, funds, foreign governments) from intragovernmental holdings (money one part of the government owes another, like the Social Security trust fund).
+The card shows the headline total, how much it changed over the chosen window, and a trend line. The optional split is whatever the publisher itself reports: the U.S. separates debt held by the public (investors, funds, foreign governments) from intragovernmental holdings (money one part of the government owes another, like the Social Security trust fund), while Thailand's ministry splits its debt into government, state-enterprise, financial state-enterprise, FIDF and other-agency borrowing, and states its own debt-to-GDP ratio alongside.
 
-The total almost always rises; what varies is the pace. Faster growth means heavier borrowing, which feeds Treasury auction sizes and, eventually, interest costs. The figure stays in U.S. dollars regardless of the board's display currency — nobody quotes this number any other way.`,
+The total almost always rises; what varies is the pace. Faster growth means heavier borrowing, which feeds auction sizes and, eventually, interest costs. The figure stays in U.S. dollars regardless of the board's display currency — a non-USD publisher is converted once, at the rate it publishes with its own release, so the total stays consistent with the debt-to-GDP figure beside it.`,
   capabilities: ["national-debt"],
-  source: SOURCES.treasury,
+  source: [SOURCES.treasury, SOURCES.mofTh],
   schema: z.object({
     trendDays: z
       .number()
@@ -170,14 +171,18 @@ The total almost always rises; what varies is the pace. Faster growth means heav
       .max(365)
       .default(180)
       .describe(
-        "How many business days of history to load for the trend and the change figure.",
+        "How many business days of history to load for the trend and the change figure. Ignored by a monthly publisher, which serves the months its release carries.",
       ),
     showSplit: z
       .boolean()
       .default(true)
       .describe(
-        "Show the debt-held-by-the-public vs intragovernmental-holdings split.",
+        "Show the publisher's own split — debt held by the public vs intragovernmental holdings for the U.S., or the ministry's components elsewhere.",
       ),
+    source: sourceField(
+      ["treasury", "mof-th"],
+      'Which publisher to read: "treasury" (default, the U.S. Debt to the Penny, updated each business day) or "mof-th" (Thailand\'s public debt from the Ministry of Finance, monthly, converted to USD at the rate the ministry publishes). Omit for the US.',
+    ),
   }),
 });
 

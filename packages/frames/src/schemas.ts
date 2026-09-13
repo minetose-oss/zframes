@@ -27,6 +27,8 @@ import {
   indexDrawdownMeta,
   indexAnnualReturnsMeta,
   vixGaugeMeta,
+  marketIndexBoardMeta,
+  marketBreadthMeta,
 } from "./schemas/markets";
 import {
   tvlTreemapMeta,
@@ -348,6 +350,8 @@ export const frameMetas: FrameMeta[] = [
   indexDrawdownMeta,
   indexLevelChartMeta,
   indexLevelMeta,
+  marketBreadthMeta,
+  marketIndexBoardMeta,
   orderBookDepthMeta,
   priceChartMeta,
   priceCompareMeta,

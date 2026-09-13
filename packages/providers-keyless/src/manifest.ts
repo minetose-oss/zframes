@@ -148,6 +148,9 @@ const CAPABILITIES: readonly Capability[] = [
   // provider-bis (also macro-reference-series, reachable by pinning source: "bis")
   "policy-rates",
   // provider-worldbank (macro-reference-series, pin source: "worldbank")
+  // provider-settrade
+  "market-snapshot",
+  // provider-mof-th (national-debt, reachable by pinning source: "mof-th")
 ];
 
 /**

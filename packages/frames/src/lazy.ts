@@ -451,6 +451,9 @@ export const frameLoaders: Record<string, FrameLoader> = {
   "margin-trend": {
     load: () => import("./margin-trend").then((m) => m.marginTrendFrame),
   },
+  "market-breadth": {
+    load: () => import("./market-breadth").then((m) => m.marketBreadthFrame),
+  },
   "market-bubbles": {
     load: () => import("./market-bubbles").then((m) => m.marketBubblesFrame),
   },
@@ -461,6 +464,10 @@ export const frameLoaders: Record<string, FrameLoader> = {
   "market-hours": {
     load: () => import("./market-hours").then((m) => m.marketHoursFrame),
     titleIcon: true,
+  },
+  "market-index-board": {
+    load: () =>
+      import("./market-index-board").then((m) => m.marketIndexBoardFrame),
   },
   "market-scatter": {
     load: () => import("./market-scatter").then((m) => m.marketScatterFrame),

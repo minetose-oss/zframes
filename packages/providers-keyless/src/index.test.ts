@@ -80,6 +80,8 @@ const EXPECTED_ORDER = [
   "thaibma",
   "bis",
   "worldbank",
+  "settrade",
+  "mof-th",
 ];
 
 /**
@@ -113,15 +115,28 @@ describe("createKeylessProviders", () => {
   it("constructs the whole keyless fleet in capability-routing order", () => {
     const providers = createKeylessProviders();
     expect(providers.map((p) => p.name)).toEqual(EXPECTED_ORDER);
-    expect(providers).toHaveLength(32);
+    expect(providers).toHaveLength(EXPECTED_ORDER.length);
   });
 
-  it("keeps hyperliquid first and bitkub after it (the two load-bearing ends)", () => {
+  it("keeps hyperliquid first and bitkub behind it (the load-bearing pair)", () => {
     const names = createKeylessProviders().map((p) => p.name);
     expect(names[0]).toBe("hyperliquid");
     // The invariant that actually matters is the relative order of the two
     // sources that overlap on day-stats/ohlcv.
     expect(names.indexOf("hyperliquid")).toBeLessThan(names.indexOf("bitkub"));
+  });
+
+  it("leaves national-debt on the US Treasury unless a card pins mof-th", () => {
+    const providers = createKeylessProviders();
+    expect(routeFor(providers, "national-debt")?.name).toBe("treasury");
+    expect(routeFor(providers, "national-debt", "mof-th")?.name).toBe("mof-th");
+  });
+
+  it("routes market-snapshot to settrade, the only source that serves it", () => {
+    const venues = createKeylessProviders().filter((p) =>
+      p.capabilities.includes("market-snapshot"),
+    );
+    expect(venues.map((p) => p.name)).toEqual(["settrade"]);
   });
 
   it("names every provider uniquely, so a source pin is unambiguous", () => {

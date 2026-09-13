@@ -1,4 +1,4 @@
-// The keyless market-data provider set — the 32 free, no-key providers, as ONE
+// The keyless market-data provider set — the 34 free, no-key providers, as ONE
 // factory both apps share. Runtime and explorer used to each keep an identical
 // copy of this list (apps/runtime/src/App.tsx, apps/explorer/app/lib/frames.ts);
 // adding a provider meant editing both and they drifted. Centralising it here
@@ -48,6 +48,8 @@ import { TreasuryProvider } from "@zframes/provider-treasury";
 import { ThaibmaProvider } from "@zframes/provider-thaibma";
 import { BisProvider } from "@zframes/provider-bis";
 import { WorldBankProvider } from "@zframes/provider-worldbank";
+import { SettradeProvider } from "@zframes/provider-settrade";
+import { MofThProvider } from "@zframes/provider-mof-th";
 
 /** Provider constructors, in capability-routing order (see the header note). */
 const KEYLESS_PROVIDERS = [
@@ -87,15 +89,18 @@ const KEYLESS_PROVIDERS = [
   DeribitProvider,
   BitkubProvider,
   // The national official-data cluster, all after the US publishers they sit
-  // beside: ThaibmaProvider also fulfils `yield-curve` and WorldBankProvider
-  // also fulfils `macro-reference-series`, so placing either earlier would
-  // repoint every existing US card at a foreign series. Here each stays
-  // reachable by pinning `source`, which is what a card wanting the Thai curve
-  // or a World Bank indicator asks for. BisProvider is the only provider for
-  // `policy-rates`, so its position is free.
+  // beside: ThaibmaProvider also fulfils `yield-curve`, MofThProvider
+  // `national-debt`, and WorldBankProvider `macro-reference-series`, so placing
+  // any of them earlier would repoint every existing US card at a foreign
+  // series. Here each stays reachable by pinning `source`, which is what a card
+  // wanting the Thai curve, Thai debt or a World Bank indicator asks for.
+  // BisProvider (`policy-rates`) and SettradeProvider (`market-snapshot`) are
+  // the only sources for their capabilities, so their positions are free.
   ThaibmaProvider,
   BisProvider,
   WorldBankProvider,
+  SettradeProvider,
+  MofThProvider,
 ] as const;
 
 /**
