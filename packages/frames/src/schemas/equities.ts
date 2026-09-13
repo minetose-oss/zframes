@@ -1,6 +1,6 @@
 import { defineFrameMeta } from "@zframes/spec/frame";
 import { z } from "zod";
-import { widgetIcon, SOURCES, companySymbolField } from "./shared";
+import { widgetIcon, SOURCES, companySymbolField, sourceField } from "./shared";
 
 export const filingsFeedMeta = defineFrameMeta({
   name: "filings-feed",
@@ -49,21 +49,25 @@ export const fundamentalsMeta = defineFrameMeta({
   iconUrl: widgetIcon("fundamentals"),
   layout: { w: 4, h: 4, minW: 3, minH: 3, maxH: 5 },
   description:
-    "Headline financials for one US-listed company from SEC EDGAR XBRL company facts — revenue, net income, total assets, shareholders' equity, diluted EPS, and shares outstanding, each labelled with its fiscal period. Income-statement figures are the latest full fiscal year; balance-sheet figures are the latest reported quarter. Keyless official data that updates only when the company files (annual/quarterly), not a live feed. Requires the zframes runtime's data proxy (it ships with `zframes serve` / `vite dev`); resolve by ticker (bundled top-500 map) or raw SEC CIK.",
+    "Headline financials for one US-listed company from SEC EDGAR XBRL company facts — revenue, net income, total assets, shareholders' equity, diluted EPS, and shares outstanding, each labelled with its fiscal period. Income-statement figures are the latest full fiscal year; balance-sheet figures are the latest reported quarter. Keyless official data that updates only when the company files (annual/quarterly), not a live feed. Requires the zframes runtime's data proxy (it ships with `zframes serve` / `vite dev`); resolve by ticker (bundled top-500 map) or raw SEC CIK. Pin source \"settrade\" for a SET-listed Thai company instead, whose exchange publishes its own highlights (assets, liabilities, equity, revenue, net profit, EPS, D/E, asset turnover, margin, ROE, ROA) as of its latest reported period.",
   interpretation: `The headline numbers a company reported in its own SEC filings — revenue (total sales), net income (profit after everything), total assets, shareholders' equity (assets minus liabilities), diluted EPS (profit per share), and shares outstanding. These are the figures as filed, in US dollars, not estimates.
 
 Each value is labelled with its fiscal period. Income figures cover the latest full fiscal year; balance-sheet figures are a snapshot at the latest quarter — so the two groups describe different dates on purpose.
 
 Rising revenue with rising net income is a growing, profitable business; revenue up while income falls means costs are growing faster than sales. A common misreading: fiscal years are not calendar years — many companies end their year in June or January, so "FY2025" may mostly describe 2024.`,
   capabilities: ["fundamentals"],
-  source: SOURCES.secEdgar,
+  source: [SOURCES.secEdgar, SOURCES.settrade],
   schema: z.object({
     symbol: z
       .string()
       .min(1)
       .describe(
-        'Company to show financials for — a ticker ("AAPL", "NVDA"), a HIP-3 symbol ("xyz:NVDA"), or a raw SEC CIK ("320193"). Tickers outside the bundled top-500 map need a CIK.',
+        'Company to show financials for — a ticker ("AAPL", "NVDA"), a HIP-3 symbol ("xyz:NVDA"), or a raw SEC CIK ("320193"). Tickers outside the bundled top-500 map need a CIK. With source "settrade" it is a bare SET ticker instead ("PTT").',
       ),
+    source: sourceField(
+      ["settrade"],
+      'Omit for SEC EDGAR (US filers, XBRL as filed). "settrade" reads a SET-listed company\'s latest Settrade financial highlights instead; the symbol is then a bare SET ticker like "PTT".',
+    ),
   }),
 });
 
@@ -189,16 +193,22 @@ export const companyProfileMeta = defineFrameMeta({
   iconUrl: widgetIcon("company-profile"),
   layout: { w: 4, h: 3, minW: 2, minH: 2 },
   description:
-    "Identity card for one US-listed company — name, exchange, sector and industry, the last sale with its change, market capitalisation, the 52-week range with a marker showing where price sits inside it, average volume, and the dividend and yield when the company pays one. The header a company deep-dive board opens with. Keyless exchange data through the zframes runtime proxy; empty on a static host.",
+    'Identity card for one US-listed company — name, exchange, sector and industry, the last sale with its change, market capitalisation, the 52-week range with a marker showing where price sits inside it, average volume, and the dividend and yield when the company pays one. The header a company deep-dive board opens with. Pin source "settrade" for a SET-listed Thai company instead, quoted as of the last Bangkok session. Keyless exchange data through the zframes runtime proxy; empty on a static host.',
   interpretation: `A one-glance identity card: who the company is (name, exchange, sector, industry), what the stock last traded at with its daily change, and how big it is (market capitalisation — share price times shares outstanding).
 
 The 52-week range bar shows the past year's low and high with a marker where today's price sits between them: near the right edge means trading close to its yearly high, near the left edge close to its low. Average volume gives a sense of how actively the stock trades, and the dividend line appears only when the company pays one.
 
 Position in the 52-week range is context, not a verdict — near the high can mean momentum or an expensive entry, near the low can mean a bargain or a business in decline. Market cap, not share price, is the measure of size: a $900 stock can belong to a smaller company than a $40 one.`,
   capabilities: ["equity-profile"],
-  source: SOURCES.nasdaq,
+  // Either exchange can back this card, so both are credited — the renderer
+  // narrows the badge to the one this instance pinned.
+  source: [SOURCES.nasdaq, SOURCES.settrade],
   schema: z.object({
     symbol: companySymbolField(),
+    source: sourceField(
+      ["nasdaq", "settrade"],
+      'Which exchange publishes the profile — omit for Nasdaq (US-listed companies, a plain ticker like "NVDA"). "settrade" reads a SET-listed Thai company instead, where the symbol is a bare SET ticker like "PTT" or "KBANK" and the figures are the exchange\'s own baht numbers, converted.',
+    ),
   }),
 });
 
@@ -437,6 +447,40 @@ High institutional ownership (large caps often sit above 70%) signals profession
   source: SOURCES.nasdaq,
   schema: z.object({
     symbol: companySymbolField(),
+  }),
+});
+
+export const exchangeKeyStatsMeta = defineFrameMeta({
+  name: "exchange-key-stats",
+  label: "Exchange Key Stats",
+  category: "equities",
+  iconUrl: widgetIcon("exchange-key-stats"),
+  layout: { w: 6, h: 4, minW: 4, minH: 3 },
+  description:
+    "The annual key-statistics table a Thai exchange publishes about itself, years as columns: index close, market capitalisation, trading value and average daily value, turnover, listed companies, P/E, P/BV and dividend yield — plus, for SET, what foreign investors bought or sold net that year. Up to eight years, from SEC Thailand's published statistics, money converted to USD.",
+  interpretation: `This is the exchange's own scorecard, one column per year. The top rows are size and activity — where the index closed, what the whole market was worth, how much changed hands in the year and on an average day — and turnover ties the two together: traded value as a percent of market capitalisation, which is how busy the market was relative to its size.
+
+Beneath them sit the listing count and the valuation rows. A P/E that drifts up while the index goes nowhere means earnings fell, not that the market rallied; P/BV under 1 says the market values the listed companies below their own books; the dividend yield is what the board pays out on today's prices.
+
+SET adds the year's foreign net: green when overseas investors were net buyers, red when they were net sellers. Several consecutive red years is the single most cited fact about Thai equities. One caution: every money figure in the table is converted at today's exchange rate, so the dollar columns move with the baht as well as with the market.`,
+  capabilities: ["exchange-key-stats"],
+  source: SOURCES.secTh,
+  schema: z.object({
+    market: z
+      .enum(["SET", "mai"])
+      .default("SET")
+      .describe(
+        'Which Thai exchange to show: "SET" (the main board; the only one with the foreign-investor row) or "mai" (the growth board for smaller companies).',
+      ),
+    years: z
+      .number()
+      .int()
+      .min(3)
+      .max(8)
+      .default(5)
+      .describe(
+        "How many of the latest years to show, newest on the right. The publisher carries eight; fewer keeps the columns readable on a narrow card.",
+      ),
   }),
 });
 

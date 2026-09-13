@@ -360,6 +360,30 @@ const PROBES: Probe[] = [
     proxied: true,
   },
   {
+    pkg: "provider-sec-th",
+    cls: "SecThProvider",
+    method: "getExchangeKeyStats",
+    args: ["SET"],
+    expect: "object",
+    proxied: true,
+  },
+  {
+    pkg: "provider-sec-th",
+    cls: "SecThProvider",
+    method: "getBondMarketStats",
+    args: [],
+    expect: "object",
+    proxied: true,
+  },
+  {
+    pkg: "provider-sec-th",
+    cls: "SecThProvider",
+    method: "getBondIssuance",
+    args: [],
+    expect: "object",
+    proxied: true,
+  },
+  {
     pkg: "provider-goldtraders",
     cls: "GoldTradersProvider",
     method: "getRetailGoldPrice",
@@ -688,6 +712,60 @@ const PROBES: Probe[] = [
     proxied: true,
   },
   {
+    pkg: "provider-settrade",
+    cls: "SettradeProvider",
+    method: "getInvestorTypeFlow",
+    args: ["SET"],
+    expect: "array",
+    pick: "investors",
+    proxied: true,
+  },
+  // The per-stock half, all off one ticker. PTT is the largest SET listing and
+  // has traded continuously for decades, so an empty answer here is drift
+  // rather than a quiet day. Note the venue's symbols are SET-native: "BTC" is
+  // a mai-listed company on this host, not the coin.
+  {
+    pkg: "provider-settrade",
+    cls: "SettradeProvider",
+    method: "getDayStats",
+    args: [["PTT"]],
+    expect: "object",
+    proxied: true,
+  },
+  {
+    pkg: "provider-settrade",
+    cls: "SettradeProvider",
+    method: "getOrderBook",
+    args: ["PTT"],
+    expect: "object",
+    proxied: true,
+  },
+  {
+    pkg: "provider-settrade",
+    cls: "SettradeProvider",
+    method: "getEquityProfile",
+    args: ["PTT"],
+    expect: "object",
+    proxied: true,
+  },
+  {
+    pkg: "provider-settrade",
+    cls: "SettradeProvider",
+    method: "getCompanyFacts",
+    args: ["PTT"],
+    expect: "array",
+    pick: "metrics",
+    proxied: true,
+  },
+  {
+    pkg: "provider-settrade",
+    cls: "SettradeProvider",
+    method: "getDailyCloseHistory",
+    args: ["PTT"],
+    expect: "array",
+    proxied: true,
+  },
+  {
     pkg: "provider-mof-th",
     cls: "MofThProvider",
     method: "getNationalDebt",
@@ -756,7 +834,9 @@ function grade(
   if (typeof value !== "object" || Array.isArray(value))
     return {
       status: "warn",
-      detail: `expected object, got ${Array.isArray(value) ? "array" : typeof value}`,
+      detail: `expected object, got ${
+        Array.isArray(value) ? "array" : typeof value
+      }`,
     };
   const keys = Object.keys(value as object).length;
   return keys === 0
@@ -936,7 +1016,9 @@ async function main() {
     console.log(`${icon} ${r.provider}.${r.method}  ${r.detail}  (${r.ms}ms)`);
   }
   console.log(
-    `\n${results.length} methods — ${results.length - fails.length - warns.length} ok, ${warns.length} warn, ${fails.length} fail`,
+    `\n${results.length} methods — ${
+      results.length - fails.length - warns.length
+    } ok, ${warns.length} warn, ${fails.length} fail`,
   );
 
   const report = {

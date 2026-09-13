@@ -147,12 +147,17 @@ const CAPABILITIES: readonly Capability[] = [
   // provider-bis (also macro-reference-series, reachable by pinning source: "bis")
   "policy-rates",
   // provider-worldbank (macro-reference-series, pin source: "worldbank")
-  // provider-settrade
+  // provider-settrade (also day-stats, order-book, equity-profile, fundamentals,
+  // price-history-daily — all reachable by pinning source: "settrade")
   "market-snapshot",
+  "investor-type-flow",
   // provider-mof-th (national-debt, reachable by pinning source: "mof-th")
   // provider-sec-th
   "industry-market-cap",
   "fund-industry-allocation",
+  "exchange-key-stats",
+  "bond-market-stats",
+  "bond-issuance",
   // provider-goldtraders
   "retail-gold-price",
 ];
@@ -313,7 +318,8 @@ const HOSTS = [
   {
     host: "api.settrade.com",
     proxied: true,
-    reason: "SET and mai index levels with market breadth, restamped intraday.",
+    reason:
+      "SET and mai index levels with market breadth and valuation, investor-type flows, and per-stock quotes, financial highlights and daily closes.",
   },
   {
     host: "dataservices.mof.go.th",
@@ -566,7 +572,8 @@ const SOURCES: ProviderPluginManifest["sources"] = [
     id: "settrade",
     name: "Settrade",
     url: "https://www.settrade.com",
-    notes: "SET and mai index snapshot with market breadth; no per-stock data.",
+    notes:
+      'The Stock Exchange of Thailand, THB-quoted. Wants a bare SET ticker like "PTT" or "KBANK" — note "BTC" is a mai-listed company here, not the coin. Serves the SET/mai session snapshot (index family, breadth, the venue\'s own multiples) and its investor-type flows, plus per-stock quotes as of the LAST SESSION, about six months of daily closes, and best bid/offer only — one level a side, no live tick. Per symbol only: the host publishes no stock list or ranking, so it cannot back a card that scans a universe.',
   },
   {
     id: "bis",

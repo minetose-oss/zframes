@@ -106,14 +106,22 @@ A green change means the price is higher than it was 24 hours ago; red means low
 
 Stock and index symbols here are perpetual futures tracking the listing, so they tick around the clock — a moving price at 3 a.m. is the perp market, not the stock exchange.`,
   capabilities: ["quote-stream", "day-stats"],
-  source: SOURCES.hyperliquid,
+  // Any of these can back the watchlist; only Hyperliquid streams, so a card
+  // pinned elsewhere polls its day stats and shows no live tick.
+  source: [
+    SOURCES.hyperliquid,
+    SOURCES.bitkub,
+    SOURCES.nasdaq,
+    SOURCES.settrade,
+  ],
   schema: z.object({
     symbols: z
       .array(z.string())
       .min(1)
       .describe(
-        'Hyperliquid symbols to track — mix asset classes, e.g. ["xyz:NVDA", "xyz:SP500", "xyz:GOLD", "xyz:EUR"] or all-equity ["xyz:TSLA", "xyz:NVDA", "xyz:AAPL"]. Crypto works too: "BTC", "ETH".',
+        'Symbols to track, spelled the way the chosen venue spells them — mix asset classes on Hyperliquid, e.g. ["xyz:NVDA", "xyz:SP500", "xyz:GOLD", "xyz:EUR"] or all-equity ["xyz:TSLA", "xyz:NVDA", "xyz:AAPL"]. Crypto works too: "BTC", "ETH". Pinned to another venue they are that venue\'s own tickers ("KUB" on Bitkub, "NVDA" on Nasdaq, "PTT" on Settrade).',
       ),
+    source: sourceField(),
   }),
 });
 
@@ -479,21 +487,21 @@ export const orderBookDepthMeta = defineFrameMeta({
   iconUrl: widgetIcon("order-book-depth"),
   layout: { w: 4, h: 4, minW: 1, minH: 2 },
   description:
-    "Live two-sided order book for one Bitkub market — bid and ask ladders with cumulative resting size, plus the mid price and spread. Shows where the resting liquidity actually sits, which a price feed alone can't. Prices in Thai baht. Keyless (Bitkub public API).",
+    'Live two-sided order book for one Bitkub market — bid and ask ladders with cumulative resting size, plus the mid price and spread. Shows where the resting liquidity actually sits, which a price feed alone can\'t. Prices in Thai baht. Keyless (Bitkub public API). Pinning source "settrade" points it at a SET-listed stock instead, where the exchange publishes only the BEST bid and offer — one level a side, as of the last session, not a live ladder.',
   interpretation: `The live resting orders on one market: bids (offers to buy) stacked below the current price and asks (offers to sell) above it, with the mid price between them and the spread — the gap between the best bid and the best ask.
 
 Each row is a price level with the size resting at it, and the shaded bars show cumulative depth growing away from the mid. A thick side is a wall of resting liquidity the price must eat through to move that way; a thin book means even small orders can push the price a long distance.
 
-This card reads Bitkub, a Thai venue quoted in baht, so its levels will not match a dollar chart of the same asset. And depth is a snapshot of intent, not a promise — resting orders can be pulled the moment the price approaches them.`,
+Both sources here are Thai venues quoted in baht, so their levels will not match a dollar chart of the same asset — Bitkub for crypto, Settrade for SET-listed stocks. Settrade publishes one level a side and only as of the last session, so a card pinned there shows the top of book, not a ladder. And depth is a snapshot of intent, not a promise — resting orders can be pulled the moment the price approaches them.`,
   capabilities: ["order-book"],
-  source: SOURCES.bitkub,
+  source: [SOURCES.bitkub, SOURCES.settrade],
   schema: z.object({
     symbol: z
       .string()
       .min(1)
       .default("KUB")
       .describe(
-        'Base asset ticker as listed on the venue, e.g. "KUB", "BTC", "ETH" — the quote asset is implied (THB on Bitkub).',
+        'Base asset ticker as listed on the venue, e.g. "KUB", "BTC", "ETH" on Bitkub — the quote asset is implied (THB on both venues). With source "settrade" it is a bare SET ticker like "PTT" instead.',
       ),
     source: sourceField(),
     levels: z
@@ -755,6 +763,99 @@ The unchanged slice runs wider here than on a deep US venue, because many Thai l
       .default("SET")
       .describe(
         "Which venue's breadth to show: SET (main board) or mai (Market for Alternative Investment, the growth board).",
+      ),
+  }),
+});
+
+export const marketValuationMeta = defineFrameMeta({
+  name: "market-valuation",
+  label: "Market Valuation",
+  category: "markets",
+  iconUrl: widgetIcon("market-valuation"),
+  layout: { w: 4, h: 2, minW: 3, minH: 2, maxH: 3 },
+  description:
+    "What a whole Thai venue is worth and what the market pays for it — total market capitalisation, aggregate P/E and P/BV, dividend yield and turnover ratio, as the exchange itself computes them. Venue-level, never per stock: these are the exchange's own weights, which no per-symbol feed can be summed into. Keyless (Settrade). Proxied: needs a running runtime.",
+  interpretation: `Five numbers describing an entire listed market as if it were one company: what all its listings are worth together (market cap), what the market pays per unit of their combined earnings (P/E) and of their book value (P/BV), what they yield in dividends, and how much of that market cap changes hands over a year (turnover ratio).
+
+Read them against the venue's own history rather than against another country's index: an emerging market habitually trades at a lower P/E and a higher dividend yield than a US board, and that gap is structural, not a bargain.
+
+The growth board (mai) normally shows a much higher P/E and a much lower yield than the main board — smaller, younger companies reinvest instead of paying out. A missing multiple means the aggregate it divides by was negative, where the ratio would say nothing.`,
+  capabilities: ["market-snapshot"],
+  source: SOURCES.settrade,
+  schema: z.object({
+    market: z
+      .enum(["SET", "mai"])
+      .default("SET")
+      .describe(
+        "Which venue's valuation to show: SET (main board) or mai (Market for Alternative Investment, the growth board).",
+      ),
+  }),
+});
+
+export const investorFlowBarsMeta = defineFrameMeta({
+  name: "investor-flow-bars",
+  label: "Investor Flows",
+  category: "markets",
+  iconUrl: widgetIcon("investor-flow-bars"),
+  layout: { w: 4, h: 4, minW: 3, minH: 3 },
+  description:
+    "Who traded a Thai venue's session — institutions, broker proprietary books, foreign investors and local individuals — as one net-value bar per investor class, optionally with each class's gross buying and selling underneath. Aggregation the exchange publishes itself (keyless, Settrade); there is no per-stock equivalent. Proxied: needs a running runtime.",
+  interpretation: `The exchange tallies every trade of the session by who stood on each side, and this is the result: one bar per investor class, its length that class's net value — what it bought minus what it sold. Green is net buying, red net selling.
+
+The classes sum to zero by construction, because someone bought everything that was sold, so the reading is always relative. A long red foreign bar against a long green individual bar means foreign money left and local retail absorbed it, which is the single most-watched flow on this market.
+
+A big net figure is not the same as a big session: a class can churn billions and finish nearly flat. The gross rows show that — buy and sell side by side under each net bar — and the header states the whole session's traded value for scale.`,
+  capabilities: ["investor-type-flow"],
+  source: SOURCES.settrade,
+  schema: z.object({
+    market: z
+      .enum(["SET", "mai"])
+      .default("SET")
+      .describe(
+        "Which venue's flows to show: SET (main board) or mai (Market for Alternative Investment, the growth board).",
+      ),
+    showGross: z
+      .boolean()
+      .default(true)
+      .describe(
+        "Also show each type's buy and sell value under its net bar. Turn it off for just the net picture on a short card.",
+      ),
+  }),
+});
+
+export const closeHistoryMeta = defineFrameMeta({
+  name: "close-history",
+  annotatable: true,
+  label: "Close History",
+  category: "markets",
+  iconUrl: widgetIcon("close-history"),
+  layout: { w: 6, h: 4, minW: 3, minH: 3 },
+  description:
+    "Daily closing prices for one asset as a line chart, with the latest close and the move across the chosen window. Reads a published daily-close series rather than an intraday feed, so it also covers assets with no live tick: Coin Metrics for crypto majors (years of history) or Settrade for a SET-listed Thai stock (about six months). Use it for the shape of a trend rather than for today's tick.",
+  interpretation: `One closing price per day, drawn left to right. There is no intraday detail here — each point is where the asset finished a session — so the line shows the trend rather than the churn inside it.
+
+The header states the latest close and how far the price travelled across the whole visible window, so shortening the window changes that percentage: it is a window return, not a daily change.
+
+A flat step in the line is a market that was shut (a weekend, a Thai public holiday), not missing data. And a Thai stock is charted from the exchange's own baht closes, converted — so it will not line up tick for tick with a dollar quote of the same company.`,
+  capabilities: ["price-history-daily"],
+  source: [SOURCES.coinMetrics, SOURCES.settrade],
+  schema: z.object({
+    symbol: z
+      .string()
+      .min(1)
+      .default("BTC")
+      .describe(
+        'Asset to chart, spelled the way the chosen source spells it: a crypto ticker like "BTC" or "ETH" for Coin Metrics, a bare SET ticker like "PTT" or "KBANK" for Settrade.',
+      ),
+    source: sourceField(
+      ["coinmetrics", "settrade"],
+      'Where the daily closes come from — "coinmetrics" (default: crypto majors, years of history) or "settrade" (a SET-listed Thai stock by bare ticker, about six months of sessions, converted from baht). Symbols are source-native, so changing the source means changing the symbol too.',
+    ),
+    window: z
+      .enum(["3M", "6M", "1Y", "5Y", "MAX"])
+      .default("6M")
+      .describe(
+        'How much history to chart. Asking for more than the source carries simply shows everything there is — Settrade publishes about six months, so "1Y" and longer draw the same chart there.',
       ),
   }),
 });

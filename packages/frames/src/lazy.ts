@@ -34,6 +34,14 @@ export const frameLoaders: Record<string, FrameLoader> = {
     load: () =>
       import("./bitcoin-dominance").then((m) => m.bitcoinDominanceFrame),
   },
+  "bond-issuance-bars": {
+    load: () =>
+      import("./bond-issuance-bars").then((m) => m.bondIssuanceBarsFrame),
+  },
+  "bond-market-stats": {
+    load: () =>
+      import("./bond-market-stats").then((m) => m.bondMarketStatsFrame),
+  },
   "breadth-histogram": {
     load: () =>
       import("./breadth-histogram").then((m) => m.breadthHistogramFrame),
@@ -101,6 +109,9 @@ export const frameLoaders: Record<string, FrameLoader> = {
     load: () => import("./checklist").then((m) => m.checklistFrame),
   },
   clock: { load: () => import("./clock").then((m) => m.clockFrame) },
+  "close-history": {
+    load: () => import("./close-history").then((m) => m.closeHistoryFrame),
+  },
   "coin-momentum-heatmap": {
     load: () =>
       import("./coin-momentum-heatmap").then((m) => m.coinMomentumHeatmapFrame),
@@ -269,6 +280,10 @@ export const frameLoaders: Record<string, FrameLoader> = {
   "eth-supply": {
     load: () => import("./eth-supply").then((m) => m.ethSupplyFrame),
   },
+  "exchange-key-stats": {
+    load: () =>
+      import("./exchange-key-stats").then((m) => m.exchangeKeyStatsFrame),
+  },
   "fear-greed": {
     load: () => import("./fear-greed").then((m) => m.fearGreedFrame),
   },
@@ -424,6 +439,10 @@ export const frameLoaders: Record<string, FrameLoader> = {
         (m) => m.institutionalOwnershipFrame,
       ),
   },
+  "investor-flow-bars": {
+    load: () =>
+      import("./investor-flow-bars").then((m) => m.investorFlowBarsFrame),
+  },
   "journal-log": {
     load: () => import("./journal-log").then((m) => m.journalLogFrame),
   },
@@ -481,6 +500,10 @@ export const frameLoaders: Record<string, FrameLoader> = {
   },
   "market-scatter": {
     load: () => import("./market-scatter").then((m) => m.marketScatterFrame),
+  },
+  "market-valuation": {
+    load: () =>
+      import("./market-valuation").then((m) => m.marketValuationFrame),
   },
   marquee: { load: () => import("./marquee").then((m) => m.marqueeFrame) },
   "mayer-multiple": {

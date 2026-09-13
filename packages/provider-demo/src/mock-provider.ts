@@ -88,12 +88,20 @@ import type {
   AnalystRatings,
   InstitutionalOwnership,
   MarketSnapshot,
+  MarketValuation,
+  InvestorTypeFlow,
   IndexQuote,
   PolicyRate,
   IndustryCap,
   IndustryCapPeriod,
   IndustryMarketCap,
   FundIndustryAllocation,
+  ExchangeKeyStats,
+  ExchangeYearStats,
+  BondIssuance,
+  BondIssuancePeriod,
+  BondMarketStats,
+  BondMarketYear,
   RetailGoldPrice,
 } from "@zframes/spec";
 
@@ -874,9 +882,13 @@ export const DEMO_CAPABILITIES: readonly Capability[] = [
   "home-value-index",
   "regional-housing-price",
   "market-snapshot",
+  "investor-type-flow",
   "policy-rates",
   "industry-market-cap",
   "fund-industry-allocation",
+  "exchange-key-stats",
+  "bond-market-stats",
+  "bond-issuance",
   "retail-gold-price",
   "portfolio",
 ];
@@ -4862,6 +4874,73 @@ export class MockMarketDataProvider implements MarketDataProvider {
           losersVolume: 3_400_000_000,
           unchangedVolume: 900_000_000,
         },
+        valuation: MockMarketDataProvider.VALUATIONS[id],
+        source: "demo",
+      };
+    });
+  }
+
+  /** The venue's aggregate multiples — a main board richer than its growth board. */
+  private static readonly VALUATIONS: Record<string, MarketValuation> = {
+    SET: {
+      asOf: isoDay(BASELINE_NOW),
+      marketCap: 553_000_000_000,
+      peRatio: 15.98,
+      pbvRatio: 1.5,
+      dividendYieldPct: 3.97,
+      turnoverRatioPct: 46.56,
+    },
+    mai: {
+      asOf: isoDay(BASELINE_NOW),
+      marketCap: 6_400_000_000,
+      peRatio: 28.4,
+      pbvRatio: 1.12,
+      dividendYieldPct: 1.84,
+      turnoverRatioPct: 92.3,
+    },
+  };
+
+  /**
+   * Who traded the session. The signs are the Thai market's habitual shape —
+   * foreign investors net sellers against local individuals absorbing it — so a
+   * demo board reads like the real one instead of like noise.
+   */
+  private static readonly INVESTOR_FLOWS: [string, string, number, number][] = [
+    ["institution", "Institution", 110_900_000, 94_600_000],
+    ["proprietary", "Proprietary", 138_100_000, 151_600_000],
+    ["foreign", "Foreign", 1_091_400_000, 1_177_300_000],
+    ["individual", "Individual", 609_500_000, 526_400_000],
+  ];
+
+  getInvestorTypeFlow(market?: string): Promise<InvestorTypeFlow> {
+    const id = MockMarketDataProvider.VENUES[market ?? ""] ? market! : "SET";
+    const empty: InvestorTypeFlow = {
+      market: id,
+      asOf: isoDay(BASELINE_NOW),
+      totalValue: 0,
+      investors: [],
+      source: "demo",
+    };
+    return this.gate<InvestorTypeFlow>(empty, () => {
+      // The growth board turns over a fraction of the main board's value.
+      const scale = id === "mai" ? 0.04 : 1;
+      const investors = MockMarketDataProvider.INVESTOR_FLOWS.map(
+        ([type, name, buy, sell]) => ({
+          type,
+          name,
+          buy: round(buy * scale, 0),
+          sell: round(sell * scale, 0),
+          net: round((buy - sell) * scale, 0),
+        }),
+      );
+      return {
+        market: id,
+        asOf: isoDay(BASELINE_NOW),
+        totalValue: round(
+          investors.reduce((sum, row) => sum + row.buy + row.sell, 0),
+          0,
+        ),
+        investors,
         source: "demo",
       };
     });
@@ -5037,6 +5116,183 @@ export class MockMarketDataProvider implements MarketDataProvider {
       ),
       source: "demo",
     }));
+  }
+
+  /** Venue scale: index level, market cap and turnover the seeds grow from. */
+  private static readonly EXCHANGE_SCALE: Record<
+    string,
+    { index: number; marketCap: number; turnover: number; listed: number }
+  > = {
+    SET: { index: 1260, marketCap: 480e9, turnover: 300e9, listed: 640 },
+    mai: { index: 217, marketCap: 6.5e9, turnover: 4e9, listed: 230 },
+  };
+
+  getExchangeKeyStats(market?: string): Promise<ExchangeKeyStats> {
+    const id = (market || "SET").toUpperCase() === "MAI" ? "mai" : "SET";
+    const empty: ExchangeKeyStats = {
+      market: id,
+      asOf: isoDay(BASELINE_NOW),
+      years: [],
+      source: "demo",
+    };
+    return this.gate<ExchangeKeyStats>(empty, () => {
+      const scale = MockMarketDataProvider.EXCHANGE_SCALE[id];
+      const r = rng(`exchange-stats:${id}`);
+      const latestYear = new Date(BASELINE_NOW).getUTCFullYear();
+      const years: ExchangeYearStats[] = Array.from({ length: 8 }, (_, i) => {
+        const back = 7 - i;
+        const drift = Math.pow(0.97, back) * (0.95 + r() * 0.1);
+        const stats: ExchangeYearStats = {
+          year: latestYear - back,
+          indexClose: round(scale.index * drift, 2),
+          tradingValue: round(scale.turnover * drift, 0),
+          avgDailyValue: round((scale.turnover * drift) / 242, 0),
+          turnoverPct: round(45 + r() * 25, 2),
+          marketCap: round(scale.marketCap * drift, 0),
+          listedCompanies: Math.round(scale.listed * (0.9 + back * 0.01)),
+          listedSecurities: Math.round(
+            scale.listed * 3.3 * (0.9 + back * 0.01),
+          ),
+          peRatio: round(14 + r() * 6, 2),
+          pbvRatio: round(1.1 + r() * 0.8, 2),
+          dividendYieldPct: round(2.8 + r() * 1.4, 2),
+        };
+        // The publisher splits turnover by investor for the main board only.
+        if (id === "SET")
+          stats.investors = {
+            foreign: {
+              net: round(scale.turnover * (r() - 0.6) * 0.05, 0),
+              sharePct: round(45 + r() * 10, 2),
+            },
+            institution: {
+              net: round(scale.turnover * (r() - 0.4) * 0.03, 0),
+              sharePct: round(10 + r() * 6, 2),
+            },
+            proprietary: {
+              net: round(scale.turnover * (r() - 0.5) * 0.02, 0),
+              sharePct: round(8 + r() * 4, 2),
+            },
+          };
+        return stats;
+      });
+      return { market: id, asOf: isoDay(BASELINE_NOW), years, source: "demo" };
+    });
+  }
+
+  /** The publisher's investor classes for bond turnover, and their rough share. */
+  private static readonly BOND_INVESTORS: [string, number][] = [
+    ["Retail", 1.4],
+    ["Mutual funds", 18.6],
+    ["Insurers", 9.2],
+    ["Domestic companies", 6.1],
+    ["Foreign companies", 12.4],
+    ["Inter-dealer", 34.8],
+    ["Non-dealer financial institutions", 15.1],
+    ["Others", 2.4],
+  ];
+
+  getBondMarketStats(): Promise<BondMarketStats> {
+    const empty: BondMarketStats = {
+      asOf: isoDay(BASELINE_NOW),
+      years: [],
+      source: "demo",
+    };
+    return this.gate<BondMarketStats>(empty, () => {
+      const r = rng("bond-market");
+      const latestYear = new Date(BASELINE_NOW).getUTCFullYear();
+      const years: BondMarketYear[] = Array.from({ length: 8 }, (_, i) => {
+        const back = 7 - i;
+        const drift = Math.pow(0.96, back) * (0.97 + r() * 0.06);
+        const government = 405e9 * drift;
+        const corporate = 134e9 * drift;
+        const foreign = 1.6e9 * drift;
+        const traded = { gov: government * 1.5, corp: corporate * 0.33 };
+        return {
+          year: latestYear - back,
+          outstanding: {
+            total: round(government + corporate + foreign, 0),
+            government: round(government, 0),
+            corporate: round(corporate, 0),
+            foreign: round(foreign, 0),
+          },
+          tradingValue: {
+            total: round(traded.gov + traded.corp, 0),
+            government: round(traded.gov, 0),
+            corporate: round(traded.corp, 0),
+            foreign: round(foreign * 0.06, 0),
+          },
+          avgDailyTradingValue: round((traded.gov + traded.corp) / 242, 0),
+          turnoverPct: {
+            total: round(120 + r() * 20, 2),
+            government: round(150 + r() * 20, 2),
+            corporate: round(30 + r() * 8, 2),
+            foreign: round(4 + r() * 3, 2),
+          },
+          registeredIssues: {
+            total: 2770 - back * 40,
+            government: 471 - back * 5,
+            corporate: 2265 - back * 34,
+            foreign: 34 - back,
+          },
+          tradingShareByInvestor: MockMarketDataProvider.BOND_INVESTORS.map(
+            ([label, pct]) => ({ label, pct }),
+          ),
+          govTotalReturnIndex: round(364 * Math.pow(0.98, back), 2),
+          corpTotalReturnIndex: round(235 * Math.pow(0.975, back), 2),
+          avgGovYieldPct: round(2 + r() * 0.8, 3),
+          avgCorpYieldPct: round(2.4 + r() * 0.9, 3),
+        };
+      });
+      return { asOf: isoDay(BASELINE_NOW), years, source: "demo" };
+    });
+  }
+
+  /** Corporate instruments, with the share of corporate issuance each takes. */
+  private static readonly BOND_INSTRUMENTS: [string, number][] = [
+    ["Bills of exchange", 0.34],
+    ["Short-term debentures", 0.21],
+    ["Long-term debentures & bonds", 0.36],
+    ["Foreign-currency debentures", 0.03],
+    ["Basel capital instruments", 0.03],
+    ["Structured notes", 0.02],
+    ["Convertibles", 0.01],
+  ];
+
+  getBondIssuance(): Promise<BondIssuance> {
+    const empty: BondIssuance = {
+      asOf: isoDay(BASELINE_NOW),
+      periods: [],
+      source: "demo",
+    };
+    return this.gate<BondIssuance>(empty, () => {
+      const r = rng("bond-issuance");
+      const quarters = 20;
+      const periods: BondIssuancePeriod[] = Array.from(
+        { length: quarters },
+        (_, i) => {
+          const back = quarters - 1 - i;
+          const time = BASELINE_NOW - back * 91 * DAY;
+          const swing = 0.85 + r() * 0.3;
+          const corporate = 9.4e9 * swing;
+          const government = 12.1e9 * (0.9 + r() * 0.2);
+          const offshore = corporate * 0.06;
+          const byInstrument: Record<string, number> = {};
+          for (const [label, share] of MockMarketDataProvider.BOND_INSTRUMENTS)
+            byInstrument[label] = round(corporate * share, 0);
+          return {
+            period: MockMarketDataProvider.quarterLabel(time),
+            time,
+            total: round(corporate + government, 0),
+            corporate: round(corporate, 0),
+            government: round(government, 0),
+            domestic: round(corporate + government - offshore, 0),
+            offshore: round(offshore, 0),
+            byInstrument,
+          };
+        },
+      );
+      return { asOf: isoDay(BASELINE_NOW), periods, source: "demo" };
+    });
   }
 
   getRetailGoldPrice(): Promise<RetailGoldPrice> {

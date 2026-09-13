@@ -1324,6 +1324,65 @@ The spread across the bars is the story: housing rarely moves as one country, an
   }),
 });
 
+export const bondMarketStatsMeta = defineFrameMeta({
+  name: "bond-market-stats",
+  label: "Bond Market",
+  category: "macro",
+  iconUrl: widgetIcon("bond-market-stats"),
+  layout: { w: 6, h: 4, minW: 3, minH: 3 },
+  description:
+    "A country's whole bond market by year, split into government, corporate and foreign paper: value outstanding, value traded, turnover, or the latest year's traded share by investor class. The header carries the average government and corporate yields and both total-return index levels. Annual, from SEC Thailand's published statistics, money converted to USD.",
+  interpretation: `A national bond market is far larger than its stock market and almost nobody sees it, because it trades over the counter rather than on a screen. This card is the registrar's own annual count of it.
+
+Outstanding is what exists — the registered value of every live issue, dominated by government paper with corporate bonds beside it. Trading is what actually changed hands in the year, and turnover divides one by the other: government bonds turn over more than their whole stock in a year, corporates a third of theirs, which is the liquidity gap an investor feels the moment they try to sell. The investor view shows who trades, and inter-dealer flow usually dwarfs everyone else.
+
+The two yields in the header are the market's price of money: the government average is the risk-free anchor, and the gap to the corporate average is the credit premium. One caution: the money figures are converted at today's exchange rate, so the dollar totals move with the baht as well as with the market.`,
+  capabilities: ["bond-market-stats"],
+  source: SOURCES.secTh,
+  schema: z.object({
+    metric: z
+      .enum(["outstanding", "trading", "turnover", "investors"])
+      .default("outstanding")
+      .describe(
+        "outstanding = registered value outstanding per year, stacked by government / corporate / foreign; trading = value traded per year, same split; turnover = traded value as a percent of value outstanding per segment; investors = the latest year's traded share by investor class.",
+      ),
+  }),
+});
+
+export const bondIssuanceBarsMeta = defineFrameMeta({
+  name: "bond-issuance-bars",
+  label: "Bond Issuance",
+  category: "macro",
+  iconUrl: widgetIcon("bond-issuance-bars"),
+  layout: { w: 6, h: 4, minW: 3, minH: 3 },
+  description:
+    "New bond supply per quarter as stacked bars — corporate against government, domestic against offshore, or the corporate instruments issuers actually used (bills of exchange, short- and long-term debentures, foreign-currency and Basel capital paper). Header shows the latest quarter's total and its move on the quarter. Quarterly, from SEC Thailand's filings data, converted to USD.",
+  interpretation: `Issuance is the primary market: bonds that did not exist last quarter and now do. It is the cleanest read there is on corporate funding conditions, because a company only comes to market when it believes it can be funded at a price it will accept.
+
+Split by type, the card separates companies raising money from the state raising money. Split by market, it separates paper sold at home from paper sold offshore — an offshore quarter usually means either a very large issuer or a domestic market that has gone quiet. Split by instrument, it shows what was actually sold: short bills of exchange are working capital rolling over, long debentures are real term funding, and Basel capital instruments are banks topping up regulatory capital.
+
+Read the quarter-over-quarter change with care. Issuance is seasonal and lumpy — one big deal moves a quarter — so the shape over a year matters more than any single bar.`,
+  capabilities: ["bond-issuance"],
+  source: SOURCES.secTh,
+  schema: z.object({
+    split: z
+      .enum(["type", "market", "instrument"])
+      .default("type")
+      .describe(
+        "type = corporate vs government; market = domestic vs offshore; instrument = corporate instruments",
+      ),
+    quarters: z
+      .number()
+      .int()
+      .min(4)
+      .max(20)
+      .default(12)
+      .describe(
+        "How many of the latest quarters to show, oldest on the left. The publisher carries twenty.",
+      ),
+  }),
+});
+
 export const fundIndustryAllocationMeta = defineFrameMeta({
   name: "fund-industry-allocation",
   label: "Fund Industry Allocation",

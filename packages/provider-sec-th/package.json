@@ -1,7 +1,7 @@
 {
   "name": "@zframes/provider-sec-th",
   "version": "0.0.0",
-  "description": "Free, no-key zframes data provider for SEC Thailand's published statistics CSVs: SET/mai market capitalisation by industry group and sector, and the mutual-fund industry's asset allocation (industry-market-cap, fund-industry-allocation capabilities).",
+  "description": "Free, no-key zframes data provider for SEC Thailand's published statistics CSVs: SET/mai market capitalisation by industry group and sector, the mutual-fund industry's asset allocation, each exchange's annual key statistics, and the bond market's annual statistics and quarterly issuance (industry-market-cap, fund-industry-allocation, exchange-key-stats, bond-market-stats, bond-issuance capabilities).",
   "license": "MIT",
   "author": "Zentry",
   "repository": {

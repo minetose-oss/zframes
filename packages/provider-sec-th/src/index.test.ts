@@ -102,6 +102,110 @@ const FUND_CSV = [
   "",
 ].join("\n");
 
+/**
+ * Cut from the live file (2026-09-13). Note the label of the first two rows
+ * carries a TRAILING SPACE and the P/BV label loses its halfway down — the
+ * publisher is inconsistent within one file, which is why every lookup trims.
+ * Years are Buddhist Era here.
+ */
+const SET_STATS_CSV = [
+  `${BOM}ข้อมูล ณ วันที่,รายการ,ปี,ค่า`,
+  "31/12/2568,ดัชนีราคาหลักทรัพย์ตลาดหลักทรัพย์แห่งประเทศไทย ,2567,1400.21",
+  "31/12/2568,ดัชนีราคาหลักทรัพย์ตลาดหลักทรัพย์แห่งประเทศไทย ,2568,1259.67",
+  '31/12/2568,มูลค่าซื้อขายทั้งหมด (ล้านบาท),2567,"11,000,000.00"',
+  '31/12/2568,มูลค่าซื้อขายทั้งหมด (ล้านบาท),2568,"9,957,995.69"',
+  '31/12/2568,มูลค่าซื้อขายเฉลี่ยต่อวัน (ล้านบาท),2567,"45,000.00"',
+  '31/12/2568,มูลค่าซื้อขายเฉลี่ยต่อวัน (ล้านบาท),2568,"41,148.74"',
+  "31/12/2568,อัตราการหมุนเวียนของการซื้อขาย (ร้อยละ) ,2567,60.11",
+  "31/12/2568,อัตราการหมุนเวียนของการซื้อขาย (ร้อยละ),2568,56.2095727",
+  '31/12/2568,มูลค่าหลักทรัพย์ตามราคาตลาด (ล้านบาท) ,2567,"17,500,000.00"',
+  '31/12/2568,มูลค่าหลักทรัพย์ตามราคาตลาด (ล้านบาท),2568,"16,189,722.67"',
+  "31/12/2568,จำนวนบริษัทจดทะเบียน ,2567,645",
+  "31/12/2568,จำนวนบริษัทจดทะเบียน,2568,638",
+  "31/12/2568,จำนวนหลักทรัพย์จดทะเบียน ,2567,2145",
+  "31/12/2568,จำนวนหลักทรัพย์จดทะเบียน,2568,2131",
+  "31/12/2568,ราคาปิดต่อกำไรต่อหุ้น (เท่า) ,2567,-",
+  "31/12/2568,ราคาปิดต่อกำไรต่อหุ้น (เท่า),2568,15.44",
+  "31/12/2568,ราคาปิดต่อมูลค่าหุ้นตามบัญชี (เท่า) ,2567,1.4",
+  "31/12/2568,ราคาปิดต่อมูลค่าหุ้นตามบัญชี (เท่า),2568,1.19",
+  "31/12/2568,อัตราเงินปันผลตอบแทน (ร้อยละ) ,2567,3.42",
+  "31/12/2568,อัตราเงินปันผลตอบแทน (ร้อยละ),2568,3.71",
+  "",
+].join("\n");
+
+/** The mai file, whose index row is the one label that differs per venue. */
+const MAI_STATS_CSV = [
+  `${BOM}ข้อมูล ณ วันที่,รายการ,ปี,ค่า`,
+  "31/12/2568,ดัชนีราคาหลักทรัพย์ตลาดหลักทรัพย์ เอ็ม เอ ไอ,2568,217.05",
+  '31/12/2568,มูลค่าหลักทรัพย์ตามราคาตลาด (ล้านบาท),2568,"219,554.52"',
+  "31/12/2568,จำนวนบริษัทจดทะเบียน,2568,230",
+  "",
+].join("\n");
+
+/**
+ * The investor file. Four classes are published; the fourth (domestic
+ * individuals) has no slot in the contract and must be ignored rather than
+ * mis-bucketed.
+ */
+const SET_INVESTOR_CSV = [
+  `${BOM}ข้อมูล ณ วันที่,รายการ,ประเภทผู้ลงทุน,ปี,มูลค่า`,
+  "31/12/2568,มูลค่าซื้อขายสุทธิ ,ผู้ลงทุนต่างประเทศ,2568,-100000.5",
+  "31/12/2568,สัดส่วนมูลค่าซื้อขายรวม (ร้อยละ),ผู้ลงทุนต่างประเทศ,2568,52.4",
+  "31/12/2568,มูลค่าซื้อขายสุทธิ ,ผู้ลงทุนสถาบันในประเทศ,2568,55000.25",
+  "31/12/2568,สัดส่วนมูลค่าซื้อขายรวม (ร้อยละ),ผู้ลงทุนสถาบันในประเทศ,2568,13.1",
+  "31/12/2568,มูลค่าซื้อขายสุทธิ ,บัญชีบริษัทหลักทรัพย์,2568,12000",
+  "31/12/2568,สัดส่วนมูลค่าซื้อขายรวม (ร้อยละ),บัญชีบริษัทหลักทรัพย์,2568,9.8",
+  "31/12/2568,มูลค่าซื้อขายสุทธิ ,ผู้ลงทุนทั่วไปในประเทศ,2568,33000",
+  // 2567 has a net for one class and no share, so the year stays unannotated.
+  "31/12/2568,มูลค่าซื้อขายสุทธิ ,ผู้ลงทุนต่างประเทศ,2567,-80000",
+  "",
+].join("\n");
+
+/**
+ * Cut from the live bond file (2026-09-13): the four segments, the turnover
+ * block that repeats its own item name where the others say "ยอดรวม", the
+ * Thai investor classes, the English `Bond Index` block, and a `-` print.
+ */
+const BOND_CSV = [
+  `${BOM}ข้อมูล ณ วันที่,รายการ,ประเภท,ปี,ค่า`,
+  '31/12/2568,มูลค่าหลักทรัพย์ขึ้นทะเบียนคงค้าง (ล้านบาท) ,ยอดรวม,2568,"18,175,072.20"',
+  '31/12/2568,มูลค่าหลักทรัพย์ขึ้นทะเบียนคงค้าง (ล้านบาท) ,ตราสารหนี้ภาครัฐ,2568,"13,612,527.31"',
+  '31/12/2568,มูลค่าหลักทรัพย์ขึ้นทะเบียนคงค้าง (ล้านบาท) ,ตราสารหนี้ภาคเอกชน ,2568,"4,509,601.65"',
+  "31/12/2568,มูลค่าหลักทรัพย์ขึ้นทะเบียนคงค้าง (ล้านบาท) ,พันธบัตรต่างประเทศ,2568,-",
+  '31/12/2568,มูลค่าซื้อขาย (ล้านบาท) ,ยอดรวม,2568,"21,958,275.22"',
+  '31/12/2568,มูลค่าซื้อขาย (ล้านบาท) ,ตราสารหนี้ภาครัฐ,2568,"20,466,035.02"',
+  '31/12/2568,มูลค่าซื้อขายเฉลี่ยต่อวัน (ล้านบาท) ,มูลค่าซื้อขายเฉลี่ยต่อวัน,2568,"90,736.67"',
+  "31/12/2568,อัตราการหมุนเวียนของการซื้อขาย (ร้อยละ),อัตราการหมุนเวียนของการซื้อขาย,2568,123.731286",
+  "31/12/2568,อัตราการหมุนเวียนของการซื้อขาย (ร้อยละ),ตราสารหนี้ภาคเอกชน ,2568,32.84517819",
+  "31/12/2568,จำนวนหลักทรัพย์ขึ้นทะเบียน,ยอดรวม,2568,2770",
+  "31/12/2568,จำนวนหลักทรัพย์ขึ้นทะเบียน,ตราสารหนี้ภาครัฐ,2568,471",
+  "31/12/2568,สัดส่วนมูลค่าซื้อขาย (ร้อยละ),รายย่อย,2568,1.36",
+  "31/12/2568,สัดส่วนมูลค่าซื้อขาย (ร้อยละ),ระหว่างผู้ค้าตราสารหนี้,2568,34.82",
+  "31/12/2568,สัดส่วนมูลค่าซื้อขาย (ร้อยละ),อื่น ๆ,2568,2.41",
+  "31/12/2568,Bond Index,Government Bond Total Return Index,2568,364.158709",
+  "31/12/2568,Bond Index,Average Government Bond Yield (ร้อยละ),2568,2.034241",
+  "31/12/2568,Bond Index,MTM Corporate Bond Total Return Index,2568,234.8998",
+  "31/12/2568,Bond Index,Average MTM Corporate Bond Yield (ร้อยละ),2568,2.46734",
+  '31/12/2568,มูลค่าหลักทรัพย์ขึ้นทะเบียนคงค้าง (ล้านบาท) ,ยอดรวม,2567,"17,000,000.00"',
+  "",
+].join("\n");
+
+/**
+ * Cut from the live issuance file (2026-09-13). Its year column is COMMON ERA
+ * and its quarter is spelled `Q1`, unlike every other file on this host.
+ */
+const ISSUANCE_CSV = [
+  `${BOM}As of date,bond_type,offer_country_name_th,corporation_type,invest_type,year,quarter,value_mn_bath`,
+  "31/12/2568,1.ตราสารหนี้ภาคเอกชน,1.ในประเทศ,1.นิติบุคคลไทย,ตั๋วเงิน,2024,Q4,100000",
+  "31/12/2568,1.ตราสารหนี้ภาคเอกชน,1.ในประเทศ,1.นิติบุคคลไทย,ตั๋วเงิน,2025,Q1,165576.82",
+  "31/12/2568,1.ตราสารหนี้ภาคเอกชน,1.ในประเทศ,1.นิติบุคคลไทย,หุ้นกู้ระยะยาว / พันธบัตรระยะยาว,2025,Q1,50000",
+  "31/12/2568,1.ตราสารหนี้ภาคเอกชน,2.ต่างประเทศ,1.นิติบุคคลไทย,หุ้นกู้สกุลเงินต่างประเทศ,2025,Q1,8000",
+  "31/12/2568,1.ตราสารหนี้ภาคเอกชน,1.ในประเทศ,1.นิติบุคคลไทย,หุ้นกู้ชนิดใหม่,2025,Q1,1000",
+  "31/12/2568,1.ตราสารหนี้ภาคเอกชน,1.ในประเทศ,1.นิติบุคคลไทย,หุ้นกู้แปลงสภาพ,2025,Q1,-",
+  "31/12/2568,2.ตราสารหนี้ภาครัฐไทย,1.ในประเทศ,1.ภาครัฐไทย,หุ้นกู้ระยะยาว / พันธบัตรระยะยาว,2025,Q1,400000",
+  "",
+].join("\n");
+
 /** What the host's F5 WAF answers, verbatim, with HTTP 200 and text/html. */
 const WAF_REJECTION =
   "<html><head><title>Request Rejected</title></head><body>The requested URL was rejected. Please consult with your administrator.<br><br>Your support ID is: 1799735157251140869<br><br></body></html>";
@@ -257,5 +361,186 @@ describe("getFundIndustryAllocation", () => {
     await expect(
       new SecThProvider().getFundIndustryAllocation(),
     ).rejects.toThrow(/blocked by the upstream WAF/);
+  });
+});
+
+describe("getExchangeKeyStats", () => {
+  it("reads SET's table across its trailing-space labels and BE years", async () => {
+    stubFetch({
+      STAT_SET_TH: SET_STATS_CSV,
+      STAT_TRADINGVALUE: SET_INVESTOR_CSV,
+    });
+    const stats = await new SecThProvider().getExchangeKeyStats("SET");
+
+    expect(stats.market).toBe("SET");
+    expect(stats.asOf).toBe("2025-12-31");
+    expect(stats.source).toBe("SEC Thailand");
+    // Buddhist-Era year columns, oldest → newest.
+    expect(stats.years.map((y) => y.year)).toEqual([2024, 2025]);
+
+    const latest = stats.years[1];
+    expect(latest.indexClose).toBe(1259.67);
+    expect(latest.tradingValue).toBe(usd(9_957_995.69));
+    expect(latest.avgDailyValue).toBe(usd(41_148.74));
+    expect(latest.marketCap).toBe(usd(16_189_722.67));
+    expect(latest.turnoverPct).toBe(56.2095727);
+    expect(latest.listedCompanies).toBe(638);
+    expect(latest.listedSecurities).toBe(2131);
+    expect(latest.peRatio).toBe(15.44);
+    expect(latest.pbvRatio).toBe(1.19);
+    expect(latest.dividendYieldPct).toBe(3.71);
+    // The `-` print is absent, never a zero P/E.
+    expect(stats.years[0].peRatio).toBeUndefined();
+  });
+
+  it("merges the investor split, and only where the year is complete", async () => {
+    stubFetch({
+      STAT_SET_TH: SET_STATS_CSV,
+      STAT_TRADINGVALUE: SET_INVESTOR_CSV,
+    });
+    const stats = await new SecThProvider().getExchangeKeyStats("SET");
+
+    expect(stats.years[1].investors).toEqual({
+      foreign: { net: usd(-100_000.5), sharePct: 52.4 },
+      institution: { net: usd(55_000.25), sharePct: 13.1 },
+      proprietary: { net: usd(12_000), sharePct: 9.8 },
+    });
+    // 2567 carries one class and no share, so it is left unannotated rather
+    // than published as a partial split.
+    expect(stats.years[0].investors).toBeUndefined();
+  });
+
+  it("matches mai's own index label and fetches no investor file", async () => {
+    const fetchMock = stubFetch({ STAT_MAI_TH: MAI_STATS_CSV });
+    const stats = await new SecThProvider().getExchangeKeyStats("mai");
+
+    expect(stats.market).toBe("mai");
+    expect(stats.years[0].indexClose).toBe(217.05);
+    expect(stats.years[0].marketCap).toBe(usd(219_554.52));
+    expect(stats.years[0].investors).toBeUndefined();
+    const urls = fetchMock.mock.calls.map(([url]) => String(url));
+    expect(urls.some((url) => url.includes("STAT_TRADINGVALUE"))).toBe(false);
+  });
+
+  it("accepts the market case-insensitively", async () => {
+    stubFetch({ STAT_MAI_TH: MAI_STATS_CSV });
+    const stats = await new SecThProvider().getExchangeKeyStats("MAI");
+    expect(stats.market).toBe("mai");
+  });
+
+  it("names the WAF block instead of parsing its page as CSV", async () => {
+    stubFetch({ STAT_MAI_TH: WAF_REJECTION });
+    await expect(
+      new SecThProvider().getExchangeKeyStats("mai"),
+    ).rejects.toThrow(/blocked by the upstream WAF/);
+  });
+});
+
+describe("getBondMarketStats", () => {
+  it("splits each item across the four segments", async () => {
+    stubFetch({ STAT_DEPT_TH: BOND_CSV });
+    const stats = await new SecThProvider().getBondMarketStats();
+
+    expect(stats.asOf).toBe("2025-12-31");
+    expect(stats.years.map((y) => y.year)).toEqual([2024, 2025]);
+    const latest = stats.years[1];
+    expect(latest.outstanding).toEqual({
+      total: usd(18_175_072.2),
+      government: usd(13_612_527.31),
+      // The segment label carries a trailing space in this file too.
+      corporate: usd(4_509_601.65),
+    });
+    // The `-` print leaves the segment absent rather than drawing a zero bar.
+    expect(latest.outstanding.foreign).toBeUndefined();
+    expect(latest.tradingValue.total).toBe(usd(21_958_275.22));
+    expect(latest.avgDailyTradingValue).toBe(usd(90_736.67));
+    expect(latest.registeredIssues).toEqual({ total: 2770, government: 471 });
+  });
+
+  it("reads the turnover block's self-named total and the English index rows", async () => {
+    stubFetch({ STAT_DEPT_TH: BOND_CSV });
+    const latest = (await new SecThProvider().getBondMarketStats()).years[1];
+
+    expect(latest.turnoverPct.total).toBe(123.731286);
+    expect(latest.turnoverPct.corporate).toBe(32.84517819);
+    expect(latest.govTotalReturnIndex).toBe(364.158709);
+    expect(latest.corpTotalReturnIndex).toBe(234.8998);
+    expect(latest.avgGovYieldPct).toBe(2.034241);
+    expect(latest.avgCorpYieldPct).toBe(2.46734);
+  });
+
+  it("translates the investor classes into English, in published order", async () => {
+    stubFetch({ STAT_DEPT_TH: BOND_CSV });
+    const latest = (await new SecThProvider().getBondMarketStats()).years[1];
+
+    expect(latest.tradingShareByInvestor).toEqual([
+      { label: "Retail", pct: 1.36 },
+      { label: "Inter-dealer", pct: 34.82 },
+      { label: "Others", pct: 2.41 },
+    ]);
+  });
+
+  it("names the WAF block here too", async () => {
+    stubFetch({ STAT_DEPT_TH: WAF_REJECTION });
+    await expect(new SecThProvider().getBondMarketStats()).rejects.toThrow(
+      /blocked by the upstream WAF/,
+    );
+  });
+});
+
+describe("getBondIssuance", () => {
+  it("parses the Common-Era year and Qn quarter this one file uses", async () => {
+    stubFetch({ OFFER_DEBT_COR_TH: ISSUANCE_CSV });
+    const issuance = await new SecThProvider().getBondIssuance();
+
+    // The as-of stamp is still Buddhist Era even though the year column is not.
+    expect(issuance.asOf).toBe("2025-12-31");
+    expect(issuance.periods.map((p) => p.period)).toEqual([
+      "2024 Q4",
+      "2025 Q1",
+    ]);
+    expect(new Date(issuance.periods[1].time).toISOString()).toBe(
+      "2025-03-31T23:59:59.999Z",
+    );
+  });
+
+  it("totals each quarter by issuer and by where it was offered", async () => {
+    stubFetch({ OFFER_DEBT_COR_TH: ISSUANCE_CSV });
+    const latest = (await new SecThProvider().getBondIssuance()).periods[1];
+
+    expect(latest.corporate).toBeCloseTo(
+      usd(165_576.82 + 50_000 + 8_000 + 1_000),
+      3,
+    );
+    expect(latest.government).toBe(usd(400_000));
+    expect(latest.total).toBeCloseTo(latest.corporate + latest.government, 3);
+    expect(latest.domestic).toBeCloseTo(
+      usd(165_576.82 + 50_000 + 1_000 + 400_000),
+      3,
+    );
+    expect(latest.offshore).toBe(usd(8_000));
+  });
+
+  it("maps the instruments to English and keeps an unknown one in Thai", async () => {
+    stubFetch({ OFFER_DEBT_COR_TH: ISSUANCE_CSV });
+    const latest = (await new SecThProvider().getBondIssuance()).periods[1];
+
+    expect(latest.byInstrument).toEqual({
+      "Bills of exchange": usd(165_576.82),
+      "Long-term debentures & bonds": usd(50_000),
+      "Foreign-currency debentures": usd(8_000),
+      หุ้นกู้ชนิดใหม่: usd(1_000),
+    });
+    // The `-` row contributes nothing at all, not a zero-height segment.
+    expect(latest.byInstrument["Convertibles"]).toBeUndefined();
+    // Government paper never enters the instrument breakdown.
+    expect(Object.keys(latest.byInstrument)).toHaveLength(4);
+  });
+
+  it("names the WAF block here too", async () => {
+    stubFetch({ OFFER_DEBT_COR_TH: WAF_REJECTION });
+    await expect(new SecThProvider().getBondIssuance()).rejects.toThrow(
+      /blocked by the upstream WAF/,
+    );
   });
 });

@@ -99,6 +99,11 @@ const CONVERTS: Record<string, string> = {
   "market-index-board":
     "the venue's traded value; the index levels themselves are unit-less",
   "market-scatter": "market-cap axis",
+  "market-valuation":
+    "the venue's total market cap; the multiples beside it are unit-less ratios and percentages",
+  "investor-flow-bars":
+    "net, buy and sell value per investor class, plus the session's traded value",
+  "close-history": "daily closing prices, in the header and on the value axis",
   "metal-ath": "the all-time-high London fix",
   "metal-fix-table":
     "LBMA fix prices — the USD series goes through money; a GBP/EUR series is shown as published",
@@ -179,6 +184,11 @@ const CONVERTS: Record<string, string> = {
   "industry-cap-treemap":
     "industry market capitalisation per tile, plus the market total",
   "fund-industry-allocation": "bucket values and the industry's total NAV",
+  "exchange-key-stats":
+    "market cap, trading value, average daily value and the foreign net row",
+  "bond-market-stats":
+    "value outstanding and value traded per year; turnover and investor shares are percentages",
+  "bond-issuance-bars": "new bond supply per quarter",
   "retail-gold": "the announced bar/ornament quotes and the dealer spread",
 };
 

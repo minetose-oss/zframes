@@ -81,9 +81,13 @@ import type {
   HomeValueIndex,
   RegionalHousingPrice,
   MarketSnapshot,
+  InvestorTypeFlow,
   PolicyRate,
   IndustryMarketCap,
   FundIndustryAllocation,
+  ExchangeKeyStats,
+  BondMarketStats,
+  BondIssuance,
   RetailGoldPrice,
 } from "@zframes/spec/types";
 
@@ -1145,13 +1149,18 @@ export function useOnchainValuation(refreshMs = 3 * 60 * 60_000): {
  * Long daily close series for `asset` (default BTC) — the multi-year history the
  * compute-in-frame cycle multiples (Mayer, Pi Cycle, 2Y/4Y-MA, RSI) run over.
  * Polled every ~6h; frames derive their own moving averages from the series.
+ *
+ * `source` pins a publisher other than the default crypto one — an exchange
+ * serving a listed stock's own closes, where `asset` is then that venue's
+ * ticker and the history is as deep as the venue publishes.
  */
 export function useDailyCloseHistory(
   asset = "btc",
   refreshMs = 6 * 60 * 60_000,
   enabled = true,
+  source?: string,
 ): { history: SeriesPoint[]; isLoading: boolean } {
-  const provider = useProviderFor("price-history-daily");
+  const provider = useProviderFor("price-history-daily", source);
   const key = asset.toLowerCase();
   // `enabled` exists for frames that can read EITHER this deep crypto series or
   // a per-symbol candle feed: hooks can't be called conditionally, so the
@@ -1163,7 +1172,7 @@ export function useDailyCloseHistory(
       ? () => provider.getDailyCloseHistory!(key)
       : null,
     [],
-    [provider, key, refreshMs, enabled],
+    [provider, key, source, refreshMs, enabled],
     refreshMs,
   );
   return { history, isLoading };
@@ -1369,19 +1378,22 @@ export function useCompanyFilings(
 
 /**
  * SEC EDGAR XBRL headline financials, by ticker or CIK. Financials change only
- * on filings, so this polls slowly (every 12 h by default).
+ * on filings, so this polls slowly (every 12 h by default). `source` pins
+ * another publisher's headline figures for a company EDGAR does not carry — a
+ * foreign exchange's own financial highlights, keyed by its listing ticker.
  */
 export function useCompanyFacts(
   tickerOrCik: string,
   refreshMs = 12 * 60 * 60_000,
+  source?: string,
 ): { data: CompanyFacts | null; isLoading: boolean } {
-  const provider = useProviderFor("fundamentals");
+  const provider = useProviderFor("fundamentals", source);
   const { data, isLoading } = usePolled<CompanyFacts | null>(
     provider?.getCompanyFacts && tickerOrCik
       ? () => provider.getCompanyFacts!(tickerOrCik)
       : null,
     null,
-    [provider, tickerOrCik, refreshMs],
+    [provider, tickerOrCik, source, refreshMs],
     refreshMs,
   );
   return { data, isLoading };
@@ -1429,7 +1441,7 @@ export function useEquityProfile(
       ? () => provider.getEquityProfile!(symbol)
       : null,
     null,
-    [provider, symbol, refreshMs],
+    [provider, symbol, source, refreshMs],
     refreshMs,
   );
   return { data, isLoading };
@@ -1945,6 +1957,27 @@ export function useMarketSnapshot(
 }
 
 /**
+ * How a venue's session turnover split between investor classes, polled every
+ * ~5 min — the exchange totals it once per session and restamps it late in the
+ * day, so a faster poll buys nothing.
+ */
+export function useInvestorTypeFlow(
+  market?: string,
+  refreshMs = 5 * 60_000,
+): { flow: InvestorTypeFlow | null; isLoading: boolean } {
+  const provider = useProviderFor("investor-type-flow");
+  const { data: flow, isLoading } = usePolled<InvestorTypeFlow | null>(
+    provider?.getInvestorTypeFlow
+      ? () => provider.getInvestorTypeFlow!(market)
+      : null,
+    null,
+    [provider, market, refreshMs],
+    refreshMs,
+  );
+  return { flow, isLoading };
+}
+
+/**
  * Central-bank policy rates, polled every ~6h — a rate changes a handful of
  * times a year, on scheduled meeting dates.
  */
@@ -2000,6 +2033,53 @@ export function useFundIndustryAllocation(refreshMs = 12 * 60 * 60_000): {
       refreshMs,
     );
   return { allocation, isLoading };
+}
+
+/** An exchange's published key statistics by year, polled every ~12h. */
+export function useExchangeKeyStats(
+  market?: string,
+  refreshMs = 12 * 60 * 60_000,
+): { stats: ExchangeKeyStats | null; isLoading: boolean } {
+  const provider = useProviderFor("exchange-key-stats");
+  const { data: stats, isLoading } = usePolled<ExchangeKeyStats | null>(
+    provider?.getExchangeKeyStats
+      ? () => provider.getExchangeKeyStats!(market)
+      : null,
+    null,
+    [provider, market, refreshMs],
+    refreshMs,
+  );
+  return { stats, isLoading };
+}
+
+/** A national bond market's published statistics by year, polled every ~12h. */
+export function useBondMarketStats(refreshMs = 12 * 60 * 60_000): {
+  stats: BondMarketStats | null;
+  isLoading: boolean;
+} {
+  const provider = useProviderFor("bond-market-stats");
+  const { data: stats, isLoading } = usePolled<BondMarketStats | null>(
+    provider?.getBondMarketStats ? () => provider.getBondMarketStats!() : null,
+    null,
+    [provider, refreshMs],
+    refreshMs,
+  );
+  return { stats, isLoading };
+}
+
+/** Newly offered bonds by quarter, polled every ~12h (published quarterly). */
+export function useBondIssuance(refreshMs = 12 * 60 * 60_000): {
+  issuance: BondIssuance | null;
+  isLoading: boolean;
+} {
+  const provider = useProviderFor("bond-issuance");
+  const { data: issuance, isLoading } = usePolled<BondIssuance | null>(
+    provider?.getBondIssuance ? () => provider.getBondIssuance!() : null,
+    null,
+    [provider, refreshMs],
+    refreshMs,
+  );
+  return { issuance, isLoading };
 }
 
 /**

@@ -9,10 +9,15 @@ import { z } from "zod";
 export const widgetIcon = (name: string) => `/widget-icons/${name}.png`;
 
 /** The trading venues a market-data card can pin, and how they differ. */
-export const VENUE_SOURCE_IDS = ["hyperliquid", "bitkub", "nasdaq"] as const;
+export const VENUE_SOURCE_IDS = [
+  "hyperliquid",
+  "bitkub",
+  "nasdaq",
+  "settrade",
+] as const;
 
 export const VENUE_SOURCE_DESCRIPTION =
-  'Which venue to source this card from — "hyperliquid" (default: crypto + HIP-3 stock/commodity perps, USD), "bitkub" (Thailand\'s largest exchange, THB-quoted, the source where KUB trades), or "nasdaq" (the real consolidated tape for US-listed stocks, DAILY bars only — no intraday, no crypto). Omit for the default. Use source-native symbols: Bitkub lists bare tickers like "KUB"/"BTC" and has no HIP-3 stock perps; Nasdaq wants a plain US ticker like "NVDA". Pin "nasdaq" when a stock card should show the actual listing rather than its perp: the HIP-3 perp tracks direction but its volume and open interest are Hyperliquid\'s book, not the listing\'s. Nasdaq only answers for symbols a card names, so it cannot back a card that scans a whole universe (top movers).';
+  'Which venue to source this card from — "hyperliquid" (default: crypto + HIP-3 stock/commodity perps, USD), "bitkub" (Thailand\'s largest exchange, THB-quoted, the source where KUB trades), or "nasdaq" (the real consolidated tape for US-listed stocks, DAILY bars only — no intraday, no crypto). Omit for the default. Use source-native symbols: Bitkub lists bare tickers like "KUB"/"BTC" and has no HIP-3 stock perps; Nasdaq wants a plain US ticker like "NVDA". Pin "nasdaq" when a stock card should show the actual listing rather than its perp: the HIP-3 perp tracks direction but its volume and open interest are Hyperliquid\'s book, not the listing\'s. Nasdaq only answers for symbols a card names, so it cannot back a card that scans a whole universe (top movers). And "settrade" is the Stock Exchange of Thailand via Settrade, THB-quoted: bare SET tickers like "PTT" or "KBANK" (note "BTC" is a mai-listed company there, not the coin), last-session quotes, six months of daily closes, one bid/offer level, no live tick, and per-symbol only — it cannot back a card that scans a universe either.';
 
 /**
  * Optional provider pin for frames whose capability more than one source can
@@ -60,8 +65,8 @@ function toSourceId(key: string): string {
  *
  * The id is typed `string`, not the key literal: it is a normalisation of the
  * key, not the key itself. Every id a card can actually PIN today is a
- * single-word key (`sourceField()`: hyperliquid, bitkub, nasdaq), so those stay
- * byte-identical and no existing board repoints.
+ * single-word key (`sourceField()`: hyperliquid, bitkub, nasdaq, settrade), so
+ * those stay byte-identical and no existing board repoints.
  */
 export function withSourceIds<
   T extends Record<string, Omit<FrameSource, "id">>,

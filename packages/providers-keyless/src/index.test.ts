@@ -202,11 +202,62 @@ describe("createKeylessProviders", () => {
       expect(streaming.map((p) => p.name)).toEqual(["hyperliquid"]);
     });
 
-    it("routes order-book to bitkub, the only source that serves it", () => {
-      const books = createKeylessProviders().filter((p) =>
+    it("keeps order-book on bitkub unless a card pins settrade", () => {
+      const providers = createKeylessProviders();
+      const books = providers.filter((p) =>
         p.capabilities.includes("order-book"),
       );
-      expect(books.map((p) => p.name)).toEqual(["bitkub"]);
+      expect(books.map((p) => p.name)).toEqual(["bitkub", "settrade"]);
+      expect(routeFor(providers, "order-book")?.name).toBe("bitkub");
+      expect(routeFor(providers, "order-book", "settrade")?.name).toBe(
+        "settrade",
+      );
+    });
+
+    /**
+     * Settrade sits late in the fleet and overlaps five capabilities the US and
+     * crypto sources already answer. Each pair below is one unpinned default a
+     * reorder would silently repoint — a Thai baht quote where a card asked for
+     * the consolidated tape, or a SET ticker handed to the BTC close series.
+     */
+    const SETTRADE_OVERLAPS: [Capability, string][] = [
+      ["day-stats", "hyperliquid"],
+      ["order-book", "bitkub"],
+      ["equity-profile", "nasdaq"],
+      ["fundamentals", "sec"],
+      ["price-history-daily", "coinmetrics"],
+    ];
+
+    it.each(SETTRADE_OVERLAPS)(
+      "leaves %s on %s while settrade waits behind it",
+      (capability, incumbent) => {
+        const providers = createKeylessProviders();
+        const covering = providers.filter((p) =>
+          p.capabilities.includes(capability),
+        );
+        expect(covering.map((p) => p.name)).toContain("settrade");
+        expect(routeFor(providers, capability)?.name).toBe(incumbent);
+      },
+    );
+
+    it.each(SETTRADE_OVERLAPS)(
+      "reaches settrade for %s only when the frame pins source: settrade",
+      (capability) => {
+        const providers = createKeylessProviders();
+        expect(routeFor(providers, capability, "settrade")?.name).toBe(
+          "settrade",
+        );
+        expect(routeFor(providers, capability, "SetTrade")?.name).toBe(
+          "settrade",
+        );
+      },
+    );
+
+    it("routes investor-type-flow to settrade, the only source that serves it", () => {
+      const flows = createKeylessProviders().filter((p) =>
+        p.capabilities.includes("investor-type-flow"),
+      );
+      expect(flows.map((p) => p.name)).toEqual(["settrade"]);
     });
   });
 

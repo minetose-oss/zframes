@@ -39,7 +39,7 @@ function CompanyProfile({ config }: { config: z.output<typeof schema> }) {
   // the listed ticker. Stripping is idempotent, so a provider that also strips
   // is unaffected.
   const ticker = tickerOf(config.symbol);
-  const { data, isLoading } = useEquityProfile(ticker);
+  const { data, isLoading } = useEquityProfile(ticker, config.source);
   const money = useMoney();
 
   if (isLoading)

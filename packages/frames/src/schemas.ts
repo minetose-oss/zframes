@@ -29,6 +29,9 @@ import {
   vixGaugeMeta,
   marketIndexBoardMeta,
   marketBreadthMeta,
+  marketValuationMeta,
+  investorFlowBarsMeta,
+  closeHistoryMeta,
 } from "./schemas/markets";
 import {
   tvlTreemapMeta,
@@ -206,6 +209,8 @@ import {
   homeValueScatterMeta,
   regionalHomePriceBarsMeta,
   fundIndustryAllocationMeta,
+  bondMarketStatsMeta,
+  bondIssuanceBarsMeta,
 } from "./schemas/macro";
 import {
   metalsBoardMeta,
@@ -263,6 +268,7 @@ import {
   analystRatingsMeta,
   institutionalOwnershipMeta,
   industryCapTreemapMeta,
+  exchangeKeyStatsMeta,
 } from "./schemas/equities";
 import {
   fearGreedMeta,
@@ -347,14 +353,17 @@ export * from "./schemas/games";
 export const frameMetas: FrameMeta[] = [
   // --- markets ---
   breadthHistogramMeta,
+  closeHistoryMeta,
   coinMoversMeta,
   dominanceBarsMeta,
   indexAnnualReturnsMeta,
   indexDrawdownMeta,
   indexLevelChartMeta,
   indexLevelMeta,
+  investorFlowBarsMeta,
   marketBreadthMeta,
   marketIndexBoardMeta,
+  marketValuationMeta,
   orderBookDepthMeta,
   priceChartMeta,
   priceCompareMeta,
@@ -498,6 +507,8 @@ export const frameMetas: FrameMeta[] = [
   volumeMoversScatterMeta,
   volumeShareDonutMeta,
   // --- macro ---
+  bondIssuanceBarsMeta,
+  bondMarketStatsMeta,
   creditQualityGapMeta,
   creditSpreadChartMeta,
   dxyChartMeta,
@@ -584,6 +595,7 @@ export const frameMetas: FrameMeta[] = [
   earningsCalendarMeta,
   earningsCountdownMeta,
   earningsSurpriseMeta,
+  exchangeKeyStatsMeta,
   filingsFeedMeta,
   filingsMixMeta,
   financialsTrendMeta,

@@ -85,13 +85,18 @@ export type Capability =
   | "institutional-ownership"
   | "options-chain"
   // Thai / official-data family: what a national publisher releases as a whole
-  // document rather than per symbol — a venue's session snapshot, the policy
-  // rate a central bank sets, an exchange's sector market caps, the fund
-  // industry's allocation, and the retail gold quote a goldsmith posts.
+  // document rather than per symbol — a venue's session snapshot, how its
+  // session's turnover split between investor classes, the policy rate a
+  // central bank sets, an exchange's sector market caps, the fund industry's
+  // allocation, and the retail gold quote a goldsmith posts.
   | "market-snapshot"
+  | "investor-type-flow"
   | "policy-rates"
   | "industry-market-cap"
   | "fund-industry-allocation"
+  | "exchange-key-stats"
+  | "bond-market-stats"
+  | "bond-issuance"
   | "retail-gold-price"
   | "portfolio";
 
@@ -1934,6 +1939,59 @@ export interface MarketSnapshot {
   indices: IndexQuote[];
   /** Advancing / declining / unchanged counts for the session. */
   breadth: MarketBreadth;
+  /** The venue's own valuation snapshot, when the publisher releases one. */
+  valuation?: MarketValuation;
+  source: string;
+}
+
+/**
+ * What the whole venue is worth and what the market pays for it — the
+ * exchange's own aggregate multiples, which no per-stock feed can be summed
+ * into (the weights are the exchange's).
+ */
+export interface MarketValuation {
+  /** Publisher's as-of date, ISO e.g. "2026-09-11". */
+  asOf: string;
+  /** Total market capitalisation of the venue's listings, USD. */
+  marketCap: number;
+  /** Aggregate price/earnings ratio. */
+  peRatio: number;
+  /** Aggregate price/book ratio. */
+  pbvRatio: number;
+  /** Aggregate dividend yield as a percent (0–100). */
+  dividendYieldPct: number;
+  /** Turnover ratio as a percent of market cap (0–100). */
+  turnoverRatioPct: number;
+}
+
+/** One investor class's participation in a venue's session, USD. */
+export interface InvestorTypeRow {
+  /** Publisher's class id, e.g. "foreign", "individual". */
+  type: string;
+  /** Display name, e.g. "Foreign". */
+  name: string;
+  /** Value bought over the session, USD. */
+  buy: number;
+  /** Value sold over the session, USD. */
+  sell: number;
+  /** Buy minus sell — positive is net accumulation, USD. */
+  net: number;
+}
+
+/**
+ * How a venue's session turnover split between investor classes — institutions,
+ * broker proprietary books, foreign investors and local individuals. Aggregate
+ * flow the exchange publishes itself; there is no per-symbol equivalent.
+ */
+export interface InvestorTypeFlow {
+  /** Venue id as the publisher spells it, e.g. "SET" | "mai". */
+  market: string;
+  /** Publisher's as-of date, ISO e.g. "2026-09-11". */
+  asOf: string;
+  /** Whole session's traded value across every class, USD. */
+  totalValue: number;
+  /** One row per investor class, publisher order. */
+  investors: InvestorTypeRow[];
   source: string;
 }
 
@@ -2026,6 +2084,121 @@ export interface FundIndustryAllocation {
   totalNav: number;
   /** The buckets, summing to `totalNav`. */
   buckets: FundAllocationBucket[];
+  source: string;
+}
+
+/** One year of an exchange's published key statistics. */
+export interface ExchangeYearStats {
+  /** Common-Era calendar year. */
+  year: number;
+  /** Year-end index close, unit-less. */
+  indexClose?: number;
+  /** Full-year trading value, USD. */
+  tradingValue?: number;
+  /** Average daily trading value, USD. */
+  avgDailyValue?: number;
+  /** Traded value against market capitalisation, percent. */
+  turnoverPct?: number;
+  /** Year-end market capitalisation, USD. */
+  marketCap?: number;
+  listedCompanies?: number;
+  listedSecurities?: number;
+  peRatio?: number;
+  pbvRatio?: number;
+  dividendYieldPct?: number;
+  /**
+   * Who traded, where the publisher breaks the year down by investor class:
+   * net bought/sold in USD and the class's share of gross turnover. Absent for
+   * a venue whose publisher issues no investor split.
+   */
+  investors?: Record<
+    "foreign" | "institution" | "proprietary",
+    { net: number; sharePct: number }
+  >;
+}
+
+/**
+ * An exchange's own year-by-year key statistics — the table a national venue
+ * publishes about itself: index close, turnover, capitalisation, listings and
+ * valuation, which no per-symbol feed adds up to.
+ */
+export interface ExchangeKeyStats {
+  /** Venue id as the publisher spells it, e.g. "SET", "mai". */
+  market: string;
+  /** ISO date the publisher stamped. */
+  asOf: string;
+  /** Oldest → newest. */
+  years: ExchangeYearStats[];
+  source: string;
+}
+
+/** One figure across the four slices a bond market is published in. */
+export interface BondMarketSplit {
+  total?: number;
+  government?: number;
+  corporate?: number;
+  foreign?: number;
+}
+
+/** One year of a national bond market's published statistics. */
+export interface BondMarketYear {
+  /** Common-Era calendar year. */
+  year: number;
+  /** Registered value outstanding, USD. */
+  outstanding: BondMarketSplit;
+  /** Full-year trading value, USD. */
+  tradingValue: BondMarketSplit;
+  /** Average daily trading value, USD. */
+  avgDailyTradingValue?: number;
+  /** Traded value against value outstanding, percent. */
+  turnoverPct: BondMarketSplit;
+  /** Count of registered issues. */
+  registeredIssues: BondMarketSplit;
+  /** Share of traded value per investor class, percent. */
+  tradingShareByInvestor: { label: string; pct: number }[];
+  govTotalReturnIndex?: number;
+  corpTotalReturnIndex?: number;
+  avgGovYieldPct?: number;
+  avgCorpYieldPct?: number;
+}
+
+/**
+ * A country's bond market as its registrar publishes it: what is outstanding,
+ * what trades, who trades it, and the total-return indices and average yields
+ * the market is measured by.
+ */
+export interface BondMarketStats {
+  /** ISO date the publisher stamped. */
+  asOf: string;
+  /** Oldest → newest. */
+  years: BondMarketYear[];
+  source: string;
+}
+
+/** One quarter of newly offered bonds, USD. */
+export interface BondIssuancePeriod {
+  /** e.g. "2025 Q4". */
+  period: string;
+  /** Epoch ms at the quarter end. */
+  time: number;
+  total: number;
+  corporate: number;
+  government: number;
+  domestic: number;
+  offshore: number;
+  /** Corporate issuance per instrument, English labels. */
+  byInstrument: Record<string, number>;
+}
+
+/**
+ * Primary-market bond supply by quarter — how much new debt was actually
+ * offered, split by issuer type, by where it was offered, and by instrument.
+ */
+export interface BondIssuance {
+  /** ISO date the publisher stamped. */
+  asOf: string;
+  /** Oldest → newest. */
+  periods: BondIssuancePeriod[];
   source: string;
 }
 
@@ -2250,6 +2423,12 @@ export interface MarketDataProvider {
    */
   getMarketSnapshot?(market?: string): Promise<MarketSnapshot>;
   /**
+   * How one venue's session turnover split between investor classes. `market`
+   * is the publisher's own venue id ("SET", "mai"); omitting it takes the
+   * publisher's primary board.
+   */
+  getInvestorTypeFlow?(market?: string): Promise<InvestorTypeFlow>;
+  /**
    * Current central-bank policy rates. `countries` are ISO 3166-1 alpha-2 codes
    * ("XM" for the euro area); omitting them returns the publisher's full set.
    */
@@ -2261,6 +2440,15 @@ export interface MarketDataProvider {
   getIndustryMarketCap?(market?: string): Promise<IndustryMarketCap>;
   /** Where the mutual-fund industry's net asset value sits, by bucket. */
   getFundIndustryAllocation?(): Promise<FundIndustryAllocation>;
+  /**
+   * An exchange's published key statistics by year. `market` is the publisher's
+   * venue id; omitting it takes the publisher's primary board.
+   */
+  getExchangeKeyStats?(market?: string): Promise<ExchangeKeyStats>;
+  /** A national bond market's published statistics by year. */
+  getBondMarketStats?(): Promise<BondMarketStats>;
+  /** Newly offered bonds by quarter, split by issuer, market and instrument. */
+  getBondIssuance?(): Promise<BondIssuance>;
   /** The retail (physical) gold price a national trade association announces. */
   getRetailGoldPrice?(): Promise<RetailGoldPrice>;
   /** SEC EDGAR company profile + recent filings, by ticker or CIK. */

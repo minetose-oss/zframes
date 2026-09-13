@@ -268,6 +268,9 @@ export { indexAnnualReturnsFrame } from "./index-annual-returns";
 export { vixGaugeFrame } from "./vix-gauge";
 export { marketIndexBoardFrame } from "./market-index-board";
 export { marketBreadthFrame } from "./market-breadth";
+export { marketValuationFrame } from "./market-valuation";
+export { investorFlowBarsFrame } from "./investor-flow-bars";
+export { closeHistoryFrame } from "./close-history";
 export { creditQualityGapFrame } from "./credit-quality-gap";
 export { mortgagePaymentFrame } from "./mortgage-payment";
 export { homeValueBarsFrame } from "./home-value-bars";
@@ -276,6 +279,9 @@ export { homeValueScatterFrame } from "./home-value-scatter";
 export { regionalHomePriceBarsFrame } from "./regional-home-price-bars";
 export { industryCapTreemapFrame } from "./industry-cap-treemap";
 export { fundIndustryAllocationFrame } from "./fund-industry-allocation";
+export { exchangeKeyStatsFrame } from "./exchange-key-stats";
+export { bondMarketStatsFrame } from "./bond-market-stats";
+export { bondIssuanceBarsFrame } from "./bond-issuance-bars";
 export { retailGoldFrame } from "./retail-gold";
 import type { AnyFrameDefinition } from "@zframes/core";
 import { portfolioValueFrame } from "./portfolio-value";
@@ -546,6 +552,9 @@ import { indexAnnualReturnsFrame } from "./index-annual-returns";
 import { vixGaugeFrame } from "./vix-gauge";
 import { marketIndexBoardFrame } from "./market-index-board";
 import { marketBreadthFrame } from "./market-breadth";
+import { marketValuationFrame } from "./market-valuation";
+import { investorFlowBarsFrame } from "./investor-flow-bars";
+import { closeHistoryFrame } from "./close-history";
 import { creditQualityGapFrame } from "./credit-quality-gap";
 import { mortgagePaymentFrame } from "./mortgage-payment";
 import { homeValueBarsFrame } from "./home-value-bars";
@@ -564,6 +573,9 @@ import { analystRatingsFrame } from "./analyst-ratings";
 import { institutionalOwnershipFrame } from "./institutional-ownership";
 import { industryCapTreemapFrame } from "./industry-cap-treemap";
 import { fundIndustryAllocationFrame } from "./fund-industry-allocation";
+import { exchangeKeyStatsFrame } from "./exchange-key-stats";
+import { bondMarketStatsFrame } from "./bond-market-stats";
+import { bondIssuanceBarsFrame } from "./bond-issuance-bars";
 import { retailGoldFrame } from "./retail-gold";
 import { equityOptionsOiFrame } from "./equity-options-oi";
 import { equityOptionsSmileFrame } from "./equity-options-smile";
@@ -575,6 +587,8 @@ export const allFrames: AnyFrameDefinition[] = [
   // alphabetical — insert in order
   analystRatingsFrame,
   bitcoinDominanceFrame,
+  bondIssuanceBarsFrame,
+  bondMarketStatsFrame,
   breadthHistogramFrame,
   breakevenFrame,
   breathingFrame,
@@ -595,6 +609,7 @@ export const allFrames: AnyFrameDefinition[] = [
   chainPriceMoversFrame,
   checklistFrame,
   clockFrame,
+  closeHistoryFrame,
   coinMomentumHeatmapFrame,
   coinMomentumScatterFrame,
   coinMoversFrame,
@@ -642,6 +657,7 @@ export const allFrames: AnyFrameDefinition[] = [
   ethIssuanceImpactFrame,
   ethStakingFrame,
   ethSupplyFrame,
+  exchangeKeyStatsFrame,
   fearGreedChartFrame,
   fearGreedFrame,
   filingsFeedFrame,
@@ -685,6 +701,7 @@ export const allFrames: AnyFrameDefinition[] = [
   industryCapTreemapFrame,
   inflationPulseFrame,
   institutionalOwnershipFrame,
+  investorFlowBarsFrame,
   journalLogFrame,
   journalOpenFrame,
   journalResultsFrame,
@@ -703,6 +720,7 @@ export const allFrames: AnyFrameDefinition[] = [
   marketHoursFrame,
   marketIndexBoardFrame,
   marketScatterFrame,
+  marketValuationFrame,
   marqueeFrame,
   mayerMultipleFrame,
   mempoolFeeCurveFrame,

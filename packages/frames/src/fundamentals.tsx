@@ -3,28 +3,46 @@ import type { FinancialMetric } from "@zframes/core";
 import type { z } from "zod";
 import { tickerOf } from "./asset-logo";
 import { CardHeader } from "./card-header";
-import { formatCompact, formatCompactUsd, formatPrice } from "./format";
+import {
+  formatCompact,
+  formatCompactUsd,
+  formatLevel,
+  formatPct,
+  formatPrice,
+} from "./format";
 import { fundamentalsMeta } from "./schemas";
 import { FrameStatus, scrollAreaClass } from "./ui";
 
 const schema = fundamentalsMeta.schema;
 
+/**
+ * XBRL names the unit, so the unit decides the shape. An exchange's own
+ * highlights ship ratios and percentages alongside the money rows, and a debt
+ * ratio of 0.98 rendered through the money formatter reads as "$1", which is a
+ * wrong number rather than an ugly one.
+ */
 function formatValue(m: FinancialMetric): string {
   if (m.unit === "USD/shares") return formatPrice(m.value);
   if (m.unit === "shares") return formatCompact(m.value);
+  if (m.unit === "percent") return formatPct(m.value);
+  if (m.unit === "ratio") return formatLevel(m.value);
   return formatCompactUsd(m.value);
 }
 
 function Fundamentals({ config }: { config: z.output<typeof schema> }) {
-  const { data, isLoading } = useCompanyFacts(config.symbol);
+  const { data, isLoading } = useCompanyFacts(
+    config.symbol,
+    undefined,
+    config.source,
+  );
+  const publisher = config.source
+    ? "Settrade · financial highlights"
+    : "SEC EDGAR · XBRL company facts";
 
-  if (isLoading)
-    return <FrameStatus loading>loading SEC financials…</FrameStatus>;
+  if (isLoading) return <FrameStatus loading>loading financials…</FrameStatus>;
   if (!data || data.metrics.length === 0)
     return (
-      <FrameStatus>
-        no SEC financials for “{tickerOf(config.symbol)}”
-      </FrameStatus>
+      <FrameStatus>no financials for “{tickerOf(config.symbol)}”</FrameStatus>
     );
 
   return (
@@ -38,9 +56,7 @@ function Fundamentals({ config }: { config: z.output<typeof schema> }) {
           <div className="body-sm text-strong truncate font-semibold">
             {data.entityName || tickerOf(config.symbol)}
           </div>
-          <div className="caption text-soft truncate">
-            SEC EDGAR · XBRL company facts
-          </div>
+          <div className="caption text-soft truncate">{publisher}</div>
         </CardHeader.Main>
         <CardHeader.Aside>
           <CardHeader.Sub>on filing</CardHeader.Sub>

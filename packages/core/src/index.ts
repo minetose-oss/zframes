@@ -89,9 +89,13 @@ export {
   useAnalystRatings,
   useInstitutionalOwnership,
   useMarketSnapshot,
+  useInvestorTypeFlow,
   usePolicyRates,
   useIndustryMarketCap,
   useFundIndustryAllocation,
+  useExchangeKeyStats,
+  useBondMarketStats,
+  useBondIssuance,
   useRetailGoldPrice,
 } from "./hooks";
 export {
