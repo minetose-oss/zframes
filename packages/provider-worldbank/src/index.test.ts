@@ -135,6 +135,8 @@ describe("WorldBankProvider", () => {
   it("maps the unit off the indicator suffix", async () => {
     const cases: [string, string][] = [
       ["NY.GDP.MKTP.CD", "usd"],
+      // Balance-of-payments dollar series end in `.CD.WD`, not `.CD`.
+      ["BX.KLT.DINV.CD.WD", "usd"],
       ["FP.CPI.TOTL.ZG", "percent"],
       ["NE.EXP.GNFS.ZS", "percent"],
       // Current LOCAL currency — a dollar sign here would be a factual error.

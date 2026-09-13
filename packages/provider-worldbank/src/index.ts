@@ -67,7 +67,9 @@ type IndicatorRow = z.infer<typeof IndicatorRowSchema>;
  */
 export function unitOf(indicatorId: string): OfficialSeries["unit"] {
   if (/\.(ZG|ZS)$/.test(indicatorId)) return "percent";
-  if (/\.CD$/.test(indicatorId)) return "usd";
+  // Balance-of-payments dollar series carry a trailing `.WD` (BX.KLT.DINV.CD.WD),
+  // so the dollar marker is not always the last segment.
+  if (/\.CD(\.WD)?$/.test(indicatorId)) return "usd";
   return "index";
 }
 
