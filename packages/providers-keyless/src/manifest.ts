@@ -151,6 +151,11 @@ const CAPABILITIES: readonly Capability[] = [
   // provider-settrade
   "market-snapshot",
   // provider-mof-th (national-debt, reachable by pinning source: "mof-th")
+  // provider-sec-th
+  "industry-market-cap",
+  "fund-industry-allocation",
+  // provider-goldtraders
+  "retail-gold-price",
 ];
 
 /**

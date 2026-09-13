@@ -1139,3 +1139,28 @@ A small persistent premium is the market pricing convenience over custody; a wid
       ),
   }),
 });
+
+export const retailGoldMeta = defineFrameMeta({
+  name: "retail-gold",
+  label: "Retail Gold",
+  category: "metals",
+  iconUrl: widgetIcon("retail-gold"),
+  layout: { w: 3, h: 3, minW: 2, minH: 2, maxH: 4 },
+  description:
+    "The physical gold price a household actually transacts at: the Gold Traders Association of Thailand's announced bar and ornament quotes, buy and sell, per baht-weight of 96.5% gold, with the dealer spread and the announcement time. Revised several times on a busy day. Not the LBMA spot fix.",
+  interpretation: `This is the price the trade announces for physical gold in Thailand — what a shop pays you and what it charges you, for one baht-weight (15.244 g) of 96.5% gold. It is announced several times a day and revised as the market moves.
+
+Two pairs are shown. The bar quote is investment gold, where the gap between buy and sell is narrow. The ornament quote is jewellery: the sell side carries the craftsmanship, so the spread against the buy-back side is far wider — that difference is the cost of owning gold as an object rather than as a bar.
+
+It is deliberately not the same number as international spot. It carries the local premium, the baht, and the dealer's own margin, which is why a household's gold can rise in baht while it falls in dollars. Everything is shown in the board's display currency, converted at the live rate.`,
+  capabilities: ["retail-gold-price"],
+  source: SOURCES.goldtraders,
+  schema: z.object({
+    showOrnament: z
+      .boolean()
+      .default(true)
+      .describe(
+        "Also show the ornament (jewellery) quote beside the bar quote. Its buy/sell gap is the craftsmanship cost of owning gold as an object.",
+      ),
+  }),
+});

@@ -205,6 +205,7 @@ import {
   homeValueMomentumMeta,
   homeValueScatterMeta,
   regionalHomePriceBarsMeta,
+  fundIndustryAllocationMeta,
 } from "./schemas/macro";
 import {
   metalsBoardMeta,
@@ -242,6 +243,7 @@ import {
   usGoldReserveMeta,
   usGoldVaultsMeta,
   tokenizedGoldMeta,
+  retailGoldMeta,
 } from "./schemas/metals";
 import {
   filingsFeedMeta,
@@ -260,6 +262,7 @@ import {
   earningsCalendarMeta,
   analystRatingsMeta,
   institutionalOwnershipMeta,
+  industryCapTreemapMeta,
 } from "./schemas/equities";
 import {
   fearGreedMeta,
@@ -500,6 +503,7 @@ export const frameMetas: FrameMeta[] = [
   dxyChartMeta,
   dxyMeta,
   financialStressMeta,
+  fundIndustryAllocationMeta,
   fxBoardMeta,
   fxCrossHeatmapMeta,
   fxMoversBarsMeta,
@@ -568,6 +572,7 @@ export const frameMetas: FrameMeta[] = [
   metalVsMacroMeta,
   metalsBoardMeta,
   metalsCorrelationMeta,
+  retailGoldMeta,
   tokenizedGoldMeta,
   usGoldReserveMeta,
   usGoldVaultsMeta,
@@ -583,6 +588,7 @@ export const frameMetas: FrameMeta[] = [
   filingsMixMeta,
   financialsTrendMeta,
   fundamentalsMeta,
+  industryCapTreemapMeta,
   institutionalOwnershipMeta,
   marginTrendMeta,
   shortVolumeBarsMeta,

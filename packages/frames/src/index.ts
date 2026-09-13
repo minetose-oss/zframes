@@ -274,6 +274,9 @@ export { homeValueBarsFrame } from "./home-value-bars";
 export { homeValueMomentumFrame } from "./home-value-momentum";
 export { homeValueScatterFrame } from "./home-value-scatter";
 export { regionalHomePriceBarsFrame } from "./regional-home-price-bars";
+export { industryCapTreemapFrame } from "./industry-cap-treemap";
+export { fundIndustryAllocationFrame } from "./fund-industry-allocation";
+export { retailGoldFrame } from "./retail-gold";
 import type { AnyFrameDefinition } from "@zframes/core";
 import { portfolioValueFrame } from "./portfolio-value";
 import { portfolioAllocationFrame } from "./portfolio-allocation";
@@ -559,6 +562,9 @@ import { earningsCountdownFrame } from "./earnings-countdown";
 import { earningsCalendarFrame } from "./earnings-calendar";
 import { analystRatingsFrame } from "./analyst-ratings";
 import { institutionalOwnershipFrame } from "./institutional-ownership";
+import { industryCapTreemapFrame } from "./industry-cap-treemap";
+import { fundIndustryAllocationFrame } from "./fund-industry-allocation";
+import { retailGoldFrame } from "./retail-gold";
 import { equityOptionsOiFrame } from "./equity-options-oi";
 import { equityOptionsSmileFrame } from "./equity-options-smile";
 import { equityOptionsMaxPainFrame } from "./equity-options-max-pain";
@@ -643,6 +649,7 @@ export const allFrames: AnyFrameDefinition[] = [
   financialStressFrame,
   financialsTrendFrame,
   flappyBirdFrame,
+  fundIndustryAllocationFrame,
   fundamentalsFrame,
   fundingBarsFrame,
   fundingCalendarFrame,
@@ -675,6 +682,7 @@ export const allFrames: AnyFrameDefinition[] = [
   indexDrawdownFrame,
   indexLevelChartFrame,
   indexLevelFrame,
+  industryCapTreemapFrame,
   inflationPulseFrame,
   institutionalOwnershipFrame,
   journalLogFrame,
@@ -805,6 +813,7 @@ export const allFrames: AnyFrameDefinition[] = [
   regionalHomePriceBarsFrame,
   regionalHomePricesFrame,
   reserveRiskFrame,
+  retailGoldFrame,
   returnCalendarFrame,
   returnDistributionFrame,
   returnsProjectorFrame,

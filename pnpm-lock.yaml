@@ -837,6 +837,19 @@ importers:
         specifier: ^5.8.0
         version: 5.9.3
 
+  packages/provider-goldtraders:
+    dependencies:
+      '@zframes/data-primitives':
+        specifier: workspace:*
+        version: link:../data-primitives
+      '@zframes/spec':
+        specifier: workspace:*
+        version: link:../spec
+    devDependencies:
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
   packages/provider-hyperliquid:
     dependencies:
       '@zframes/data-primitives':
@@ -955,6 +968,19 @@ importers:
         version: 5.9.3
 
   packages/provider-sec:
+    dependencies:
+      '@zframes/data-primitives':
+        specifier: workspace:*
+        version: link:../data-primitives
+      '@zframes/spec':
+        specifier: workspace:*
+        version: link:../spec
+    devDependencies:
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
+  packages/provider-sec-th:
     dependencies:
       '@zframes/data-primitives':
         specifier: workspace:*
@@ -1123,6 +1149,9 @@ importers:
       '@zframes/provider-geckoterminal':
         specifier: workspace:*
         version: link:../provider-geckoterminal
+      '@zframes/provider-goldtraders':
+        specifier: workspace:*
+        version: link:../provider-goldtraders
       '@zframes/provider-hyperliquid':
         specifier: workspace:*
         version: link:../provider-hyperliquid
@@ -1153,6 +1182,9 @@ importers:
       '@zframes/provider-sec':
         specifier: workspace:*
         version: link:../provider-sec
+      '@zframes/provider-sec-th':
+        specifier: workspace:*
+        version: link:../provider-sec-th
       '@zframes/provider-settrade':
         specifier: workspace:*
         version: link:../provider-settrade

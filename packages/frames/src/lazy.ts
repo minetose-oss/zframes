@@ -293,6 +293,12 @@ export const frameLoaders: Record<string, FrameLoader> = {
   "flappy-bird": {
     load: () => import("./flappy-bird").then((m) => m.flappyBirdFrame),
   },
+  "fund-industry-allocation": {
+    load: () =>
+      import("./fund-industry-allocation").then(
+        (m) => m.fundIndustryAllocationFrame,
+      ),
+  },
   fundamentals: {
     load: () => import("./fundamentals").then((m) => m.fundamentalsFrame),
   },
@@ -404,6 +410,10 @@ export const frameLoaders: Record<string, FrameLoader> = {
   "index-level-chart": {
     load: () =>
       import("./index-level-chart").then((m) => m.indexLevelChartFrame),
+  },
+  "industry-cap-treemap": {
+    load: () =>
+      import("./industry-cap-treemap").then((m) => m.industryCapTreemapFrame),
   },
   "inflation-pulse": {
     load: () => import("./inflation-pulse").then((m) => m.inflationPulseFrame),
@@ -907,6 +917,9 @@ export const frameLoaders: Record<string, FrameLoader> = {
   },
   "reserve-risk": {
     load: () => import("./reserve-risk").then((m) => m.reserveRiskFrame),
+  },
+  "retail-gold": {
+    load: () => import("./retail-gold").then((m) => m.retailGoldFrame),
   },
   "return-calendar": {
     load: () => import("./return-calendar").then((m) => m.returnCalendarFrame),

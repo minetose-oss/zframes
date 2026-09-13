@@ -174,6 +174,10 @@ const CONVERTS: Record<string, string> = {
   "yield-risk-pie": "pool TVL",
   "yield-scanner": "pool TVL",
   "yield-scatter": "TVL bubble axis",
+  "industry-cap-treemap":
+    "industry market capitalisation per tile, plus the market total",
+  "fund-industry-allocation": "bucket values and the industry's total NAV",
+  "retail-gold": "the announced bar/ornament quotes and the dealer spread",
 };
 
 /**

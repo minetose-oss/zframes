@@ -1,0 +1,27 @@
+{
+  "name": "@zframes/provider-goldtraders",
+  "version": "0.0.0",
+  "description": "Free, no-key zframes data provider for the Gold Traders Association of Thailand's announced retail gold price — bar and ornament, buy and sell, per baht-weight of 96.5% gold (retail-gold-price capability).",
+  "license": "MIT",
+  "author": "Zentry",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zentryhq/zframes.git",
+    "directory": "packages/provider-goldtraders"
+  },
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zframes/data-primitives": "workspace:*",
+    "@zframes/spec": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}

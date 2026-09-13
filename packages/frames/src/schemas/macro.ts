@@ -1326,3 +1326,35 @@ The spread across the bars is the story: housing rarely moves as one country, an
       ),
   }),
 });
+
+export const fundIndustryAllocationMeta = defineFrameMeta({
+  name: "fund-industry-allocation",
+  label: "Fund Industry Allocation",
+  category: "macro",
+  iconUrl: widgetIcon("fund-industry-allocation"),
+  layout: { w: 4, h: 4, minW: 2, minH: 3, maxH: 5 },
+  description:
+    "Donut of where a country's whole mutual-fund industry holds its money — listed domestic, unlisted domestic, foreign and other assets, or the asset classes across all of them (equities, corporate debt, government bonds, fund units, deposits). Industry net asset value in the centre. Quarterly, from SEC Thailand's regulatory release, converted to USD.",
+  interpretation: `This is every Thai mutual fund's holdings added together, as the regulator collects them each quarter — a read on what domestic institutional money is actually doing, rather than what any one fund says.
+
+Grouped by location, the slices separate money invested at home on the exchange, at home off the exchange, and abroad. Grouped by asset class, they separate equities from corporate debt, government bonds, other funds' units and cash. Slice size is the value held, and the figure in the centre is the industry's total net asset value.
+
+A rising foreign slice means domestic savers are sending money overseas; a rising government-bond slice usually means they are de-risking. One caution: the shares are measured against net asset value, which nets out liabilities and cross-holdings between funds run by the same manager, so the buckets add up to slightly more than 100%.`,
+  capabilities: ["fund-industry-allocation"],
+  source: SOURCES.secTh,
+  schema: z.object({
+    groupBy: z
+      .enum(["group", "class"])
+      .default("group")
+      .describe(
+        "group = listed domestic / unlisted domestic / foreign / other; class = asset class across groups",
+      ),
+    maxSlices: z
+      .number()
+      .int()
+      .min(3)
+      .max(12)
+      .default(8)
+      .describe("Largest buckets to show; the rest fold into Other"),
+  }),
+});

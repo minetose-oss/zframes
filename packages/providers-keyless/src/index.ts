@@ -1,4 +1,4 @@
-// The keyless market-data provider set — the 34 free, no-key providers, as ONE
+// The keyless market-data provider set — the 36 free, no-key providers, as ONE
 // factory both apps share. Runtime and explorer used to each keep an identical
 // copy of this list (apps/runtime/src/App.tsx, apps/explorer/app/lib/frames.ts);
 // adding a provider meant editing both and they drifted. Centralising it here
@@ -42,6 +42,8 @@ import { NewsProvider } from "@zframes/provider-news";
 import { NyFedProvider } from "@zframes/provider-nyfed";
 import { OfrProvider } from "@zframes/provider-ofr";
 import { SecProvider } from "@zframes/provider-sec";
+import { SecThProvider } from "@zframes/provider-sec-th";
+import { GoldTradersProvider } from "@zframes/provider-goldtraders";
 import { NasdaqProvider } from "@zframes/provider-nasdaq";
 import { CboeProvider } from "@zframes/provider-cboe";
 import { TreasuryProvider } from "@zframes/provider-treasury";
@@ -94,13 +96,17 @@ const KEYLESS_PROVIDERS = [
   // any of them earlier would repoint every existing US card at a foreign
   // series. Here each stays reachable by pinning `source`, which is what a card
   // wanting the Thai curve, Thai debt or a World Bank indicator asks for.
-  // BisProvider (`policy-rates`) and SettradeProvider (`market-snapshot`) are
-  // the only sources for their capabilities, so their positions are free.
+  // BisProvider (`policy-rates`), SettradeProvider (`market-snapshot`),
+  // SecThProvider (`industry-market-cap`, `fund-industry-allocation`) and
+  // GoldTradersProvider (`retail-gold-price`) are the only sources for their
+  // capabilities, so their positions are free.
   ThaibmaProvider,
   BisProvider,
   WorldBankProvider,
   SettradeProvider,
   MofThProvider,
+  SecThProvider,
+  GoldTradersProvider,
 ] as const;
 
 /**

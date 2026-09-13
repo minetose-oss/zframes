@@ -82,6 +82,8 @@ const EXPECTED_ORDER = [
   "worldbank",
   "settrade",
   "mof-th",
+  "sec-th",
+  "goldtraders",
 ];
 
 /**

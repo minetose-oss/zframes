@@ -439,3 +439,34 @@ High institutional ownership (large caps often sit above 70%) signals profession
     symbol: companySymbolField(),
   }),
 });
+
+export const industryCapTreemapMeta = defineFrameMeta({
+  name: "industry-cap-treemap",
+  label: "Industry Market Cap",
+  category: "equities",
+  iconUrl: widgetIcon("industry-cap-treemap"),
+  layout: { w: 6, h: 4, minW: 2, minH: 2, maxH: 5 },
+  description:
+    "Treemap of a Thai exchange's market capitalisation by industry, each tile sized by capitalisation and tinted by the quarter-over-quarter move. Switch between the eight SET industry groups and the ~28 sectors beneath them; mai publishes groups only. Quarterly, from SEC Thailand's published statistics, converted to USD.",
+  interpretation: `Every listed company belongs to one sector, and every sector to one of the exchange's eight industry groups. This card lays the whole market out as a mosaic: each tile is a group or a sector, and its area is the combined market value of the companies inside it.
+
+Colour is the change since the previous quarter — green where the industry grew, red where it shrank, with bigger moves tinted harder. Because area carries size, one large red tile matters far more to the market than a scatter of small ones.
+
+Read it as composition rather than performance. A market whose area is dominated by two or three groups moves with them whatever the rest does, and a group that grows its share over several quarters is where capital is arriving. One caution: the figures are quarterly and published a while after the quarter ends, and the whole history is converted at today's exchange rate, so the dollar totals move with the baht as well as with the market.`,
+  capabilities: ["industry-market-cap"],
+  source: SOURCES.secTh,
+  schema: z.object({
+    market: z
+      .enum(["SET", "mai"])
+      .default("SET")
+      .describe(
+        'Which Thai exchange to show: "SET" (the main board) or "mai" (the growth board for smaller companies).',
+      ),
+    level: z
+      .enum(["group", "sector"])
+      .default("sector")
+      .describe(
+        "group = the 8 SET industry groups; sector = the ~28 sectors (mai publishes groups only)",
+      ),
+  }),
+});

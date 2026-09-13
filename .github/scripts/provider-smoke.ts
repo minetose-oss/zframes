@@ -342,6 +342,32 @@ const PROBES: Probe[] = [
     expect: "array",
   },
 
+  // ── Thai official publishers (proxied → direct in Node) ────────────────
+  {
+    pkg: "provider-sec-th",
+    cls: "SecThProvider",
+    method: "getIndustryMarketCap",
+    args: ["SET"],
+    expect: "object",
+    proxied: true,
+  },
+  {
+    pkg: "provider-sec-th",
+    cls: "SecThProvider",
+    method: "getFundIndustryAllocation",
+    args: [],
+    expect: "object",
+    proxied: true,
+  },
+  {
+    pkg: "provider-goldtraders",
+    cls: "GoldTradersProvider",
+    method: "getRetailGoldPrice",
+    args: [],
+    expect: "object",
+    proxied: true,
+  },
+
   // ── Derivatives / options ─────────────────────────────────────────────
   {
     pkg: "provider-deribit",
