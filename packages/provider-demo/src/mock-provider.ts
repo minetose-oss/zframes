@@ -4455,6 +4455,18 @@ export class MockMarketDataProvider implements MarketDataProvider {
 
   /** The macro reference series a commodity price gets measured against. */
   private static readonly MACRO_REFERENCE: Record<string, MacroRefDef> = {
+    // The one `usd` series in the table: what the official-series frame's
+    // money path is exercised against (a World Bank GDP in current dollars).
+    "WB:NY.GDP.MKTP.CD:THA": {
+      shape: "glide",
+      label: "GDP, current prices · Thailand",
+      unit: "usd",
+      frequency: "annual",
+      count: 60,
+      start: 32_000_000_000,
+      end: 577_000_000_000,
+      wobble: 0.02,
+    },
     CPIAUCSL: {
       shape: "glide",
       label: "CPI (All Urban Consumers)",

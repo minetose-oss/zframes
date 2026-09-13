@@ -2,7 +2,7 @@ import {
   CHART_COLORS_MULTI_SERIES,
   type MultiSeriesData,
 } from "@zframes/charts";
-import { defineFrame, useMacroReferenceSeries } from "@zframes/core";
+import { defineFrame, useMacroReferenceSeries, useMoney } from "@zframes/core";
 import { useCallback, useMemo } from "react";
 import type { z } from "zod";
 // Generic series maths that happens to live in the metals module: windowing and
@@ -45,9 +45,13 @@ function OfficialSeriesChart({ config }: { config: z.output<typeof schema> }) {
   // The axis reads in the series' OWN unit, so a policy rate is ticked "1.25%"
   // where a property-price index is ticked "183.82".
   const unit = official?.unit ?? "index";
+  const money = useMoney();
+  // A `usd` series (a country's GDP, reserves, FDI) is money and follows the
+  // board's display currency; `index` and `percent` are unit-less levels.
   const formatValue = useCallback(
-    (value: number) => formatSeriesValue(value, unit),
-    [unit],
+    (value: number) =>
+      unit === "usd" ? money.compact(value) : formatSeriesValue(value, unit),
+    [unit, money],
   );
 
   if (isLoading && !official)
@@ -57,7 +61,7 @@ function OfficialSeriesChart({ config }: { config: z.output<typeof schema> }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
-      <SeriesHeader series={official} />
+      <SeriesHeader series={official} formatValue={formatValue} />
       <div className="min-h-0 flex-1">
         <TimeSeriesChart
           series={series}

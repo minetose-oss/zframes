@@ -116,6 +116,8 @@ const CONVERTS: Record<string, string> = {
   "nft-collections": "floor price and 24h volume",
   "nft-scatter": "24h-volume axis",
   "nft-treemap": "collection market cap per tile",
+  "official-series":
+    "a usd series (a country's GDP, reserves) is money and converts; index and percent series stay unit-less levels",
   "oi-treemap": "open-interest notional per tile",
   "open-interest": "open-interest notional",
   "options-max-pain": "max-pain strike and spot",
@@ -350,8 +352,6 @@ const NO_MONEY: Record<string, string> = {
   "nupl-cycle-chart": "NUPL % history",
   "nyfed-fed-funds-band-gauge": "EFFR vs the target band, in %",
   "nyfed-sofr-term-averages-bars": "SOFR term averages %",
-  "official-series":
-    "a published statistic in its own unit — an index level, a rate in % or a reported total, none of them convertible market money",
   "ofr-stress-category-area": "FSI category contributions, in index points",
   "ohlcv-volume-bars":
     "candle volume in the base asset (coins), which the currency layer deliberately never converts",
@@ -671,6 +671,13 @@ const CONFIG_OVERRIDE: Record<
       "`money.price` is never called; raw-price mode is the one that formats " +
       "money, and the one a leak would hide in",
     config: { normalize: false },
+  },
+  "official-series": {
+    why:
+      "its default series is CPI, a unit-less index level, so `money.compact` " +
+      "is never called; a World Bank `usd` series (a country's GDP) is the " +
+      "one that formats money, and the one a leak would hide in",
+    config: { seriesId: "WB:NY.GDP.MKTP.CD:THA", source: "worldbank" },
   },
 };
 

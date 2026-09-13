@@ -73,10 +73,17 @@ const CADENCE_LABEL: Record<OfficialSeries["frequency"], string> = {
 export function SeriesHeader({
   series,
   note,
+  formatValue,
 }: {
   series: OfficialSeries;
   /** Optional extra line under the value, e.g. a year-over-year change. */
   note?: string;
+  /**
+   * Overrides the hero figure's formatter. A `usd` series that is real money
+   * (a country's GDP) passes the board's `useMoney().compact` here, since the
+   * unit-aware default prints a grouped level with no currency.
+   */
+  formatValue?: (value: number) => string;
 }) {
   const color = changeColor(series.change);
   return (
@@ -96,7 +103,10 @@ export function SeriesHeader({
           ink="strong"
           className="tabular-nums"
         >
-          {formatSeriesValue(series.latest, series.unit)}
+          {(
+            formatValue ??
+            ((value: number) => formatSeriesValue(value, series.unit))
+          )(series.latest)}
         </CardHeader.Value>
         <CardHeader.Sub tint={color} className="tabular-nums">
           {formatSeriesChange(series.change, series.unit)}
