@@ -13,7 +13,11 @@ import {
   timeframeFor,
   toChartData,
 } from "./metals-shared";
-import { SeriesHeader, formatSeriesValue } from "./official-series-shared";
+import {
+  SeriesHeader,
+  formatSeriesValue,
+  withUnitLabel,
+} from "./official-series-shared";
 import { officialSeriesMeta } from "./schemas";
 import { FrameStatus } from "./ui";
 import { TimeSeriesChart } from "./series-chart";
@@ -54,6 +58,21 @@ function OfficialSeriesChart({ config }: { config: z.output<typeof schema> }) {
     [unit, money],
   );
 
+  // The header carries the per-quantity label the axis leaves off, and a priced
+  // series wants its exact figure: "$1,106.47/t", not the compact "$1.11K/t" an
+  // aggregate like a country's GDP reads better as.
+  const unitLabel = official?.unitLabel;
+  const formatHeaderValue = useCallback(
+    (value: number) =>
+      unit === "usd"
+        ? withUnitLabel(
+            unitLabel ? money.price(value) : money.compact(value),
+            unitLabel,
+          )
+        : formatSeriesValue(value, unit, unitLabel),
+    [unit, unitLabel, money],
+  );
+
   if (isLoading && !official)
     return <FrameStatus loading>loading published series…</FrameStatus>;
   if (!official || series.length === 0)
@@ -61,7 +80,7 @@ function OfficialSeriesChart({ config }: { config: z.output<typeof schema> }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
-      <SeriesHeader series={official} formatValue={formatValue} />
+      <SeriesHeader series={official} formatValue={formatHeaderValue} />
       <div className="min-h-0 flex-1">
         <TimeSeriesChart
           series={series}

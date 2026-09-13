@@ -289,7 +289,7 @@ export const officialSeriesMeta = defineFrameMeta({
   iconUrl: widgetIcon("official-series"),
   layout: { w: 6, h: 4, minW: 3, minH: 3 },
   description:
-    "Any published official statistic as a line chart with its latest print and move — FRED's US series, BIS statistics (policy rates, effective exchange rates, property prices, USD exchange rates) and World Bank annual indicators for any country. One frame over three keyless publishers; the series id picks the statistic and `source` picks the publisher.",
+    "Any published official statistic as a line chart with its latest print and move — FRED's US series, the IMF monthly commodity prices FRED mirrors (rice, palm oil, rubber, sugar, grains, softs, meat, all under FRED ids), BIS statistics (policy rates, effective exchange rates, property prices, USD exchange rates) and World Bank annual indicators for any country. One frame over three keyless publishers; the series id picks the statistic and `source` picks the publisher.",
   interpretation: `One official series, drawn over the chosen number of years, with the latest published value, when it printed, and how far it moved from the print before it.
 
 The header states the publisher's own cadence — daily, monthly, quarterly or annual — which is the thing to read first: an annual World Bank indicator has one point per year, so a ten-year window is ten dots, and the "latest" figure may describe a year that ended long ago. A move is shown in percent for a level (an index, an exchange rate, a dollar total) and in basis points for a rate, because a policy rate going 1.25 to 1.00 is a 25 bp cut, not a 20% fall.
@@ -303,7 +303,7 @@ These are published statistics, not market prices: they are revised, they lag, a
       .min(1)
       .default("CPIAUCSL")
       .describe(
-        'The publisher\'s series id. FRED (default): "CPIAUCSL" (CPI), "DFII10" (10Y TIPS real yield), "DTWEXBGS" (broad dollar), "T10YIE" (10Y breakeven), "REAINTRATREARAT10Y". BIS: "BIS:CBPOL:TH" (a central bank\'s policy rate), "BIS:EER:N:TH" / "BIS:EER:R:TH" (nominal / real effective exchange rate), "BIS:SPP:N:TH" / "BIS:SPP:R:TH" (residential property prices), "BIS:XRU:TH:THB" (units of the currency per USD). World Bank: "WB:<INDICATOR>:<ISO3>", e.g. "WB:NY.GDP.MKTP.CD:THA" (GDP in current US$) or "WB:FP.CPI.TOTL.ZG:THA" (annual inflation). The id must match the pinned source.',
+        'The publisher\'s series id. FRED (default): "CPIAUCSL" (CPI), "DFII10" (10Y TIPS real yield), "DTWEXBGS" (broad dollar), "T10YIE" (10Y breakeven), "REAINTRATREARAT10Y". IMF commodity prices via FRED (monthly, $/t unless noted): "PRICENPQUSDM" (Thai 5% rice), "PPOILUSDM" (palm oil), "PRUBBUSDM" (rubber, ¢/lb), "PSUGAISAUSDM" (sugar No. 11, ¢/lb), "PWHEAMTUSDM" (wheat), "PMAIZMTUSDM" (corn), "PSOYBUSDM" (soybeans), "PCOFFOTMUSDM" (arabica, ¢/lb), "PCOCOUSDM" (cocoa), "PCOTTINDUSDM" (cotton, ¢/lb), "PSHRIUSDM" (shrimp, $/kg), "PPOULTUSDM" (poultry, ¢/lb), "PFOODINDEXM" (IMF food index), "WPU0652" (US PPI fertilizer). BIS: "BIS:CBPOL:TH" (a central bank\'s policy rate), "BIS:EER:N:TH" / "BIS:EER:R:TH" (nominal / real effective exchange rate), "BIS:SPP:N:TH" / "BIS:SPP:R:TH" (residential property prices), "BIS:XRU:TH:THB" (units of the currency per USD). World Bank: "WB:<INDICATOR>:<ISO3>", e.g. "WB:NY.GDP.MKTP.CD:THA" (GDP in current US$) or "WB:FP.CPI.TOTL.ZG:THA" (annual inflation). The id must match the pinned source.',
       ),
     source: sourceField(
       ["fred", "bis", "worldbank"],

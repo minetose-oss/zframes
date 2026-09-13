@@ -390,6 +390,64 @@ describe("FredProvider", () => {
       ).rejects.toThrow(/unknown series "NOTASERIES"/);
     });
 
+    it("reads a $/t commodity price as money with a per-ton label", async () => {
+      const Provider = await loadProvider();
+      const fetchMock = stubCsv(
+        csv("PRICENPQUSDM", ["2026-05-01,451.20", "2026-06-01,464.00"]),
+      );
+      const series = await new Provider().getMacroReferenceSeries(
+        "PRICENPQUSDM",
+      );
+      expect(fetchMock.mock.calls[0][0]).toBe(`${FREDGRAPH}?id=PRICENPQUSDM`);
+      expect(series.label).toBe("Rice, Thai 5% broken");
+      expect(series.unit).toBe("usd");
+      expect(series.unitLabel).toBe("/t");
+      expect(series.frequency).toBe("monthly");
+      // FRED reprints the IMF series under IMF copyright, citation required.
+      expect(series.source).toBe("IMF via FRED");
+      expect(series.change).toBeCloseTo(((464 - 451.2) / 451.2) * 100, 6);
+    });
+
+    it("keeps a ¢/lb commodity in its own quote rather than dollars", async () => {
+      const Provider = await loadProvider();
+      stubCsv(csv("PSUGAISAUSDM", ["2026-05-01,15.20", "2026-06-01,14.81"]));
+      const series = await new Provider().getMacroReferenceSeries(
+        "PSUGAISAUSDM",
+      );
+      // `index`, NOT `usd`: sugar No. 11 is quoted in cents per pound on every
+      // screen, and a two-decimal dollar figure would round 14.81¢ to $0.15.
+      expect(series.unit).toBe("index");
+      expect(series.unitLabel).toBe("¢/lb");
+      expect(series.source).toBe("IMF via FRED");
+      expect(series.change).toBeCloseTo(((14.81 - 15.2) / 15.2) * 100, 6);
+    });
+
+    it("serves a PPI series as a plain FRED index, with no unit label", async () => {
+      const Provider = await loadProvider();
+      stubCsv(csv("WPU0652", ["2026-05-01,301.4", "2026-06-01,305.9"]));
+      const series = await new Provider().getMacroReferenceSeries("WPU0652");
+      expect(series.label).toBe("PPI: Fertilizer Materials");
+      expect(series.unit).toBe("index");
+      // Absent, not empty — an index has no per-quantity label to render.
+      expect(series).not.toHaveProperty("unitLabel");
+      expect(series.source).toBe("FRED");
+    });
+
+    it("accepts every id in FRED_COMMODITY_PRICE_SERIES", async () => {
+      vi.resetModules();
+      const mod = await import("./index");
+      for (const id of mod.FRED_COMMODITY_PRICE_SERIES) {
+        vi.resetModules();
+        const fresh = await import("./index");
+        const fetchMock = stubCsv(csv(id, ["2026-06-01,12.5"]));
+        const series = await new fresh.FredProvider().getMacroReferenceSeries(
+          id,
+        );
+        expect(fetchMock.mock.calls[0][0]).toBe(`${FREDGRAPH}?id=${id}`);
+        expect(series.seriesId).toBe(id);
+      }
+    });
+
     it("accepts a lower-case macro id, like every other id here", async () => {
       const Provider = await loadProvider();
       const fetchMock = stubCsv(csv("CPIAUCSL", ["2026-06-01,332.568"]));

@@ -10,15 +10,28 @@ import { changeColor, formatChangePct, formatLevel, formatPct } from "./format";
  * both formatters live here once rather than four slightly different ways.
  */
 
+/**
+ * Append a series' per-quantity label to an already-formatted value. A label
+ * starting with "/" attaches directly ("$464/t"); any other label is its own
+ * token and takes a space ("14.81 ¢/lb").
+ */
+export function withUnitLabel(text: string, unitLabel?: string): string {
+  if (!unitLabel) return text;
+  return unitLabel.startsWith("/")
+    ? `${text}${unitLabel}`
+    : `${text} ${unitLabel}`;
+}
+
 /** Format a series value in its own unit: a level, a percent, or a dollar sum. */
 export function formatSeriesValue(
   value: number,
   unit: OfficialSeries["unit"],
+  unitLabel?: string,
 ): string {
   if (unit === "percent") return formatPct(value);
   // A `usd` official series is a US-macro aggregate (the carve-out that stays in
   // dollars); `index` is unit-less. Both read as a grouped level here.
-  return formatLevel(value);
+  return withUnitLabel(formatLevel(value), unitLabel);
 }
 
 /**
@@ -105,7 +118,8 @@ export function SeriesHeader({
         >
           {(
             formatValue ??
-            ((value: number) => formatSeriesValue(value, series.unit))
+            ((value: number) =>
+              formatSeriesValue(value, series.unit, series.unitLabel))
           )(series.latest)}
         </CardHeader.Value>
         <CardHeader.Sub tint={color} className="tabular-nums">

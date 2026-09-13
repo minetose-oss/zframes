@@ -1162,6 +1162,13 @@ export interface OfficialSeries {
    * `usd` = a dollar amount.
    */
   unit: "index" | "percent" | "usd";
+  /**
+   * The quantity a price is quoted per, appended to the formatted value:
+   * "/t" (a metric ton), "/kg", "/lb", "¢/lb", "¢/kg". Absent on an index,
+   * a rate or an aggregate. A label starting with "/" attaches directly
+   * ("$464/t"); any other label is separated by a space ("14.81 ¢/lb").
+   */
+  unitLabel?: string;
   /** How often the publisher updates it. */
   frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annual";
   /** Most recent observed value. */

@@ -145,7 +145,7 @@ Twenty-nine free, keyless providers ([`packages/provider-*`](packages)) fulfil f
 | **SoSoValue** | `etf-flows` — spot BTC/ETH ETF daily net flows |
 | **LBMA / gold-api / CFTC / fiscaldata / Cboe** | metals: `metal-spot`, `metal-history` (fixes back to 1968), `metal-positioning`, `gold-reserve`, `tokenized-gold`, `commodity-vol-index` (GVZ / VXSLV / VXGDX / OVX) |
 | **Bitkub** | `day-stats`, `ohlcv`, `order-book` — Thailand's largest exchange, where KUB trades (pin a frame to it with `source: "bitkub"`) |
-| **FRED** (St. Louis Fed) | `index-level` (S&P 500, VIX, Nasdaq), `credit-spread` (ICE BofA HY + IG OAS), `housing-price` (Case-Shiller), `mortgage-rate` (30y fixed), `macro-reference-series` (CPI back to 1947, TIPS real yield, broad dollar, breakevens) — via the keyless `fredgraph.csv` endpoint, not the key-gated API |
+| **FRED** (St. Louis Fed) | `index-level` (S&P 500, VIX, Nasdaq), `credit-spread` (ICE BofA HY + IG OAS), `housing-price` (Case-Shiller), `mortgage-rate` (30y fixed), `macro-reference-series` (CPI back to 1947, TIPS real yield, broad dollar, breakevens, IMF commodity prices (rice, palm oil, rubber, sugar, grains, softs) monthly) — via the keyless `fredgraph.csv` endpoint, not the key-gated API |
 | **Zillow Research** | `home-value-index` — the typical home value per US metro, in dollars, monthly back to 2000 |
 | **FHFA** | `regional-housing-price` — the House Price Index per state and metro, quarterly back to 1975 |
 

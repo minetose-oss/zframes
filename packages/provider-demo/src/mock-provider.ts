@@ -745,6 +745,7 @@ type MacroRefDef =
       shape: "glide";
       label: string;
       unit: OfficialSeries["unit"];
+      unitLabel?: string;
       frequency: OfficialSeries["frequency"];
       count: number;
       start: number;
@@ -755,6 +756,7 @@ type MacroRefDef =
       shape: "revert";
       label: string;
       unit: OfficialSeries["unit"];
+      unitLabel?: string;
       frequency: OfficialSeries["frequency"];
       count: number;
       mean: number;
@@ -4290,6 +4292,7 @@ export class MockMarketDataProvider implements MarketDataProvider {
     frequency: OfficialSeries["frequency"],
     points: SeriesPoint[],
     source = "FRED",
+    unitLabel?: string,
   ): OfficialSeries {
     const latest = points[points.length - 1];
     const previous = points[points.length - 2]?.value ?? latest.value;
@@ -4297,6 +4300,7 @@ export class MockMarketDataProvider implements MarketDataProvider {
       seriesId,
       label,
       unit,
+      ...(unitLabel !== undefined ? { unitLabel } : {}),
       frequency,
       latest: latest.value,
       date: new Date(latest.time).toISOString().slice(0, 10),
@@ -4344,11 +4348,13 @@ export class MockMarketDataProvider implements MarketDataProvider {
     unit: OfficialSeries["unit"],
     frequency: OfficialSeries["frequency"],
     source = "FRED",
+    unitLabel?: string,
   ): OfficialSeries {
     return {
       seriesId,
       label,
       unit,
+      ...(unitLabel !== undefined ? { unitLabel } : {}),
       frequency,
       latest: 0,
       date: "",
@@ -4536,6 +4542,44 @@ export class MockMarketDataProvider implements MarketDataProvider {
       dp: 2,
       cycle: { amp: 1.5, count: 2.5 },
     },
+    // One per unit family ($/t, ¢/lb, unlabelled index), so a demo board
+    // exercises all three ways the frame formats a per-quantity price.
+    PRICENPQUSDM: {
+      shape: "glide",
+      label: "Rice, Thai 5% broken",
+      unit: "usd",
+      unitLabel: "/t",
+      frequency: "monthly",
+      count: 197,
+      start: 300,
+      end: 460,
+      wobble: 0.03,
+    },
+    PSUGAISAUSDM: {
+      shape: "revert",
+      label: "Sugar No. 11",
+      unit: "index",
+      unitLabel: "¢/lb",
+      frequency: "monthly",
+      count: 197,
+      mean: 15,
+      revert: 0.04,
+      vol: 0.9,
+      min: 9.5,
+      max: 26,
+      dp: 2,
+      cycle: { amp: 4, count: 2.5 },
+    },
+    PFOODINDEXM: {
+      shape: "glide",
+      label: "IMF Food Price Index",
+      unit: "index",
+      frequency: "monthly",
+      count: 197,
+      start: 90,
+      end: 130,
+      wobble: 0.02,
+    },
   };
 
   getMacroReferenceSeries(seriesId: string): Promise<OfficialSeries> {
@@ -4544,7 +4588,14 @@ export class MockMarketDataProvider implements MarketDataProvider {
       : "CPIAUCSL";
     const def = MockMarketDataProvider.MACRO_REFERENCE[key];
     return this.gate<OfficialSeries>(
-      this.emptySeries(key, def.label, def.unit, def.frequency),
+      this.emptySeries(
+        key,
+        def.label,
+        def.unit,
+        def.frequency,
+        "FRED",
+        def.unitLabel,
+      ),
       () =>
         this.seriesFromPoints(
           key,
@@ -4574,6 +4625,8 @@ export class MockMarketDataProvider implements MarketDataProvider {
                   cycle: def.cycle,
                 },
               ),
+          "FRED",
+          def.unitLabel,
         ),
     );
   }

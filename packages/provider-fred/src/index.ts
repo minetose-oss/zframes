@@ -54,6 +54,21 @@ import { fetchText } from "@zframes/data-primitives/fetch";
  * carries ~10 years and the two BAML spread series ~3. A frame asking for 20
  * years of the S&P 500 gets the 10 that exist rather than an error.
  *
+ * **The sixth family served through `macro-reference-series` is agricultural.**
+ * IMF Primary Commodity Prices — rice, palm oil, rubber, sugar, grains, softs,
+ * meat, fish and the three IMF agricultural indices — are mirrored on FRED as
+ * monthly series with roughly two months' publication lag, alongside two BLS
+ * producer-price series (farm products, fertilizer materials). Their units are
+ * mixed: dollars per metric ton, per kilogram or per pound, US cents per pound
+ * or per kilogram, or an index. A series quoted in DOLLARS per quantity is
+ * `unit: "usd"` with a `unitLabel` of "/t" | "/kg" | "/lb", so it follows the
+ * board's display currency like any other money. A series quoted in CENTS stays
+ * in the market's own quote as `unit: "index"` with "¢/lb" | "¢/kg", because
+ * sugar No. 11, arabica and cotton are quoted in cents per pound on every
+ * screen and a two-decimal dollar figure would round 14.81¢ to $0.15. The IMF
+ * series are "Copyrighted: Citation Required" on FRED, which is why their
+ * `source` reads "IMF via FRED" rather than the bare "FRED".
+ *
  * The rest are Fed- or agency-published and unwalled, reaching as far back as
  * the statistic itself: `CPIAUCSL` to 1947, `REAINTRATREARAT10Y` to 1982,
  * `CSUSHPINSA` to 1987, `NASDAQCOM`/`MORTGAGE30US` to 1971. Do not "fix" a short
@@ -68,8 +83,12 @@ interface SeriesDef {
   label: string;
   /** How to read the values (see {@link OfficialSeries.unit}). */
   unit: OfficialSeries["unit"];
+  /** Quantity a price is quoted per (see {@link OfficialSeries.unitLabel}). */
+  unitLabel?: string;
   /** Publisher cadence, so a frame can label the latest print honestly. */
   frequency: OfficialSeries["frequency"];
+  /** Publisher credit when it is not FRED itself, e.g. "IMF via FRED". */
+  source?: string;
 }
 
 /**
@@ -131,6 +150,202 @@ const SERIES: Record<string, SeriesDef> = {
     unit: "percent",
     frequency: "monthly",
   },
+  PRICENPQUSDM: {
+    label: "Rice, Thai 5% broken",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PWHEAMTUSDM: {
+    label: "Wheat",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PMAIZMTUSDM: {
+    label: "Corn",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PSOYBUSDM: {
+    label: "Soybeans",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PSOILUSDM: {
+    label: "Soybean Oil",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PSMEAUSDM: {
+    label: "Soybean Meal",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PPOILUSDM: {
+    label: "Palm Oil",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PSUNOUSDM: {
+    label: "Sunflower Oil",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PROILUSDM: {
+    label: "Rapeseed Oil",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  POLVOILUSDM: {
+    label: "Olive Oil",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PCOCOUSDM: {
+    label: "Cocoa",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PBARLUSDM: {
+    label: "Barley",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PBANSOPUSDM: {
+    label: "Bananas",
+    unit: "usd",
+    unitLabel: "/t",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PSHRIUSDM: {
+    label: "Shrimp",
+    unit: "usd",
+    unitLabel: "/kg",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PSALMUSDM: {
+    label: "Fish (Salmon)",
+    unit: "usd",
+    unitLabel: "/kg",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PORANGUSDM: {
+    label: "Orange",
+    unit: "usd",
+    unitLabel: "/lb",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PSUGAISAUSDM: {
+    label: "Sugar No. 11",
+    unit: "index",
+    unitLabel: "¢/lb",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PRUBBUSDM: {
+    label: "Rubber RSS3",
+    unit: "index",
+    unitLabel: "¢/lb",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PCOFFOTMUSDM: {
+    label: "Coffee, Other Mild Arabica",
+    unit: "index",
+    unitLabel: "¢/lb",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PCOTTINDUSDM: {
+    label: "Cotton",
+    unit: "index",
+    unitLabel: "¢/lb",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PBEEFUSDM: {
+    label: "Beef",
+    unit: "index",
+    unitLabel: "¢/lb",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PPOULTUSDM: {
+    label: "Poultry",
+    unit: "index",
+    unitLabel: "¢/lb",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PLAMBUSDM: {
+    label: "Lamb",
+    unit: "index",
+    unitLabel: "¢/lb",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PTEAUSDM: {
+    label: "Tea, Kenyan",
+    unit: "index",
+    unitLabel: "¢/kg",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PFOODINDEXM: {
+    label: "IMF Food Price Index",
+    unit: "index",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PRAWMINDEXM: {
+    label: "IMF Agricultural Raw Materials Index",
+    unit: "index",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  PFANDBINDEXM: {
+    label: "IMF Food & Beverage Price Index",
+    unit: "index",
+    frequency: "monthly",
+    source: "IMF via FRED",
+  },
+  WPU0652: {
+    label: "PPI: Fertilizer Materials",
+    unit: "index",
+    frequency: "monthly",
+  },
+  WPU01: {
+    label: "PPI: Farm Products",
+    unit: "index",
+    frequency: "monthly",
+  },
 };
 
 /** Ids the `index-level` capability accepts — the market-index subset. */
@@ -169,6 +384,46 @@ export const FRED_MACRO_REFERENCE_SERIES = [
   "DTWEXBGS",
   "T10YIE",
   "REAINTRATREARAT10Y",
+] as const;
+
+/**
+ * The commodity-price ids the `macro-reference-series` capability also accepts:
+ * the IMF Primary Commodity Prices FRED mirrors, plus the two BLS producer-price
+ * series that belong beside them. Kept apart from
+ * {@link FRED_MACRO_REFERENCE_SERIES} because these are prices, not the macro
+ * backdrop a price is read against — they go through the same door, but a
+ * reader of either list should see what it is for.
+ */
+export const FRED_COMMODITY_PRICE_SERIES = [
+  "PRICENPQUSDM",
+  "PWHEAMTUSDM",
+  "PMAIZMTUSDM",
+  "PSOYBUSDM",
+  "PSOILUSDM",
+  "PSMEAUSDM",
+  "PPOILUSDM",
+  "PSUNOUSDM",
+  "PROILUSDM",
+  "POLVOILUSDM",
+  "PCOCOUSDM",
+  "PBARLUSDM",
+  "PBANSOPUSDM",
+  "PSHRIUSDM",
+  "PSALMUSDM",
+  "PORANGUSDM",
+  "PSUGAISAUSDM",
+  "PRUBBUSDM",
+  "PCOFFOTMUSDM",
+  "PCOTTINDUSDM",
+  "PBEEFUSDM",
+  "PPOULTUSDM",
+  "PLAMBUSDM",
+  "PTEAUSDM",
+  "PFOODINDEXM",
+  "PRAWMINDEXM",
+  "PFANDBINDEXM",
+  "WPU0652",
+  "WPU01",
 ] as const;
 
 /** The credit-spread pair, high-yield first (the order frames chart them in). */
@@ -275,12 +530,13 @@ function toOfficialSeries(
     seriesId,
     label: def.label,
     unit: def.unit,
+    ...(def.unitLabel !== undefined ? { unitLabel: def.unitLabel } : {}),
     frequency: def.frequency,
     latest: latest.value,
     date: isoDate(latest.time),
     change: latestChange(points, def.unit),
     points,
-    source: SOURCE,
+    source: def.source ?? SOURCE,
   };
 }
 
@@ -302,9 +558,13 @@ function knownSeries(seriesId: string): string {
  */
 function knownMacroReferenceSeries(seriesId: string): string {
   const id = knownSeries(seriesId);
-  if (!(FRED_MACRO_REFERENCE_SERIES as readonly string[]).includes(id))
+  const accepted = [
+    ...FRED_MACRO_REFERENCE_SERIES,
+    ...FRED_COMMODITY_PRICE_SERIES,
+  ] as readonly string[];
+  if (!accepted.includes(id))
     throw new Error(
-      `fred: series "${seriesId}" is not a macro reference series (accepted: ${FRED_MACRO_REFERENCE_SERIES.join(", ")})`,
+      `fred: series "${seriesId}" is not a macro reference series (accepted: ${accepted.join(", ")})`,
     );
   return id;
 }

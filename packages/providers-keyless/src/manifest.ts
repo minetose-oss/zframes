@@ -249,7 +249,7 @@ const HOSTS = [
     host: "fred.stlouisfed.org",
     proxied: true,
     reason:
-      "The keyless fredgraph.csv route: index, credit-spread, house-price and mortgage-rate series.",
+      "The keyless fredgraph.csv route: index, credit-spread, house-price, mortgage-rate and IMF commodity-price series.",
   },
   {
     host: "www.bankofengland.co.uk",
@@ -546,7 +546,7 @@ const SOURCES: ProviderPluginManifest["sources"] = [
     name: "FRED",
     url: "https://fred.stlouisfed.org",
     notes:
-      "Index series are SP500, VIXCLS and NASDAQCOM. SP500 is redistributed under licence with only a ~10-year rolling window while NASDAQCOM runs back to 1971, so asking for more years than a series carries just shows everything there is.",
+      "Index series are SP500, VIXCLS and NASDAQCOM. SP500 is redistributed under licence with only a ~10-year rolling window while NASDAQCOM runs back to 1971, so asking for more years than a series carries just shows everything there is. The P…USDM and P…INDEXM ids are IMF Primary Commodity Prices reprinted by FRED under IMF copyright, so citation is required.",
   },
   {
     id: "zillow",
