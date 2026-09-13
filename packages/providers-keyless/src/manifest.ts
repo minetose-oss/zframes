@@ -12,7 +12,7 @@
  * is transcribed from the code that does the fetching, never from
  * documentation about it.
  *
- * `termsUrl` is deliberately absent. The 30 independent upstreams credited here
+ * `termsUrl` is deliberately absent. The 37 independent upstreams credited here
  * have no single terms page, and pointing the install-time notice at one (or at
  * a zframes page pretending to speak for them) would be worse than showing the
  * operator nothing: the host omits the notice rather than misstating it. Per-
@@ -23,7 +23,7 @@ import type { Capability, ProviderPluginManifest } from "@zframes/spec";
 // PURE DATA — no `./index` import. This module is what the Node mounts (the
 // CLI's serve, the dev Vite plugin via its host, Storybook's middleware, the
 // explorer's Next relay route) read to derive their allowlists, and what the
-// plugin registry lists: none of them should load 29 provider classes to read
+// plugin registry lists: none of them should load 36 provider classes to read
 // a description. The runnable half (`manifest` + `createProviders`) is
 // `./plugin`, which imports both this file and `./index`.
 
