@@ -145,8 +145,9 @@ never frames; you assemble the board yourself in step 4.
 Fill the `frames` array of the file `init` scaffolded (or the existing file for
 updates). This is a design job, not a dump, and **`references/design.md` is the
 method — read it before writing any frame JSON.** It covers the three passes
-(4a apply ONE theme preset, 4b curate 20–35 cards in 3–5 zones from a mandatory
-spine, 4c compose the layout — catalogue sizes, rows packed to 12, headed
+(4a apply ONE theme preset, 4b curate the frame set from a mandatory spine, as
+many cards as the topic needs with each one in a headed zone that is one idea,
+4c compose the layout — catalogue sizes, rows packed to 12, headed
 zones, hierarchy, small asset-logo tiles as decoration and row fillers) plus
 the card-level fields you'll need while writing: event annotations, `group`
 clusters, pinning a frame to a second venue with `source`, and
@@ -237,11 +238,12 @@ one-field update — the diff is the proof there.
   optional theme-preset question riding along — exists only to choose the
   symbols and the vibe. You assemble the board: never ask which frames or
   widgets to include, never show or read back frame names as options.
-- **Curate and compose — the two design invariants.** 20–35 cards in 3–5
-  headed zones, sizes from each frame's catalogue `layout` (never outside its
-  `minW`/`minH` → `maxW`/`maxH` envelope), every row packed to 12 columns,
-  exactly one theme preset applied verbatim. A catalogue dump and a sparse
-  husk are both failures.
+- **Curate and compose — the two design invariants.** No cap on the card
+  count, but every card sits in a headed zone that is one idea and every zone
+  reads on its own; sizes from each frame's catalogue `layout` (never outside
+  its `minW`/`minH` → `maxW`/`maxH` envelope), every row packed to 12 columns,
+  exactly one theme preset applied verbatim. An unzoned catalogue dump and a
+  sparse husk are both failures.
 - dashboard.json is the only artifact. No React, no CSS, no new frames.
   If the user wants a frame that doesn't exist, say so and list what does.
 - Free data only: 29 keyless sources — Hyperliquid (crypto + HIP-3 stock perps),

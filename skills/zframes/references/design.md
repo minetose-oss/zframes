@@ -51,11 +51,15 @@ US national debt in USD. That is correct, not a bug.
 
 ## 4b. Curate the frame set — every card earns its slot
 
-The catalogue holds ~270 frames; a good board ships **20–35 cards in 3–5
-zones** (a "both assets" desk can run to ~45). Never dump the catalogue, and
-never ship a sparse husk either. Prefer the best frame per job over three
-near-duplicates (one TVL view, not the treemap AND the chart AND the table),
-and skip categories the interview made irrelevant. Pure-content frames
+The catalogue holds ~270 frames. **There is no cap on how many cards a board
+carries**: a topic desk with forty series worth showing shows all forty. What
+is capped is disorder. Every card belongs to a headed zone that is one idea
+(one commodity family, one company, one macro question), and every zone reads
+on its own. Sixty cards in twelve clean zones is a designed board; twenty cards
+under no headings is a dump. Never dump the catalogue for its own sake, and
+never ship a sparse husk either. Within a zone prefer the best frame per job
+over three near-duplicates (one TVL view, not the treemap AND the chart AND the
+table), and skip categories the interview made irrelevant. Pure-content frames
 (`note`, `video`, `quote`, `dino-game`, …) stay opt-in — add them only if the
 user asks — with one encouraged exception: a couple of small `image` /
 `image-gallery` tiles showing the board's own assets as decoration (4c);
@@ -90,10 +94,11 @@ Then build the remaining zones from the summary's categories, by asset class:
 - **Crypto desk** → `crypto` (dominance, `tvl-treemap`, DEX/stablecoin views),
   a `bitcoin` network cluster (as one `group` — see below), `onchain` cycle
   gauges, `derivatives` (funding, options), `sentiment`.
-- **Both** → both sets, at the budget's upper end.
+- **Both** → both sets, each asset class in its own zones.
 
-Pick 4–8 frames per zone by their summary descriptions, then fetch their full
-schemas (SKILL.md step 2, phase 2) before writing any config. Symbol-bearing
+Pick the frames each zone needs by their summary descriptions (a zone of three
+cards reads fine, so does one of twelve, as long as its rows pack), then fetch
+their full schemas (SKILL.md step 2, phase 2) before writing any config. Symbol-bearing
 frames take the user's tickers; context frames ride their defaults.
 
 ## 4c. Lay it out — compose, don't scatter
@@ -113,10 +118,13 @@ widget dump:
 - **Pack every row to exactly 12 columns** (6+6, 4+4+4, 8+4, 3+3+3+3, …) — a
   row that sums to 11 leaves a hole that reads as broken. Give the cards in one
   row the same `h`, so the next row starts flush.
-- **Zone the board with `heading` frames** (full-width `w: 12, h: 1`) — one per
-  zone, 3–5 zones, hero zone first (e.g. "Markets", "NVDA Deep Dive", "Macro",
-  "Desk"). Headings render as bare section dividers (no card); they're what
-  makes a dashboard read as designed.
+- **Zone the board with `heading` frames** (full-width `w: 12, h: 1`): one per
+  zone, as many zones as the board has ideas, hero zone first (e.g. "Markets",
+  "NVDA Deep Dive", "Macro", "Desk"). A zone is one idea with a title and a
+  one-line subtitle naming what its cards share; two ideas under one heading is
+  the seam to split at. Headings render as bare section dividers (no card);
+  they're what makes a dashboard read as designed. Separation is the invariant,
+  not the card count.
 - **Hierarchy: hero → focus → context.** The liveline spans wide up top
   (`w: 12, h: 3`, or `w: 8` beside one tall card), the focus row under it, and
   later zones' cards no bigger than the zone above's. Never let a utility card
