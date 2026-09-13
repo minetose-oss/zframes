@@ -98,9 +98,12 @@ const InvestorTypeSchema = z.object({
       z.object({
         type: z.string(),
         type_name_en: z.string().optional(),
-        buy_value: z.number(),
-        sell_value: z.number(),
-        net_value: z.number(),
+        // A class that did not trade one side of a thin session (mai's
+        // institutions, or a proprietary desk that sat out) publishes `null`
+        // there, not 0.
+        buy_value: z.number().nullable(),
+        sell_value: z.number().nullable(),
+        net_value: z.number().nullable(),
       }),
     )
     .min(1),
@@ -447,9 +450,11 @@ export class SettradeProvider implements MarketDataProvider {
       const investors: InvestorTypeRow[] = body.investors.map((row) => ({
         type: row.type,
         name: row.type_name_en ?? row.type,
-        buy: row.buy_value / rate,
-        sell: row.sell_value / rate,
-        net: row.net_value / rate,
+        buy: (row.buy_value ?? 0) / rate,
+        sell: (row.sell_value ?? 0) / rate,
+        net:
+          (row.net_value ?? (row.buy_value ?? 0) - (row.sell_value ?? 0)) /
+          rate,
       }));
       return {
         market: id,

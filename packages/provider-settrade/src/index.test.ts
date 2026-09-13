@@ -509,6 +509,40 @@ describe("SettradeProvider", () => {
       expect(flow.investors[1].net).toBeCloseTo(-3.13749085337e9 / FX, 4);
     });
 
+    it("reads a one-sided or idle class as zero rather than rejecting the session", async () => {
+      // `api/market/mai/investortype`, live 2026-09-12: institutions only
+      // sold, and the proprietary desks did not trade at all.
+      stubHost({
+        "/market/mai/investortype": {
+          asof_date: "11/09/2026",
+          total_value: 3.7779294293e8,
+          investors: [
+            {
+              type: "institution",
+              type_name_en: "Institution",
+              buy_value: null,
+              sell_value: 1.5115118e7,
+              net_value: -1.5115118e7,
+            },
+            {
+              type: "proprietary",
+              type_name_en: "Proprietary",
+              buy_value: null,
+              sell_value: null,
+              net_value: null,
+            },
+          ],
+        },
+      });
+      const flow = await new SettradeProvider().getInvestorTypeFlow("mai");
+
+      expect(flow.market).toBe("mai");
+      expect(flow.investors[0].buy).toBe(0);
+      expect(flow.investors[0].sell).toBeCloseTo(1.5115118e7 / FX, 4);
+      expect(flow.investors[0].net).toBeCloseTo(-1.5115118e7 / FX, 4);
+      expect(flow.investors[1]).toMatchObject({ buy: 0, sell: 0, net: 0 });
+    });
+
     it("throws on a market the venue does not publish", async () => {
       stubFetch();
       await expect(
