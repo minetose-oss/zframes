@@ -8,20 +8,31 @@ import { z } from "zod";
 
 export const widgetIcon = (name: string) => `/widget-icons/${name}.png`;
 
+/** The trading venues a market-data card can pin, and how they differ. */
+export const VENUE_SOURCE_IDS = ["hyperliquid", "bitkub", "nasdaq"] as const;
+
+export const VENUE_SOURCE_DESCRIPTION =
+  'Which venue to source this card from — "hyperliquid" (default: crypto + HIP-3 stock/commodity perps, USD), "bitkub" (Thailand\'s largest exchange, THB-quoted, the source where KUB trades), or "nasdaq" (the real consolidated tape for US-listed stocks, DAILY bars only — no intraday, no crypto). Omit for the default. Use source-native symbols: Bitkub lists bare tickers like "KUB"/"BTC" and has no HIP-3 stock perps; Nasdaq wants a plain US ticker like "NVDA". Pin "nasdaq" when a stock card should show the actual listing rather than its perp: the HIP-3 perp tracks direction but its volume and open interest are Hyperliquid\'s book, not the listing\'s. Nasdaq only answers for symbols a card names, so it cannot back a card that scans a whole universe (top movers).';
+
 /**
- * Optional provider pin for frames whose capability more than one exchange
- * can serve. Capability routing is first-match, so without this a second
- * source (e.g. Bitkub) is never reached; naming it here routes THIS card to
- * that provider. Symbols are source-native, so they change with the source:
+ * Optional provider pin for frames whose capability more than one source can
+ * serve. Capability routing is first-match, so without this a second source
+ * (e.g. Bitkub) is never reached; naming it here routes THIS card to that
+ * provider. Symbols are source-native, so they change with the source:
  * Hyperliquid wants "BTC"/"xyz:TSLA", Bitkub wants "BTC"/"KUB".
+ *
+ * Defaults to the trading venues. A card whose capability is served by a
+ * different family of publishers (an official-data series several statistics
+ * offices publish) passes its own ids and its own wording.
  */
-export const sourceField = () =>
+export const sourceField = (
+  ids: readonly [string, ...string[]] = VENUE_SOURCE_IDS,
+  describe: string = VENUE_SOURCE_DESCRIPTION,
+) =>
   z
-    .enum(["hyperliquid", "bitkub", "nasdaq"])
+    .enum([...ids] as [string, ...string[]])
     .optional()
-    .describe(
-      'Which venue to source this card from — "hyperliquid" (default: crypto + HIP-3 stock/commodity perps, USD), "bitkub" (Thailand\'s largest exchange, THB-quoted, the source where KUB trades), or "nasdaq" (the real consolidated tape for US-listed stocks, DAILY bars only — no intraday, no crypto). Omit for the default. Use source-native symbols: Bitkub lists bare tickers like "KUB"/"BTC" and has no HIP-3 stock perps; Nasdaq wants a plain US ticker like "NVDA". Pin "nasdaq" when a stock card should show the actual listing rather than its perp: the HIP-3 perp tracks direction but its volume and open interest are Hyperliquid\'s book, not the listing\'s. Nasdaq only answers for symbols a card names, so it cannot back a card that scans a whole universe (top movers).',
-    );
+    .describe(describe);
 
 /**
  * The dashed, lowercase form of a record key: `nyFed` becomes `ny-fed`, and a
@@ -133,6 +144,19 @@ export const SOURCES = withSourceIds({
   },
   nasdaq: { name: "Nasdaq", url: "https://www.nasdaq.com" },
   cboe: { name: "Cboe", url: "https://www.cboe.com" },
+  thaibma: { name: "ThaiBMA", url: "https://www.thaibma.or.th" },
+  settrade: { name: "Settrade", url: "https://www.settrade.com" },
+  bis: { name: "BIS", url: "https://data.bis.org" },
+  mofTh: {
+    name: "Thai Ministry of Finance",
+    url: "https://dataservices.mof.go.th",
+  },
+  secTh: { name: "SEC Thailand", url: "https://www.sec.or.th/secopendata" },
+  goldtraders: {
+    name: "Gold Traders Association",
+    url: "https://www.goldtraders.or.th",
+  },
+  worldbank: { name: "World Bank", url: "https://data.worldbank.org" },
 });
 
 /**

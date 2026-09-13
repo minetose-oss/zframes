@@ -84,6 +84,15 @@ export type Capability =
   | "analyst-ratings"
   | "institutional-ownership"
   | "options-chain"
+  // Thai / official-data family: what a national publisher releases as a whole
+  // document rather than per symbol — a venue's session snapshot, the policy
+  // rate a central bank sets, an exchange's sector market caps, the fund
+  // industry's allocation, and the retail gold quote a goldsmith posts.
+  | "market-snapshot"
+  | "policy-rates"
+  | "industry-market-cap"
+  | "fund-industry-allocation"
+  | "retail-gold-price"
   | "portfolio";
 
 // ── Crypto market data ───────────────────────────────────────────────────────
@@ -1031,19 +1040,39 @@ export interface NationalDebtPoint {
   intragovernmental?: number;
 }
 
+/** One line of a publisher's own top-level debt split. */
+export interface NationalDebtComponent {
+  /** The publisher's wording, e.g. "Domestic borrowing". */
+  label: string;
+  /** Amount outstanding, USD. */
+  value: number;
+}
+
 /**
- * US total public debt outstanding from Treasury's "Debt to the Penny",
- * with the public vs intragovernmental split and a recent trend.
+ * A sovereign's total public debt outstanding with a recent trend — the US
+ * Treasury's "Debt to the Penny" and the national equivalents other finance
+ * ministries publish.
  */
 export interface NationalDebt {
   /** ISO date of the latest reading, e.g. "2026-06-17". */
   date: string;
   /** Total public debt outstanding, USD. */
   total: number;
-  /** Debt held by the public, USD. */
-  heldByPublic: number;
-  /** Intragovernmental holdings, USD. */
-  intragovernmental: number;
+  /**
+   * Debt held by the public, USD — the US Treasury's split. A publisher that
+   * splits its debt some other way leaves this and `intragovernmental`
+   * undefined and fills {@link NationalDebt.breakdown} instead.
+   */
+  heldByPublic?: number;
+  /** Intragovernmental holdings, USD. Undefined for the same reason as `heldByPublic`. */
+  intragovernmental?: number;
+  /**
+   * Publisher's own top-level split, USD, when it is not the US
+   * public/intragovernmental pair.
+   */
+  breakdown?: NationalDebtComponent[];
+  /** Debt to GDP, percent, when the publisher states it. */
+  debtToGdpPct?: number;
   /** Recent history, oldest → newest, for a trend sparkline and change calc. */
   trend: NationalDebtPoint[];
 }
@@ -1134,7 +1163,7 @@ export interface OfficialSeries {
    */
   unit: "index" | "percent" | "usd";
   /** How often the publisher updates it. */
-  frequency: "daily" | "weekly" | "monthly" | "quarterly";
+  frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annual";
   /** Most recent observed value. */
   latest: number;
   /** ISO date of the latest observation, e.g. "2026-07-31". */
@@ -1836,6 +1865,200 @@ export interface Portfolio {
   asOf: number;
 }
 
+// ── National markets & official documents ────────────────────────────────────
+
+/** One index's session quote inside a {@link MarketSnapshot}. */
+export interface IndexQuote {
+  /** Publisher's index symbol, e.g. "SET", "SET50". */
+  symbol: string;
+  /** Display name, e.g. "SET Index". */
+  name: string;
+  /** Latest index level. */
+  last: number;
+  /** Previous session's close. */
+  prior: number;
+  /** Move from `prior`, in index points. */
+  change: number;
+  /** Move from `prior`, percent. */
+  changePct: number;
+  /** Session high. */
+  high?: number;
+  /** Session low. */
+  low?: number;
+  /** Session traded volume, units (shares). */
+  volume?: number;
+  /** Session traded value, USD. */
+  valueUsd?: number;
+}
+
+/** How a session's listings split between advancing, declining and flat. */
+export interface MarketBreadth {
+  /** Securities up on the session. */
+  gainers: number;
+  /** Securities down on the session. */
+  losers: number;
+  /** Securities unchanged on the session. */
+  unchanged: number;
+  /** Traded volume in the advancing names, units (shares). */
+  gainersVolume?: number;
+  /** Traded volume in the declining names, units (shares). */
+  losersVolume?: number;
+  /** Traded volume in the unchanged names, units (shares). */
+  unchangedVolume?: number;
+}
+
+/**
+ * One venue's session snapshot as the exchange itself publishes it: its index
+ * family plus market-wide breadth. Venue-level, never per symbol — an exchange
+ * that publishes this has already done the aggregation nothing else can.
+ */
+export interface MarketSnapshot {
+  /** Venue id as the publisher spells it, e.g. "SET" | "mai". */
+  market: string;
+  /** Display name of the venue. */
+  name: string;
+  /** Session state, normalised across publishers. */
+  status: "open" | "closed" | "pre-open" | "unknown";
+  /** Publisher's own status wording. */
+  statusLabel?: string;
+  /** Epoch ms of the publisher's timestamp. */
+  asOf: number;
+  /** The venue's indices, publisher order. */
+  indices: IndexQuote[];
+  /** Advancing / declining / unchanged counts for the session. */
+  breadth: MarketBreadth;
+  source: string;
+}
+
+/** One central bank's current policy rate. */
+export interface PolicyRate {
+  /** ISO 3166-1 alpha-2, or "XM" for the euro area. */
+  country: string;
+  /** Central bank name. */
+  bank: string;
+  /** Percent. */
+  rate: number;
+  /** ISO date of the latest observation. */
+  date: string;
+  /** Previous distinct rate, percent. */
+  prev?: number;
+  /** ISO date the rate last changed. */
+  changedOn?: string;
+  source: string;
+}
+
+/** One industry group or sector's market capitalisation. */
+export interface IndustryCap {
+  /** Publisher's code, e.g. "AGRO", "BANK". */
+  code: string;
+  /** Display name, e.g. "Banking". */
+  name: string;
+  /** Industry group this sector belongs to (undefined for a group row). */
+  group?: string;
+  /** Latest period market cap, USD. */
+  value: number;
+  /** Previous period market cap, USD. */
+  prev?: number;
+}
+
+/** One period's market-cap totals across an exchange's sectors. */
+export interface IndustryCapPeriod {
+  /** e.g. "2026 Q2". */
+  period: string;
+  /** Epoch ms at the period end. */
+  time: number;
+  /** Whole-market total, USD. */
+  total: number;
+  /** Per sector/group code, USD. */
+  byCode: Record<string, number>;
+}
+
+/**
+ * An exchange's own market-capitalisation breakdown by industry group and
+ * sector, with the history it publishes alongside — the composition of a
+ * national market, which no per-symbol feed can add up.
+ */
+export interface IndustryMarketCap {
+  /** Venue id as the publisher spells it, e.g. "SET". */
+  market: string;
+  /** ISO date the publisher stamped. */
+  asOf: string;
+  /** Latest period label, e.g. "2026 Q2". */
+  period: string;
+  /** The 8 industry groups. */
+  groups: IndustryCap[];
+  /** The sectors, each carrying its `group`. */
+  sectors: IndustryCap[];
+  /** Oldest → newest. */
+  history: IndustryCapPeriod[];
+  source: string;
+}
+
+/** One bucket of the fund industry's assets. */
+export interface FundAllocationBucket {
+  /** Publisher's grouping, e.g. listed domestic / unlisted domestic / foreign / other. */
+  group: string;
+  /** Display label for the bucket. */
+  label: string;
+  /** USD. */
+  value: number;
+  /** Share of total net asset value, percent. */
+  sharePct: number;
+}
+
+/**
+ * Where a country's mutual-fund industry has its money — the regulator's
+ * periodic allocation release, a read on domestic institutional flow.
+ */
+export interface FundIndustryAllocation {
+  /** ISO date the publisher stamped. */
+  asOf: string;
+  /** Period label, e.g. "2026 Q2". */
+  period: string;
+  /** Industry net asset value, USD. */
+  totalNav: number;
+  /** The buckets, summing to `totalNav`. */
+  buckets: FundAllocationBucket[];
+  source: string;
+}
+
+/** A two-sided retail gold quote. */
+export interface RetailGoldQuote {
+  /** What the dealer pays, per unit. */
+  buy: number;
+  /** What the dealer charges, per unit. */
+  sell: number;
+}
+
+/**
+ * The retail gold price a national trade association announces — a physical,
+ * local-currency quote per traditional unit, which is what a household actually
+ * transacts at and is not the same number as the LBMA spot fix.
+ */
+export interface RetailGoldPrice {
+  source: string;
+  /** ISO 4217 the publisher quotes in, e.g. "THB". */
+  quoteCurrency: string;
+  /** Publisher's unit, human label. */
+  unit: string;
+  /** Grams in one `unit`. */
+  unitGrams: number;
+  /** Fineness, 0–1. */
+  purity: number;
+  /** Gold bar quote, USD per unit. */
+  bar: RetailGoldQuote;
+  /** Ornament quote, USD per unit. */
+  ornament: RetailGoldQuote;
+  /** The publisher's own figures in `quoteCurrency`. */
+  local: { bar: RetailGoldQuote; ornament: RetailGoldQuote };
+  /** USD per 1 `quoteCurrency` used for the conversion. */
+  fxRate: number;
+  /** Epoch ms of the publisher's announcement. */
+  updatedAt: number;
+  /** Which announcement of the day, when the publisher revises intraday. */
+  revision?: number;
+}
+
 // ── The provider interface ───────────────────────────────────────────────────
 
 export type Unsubscribe = () => void;
@@ -2013,6 +2236,26 @@ export interface MarketDataProvider {
     startYear: number,
     endYear: number,
   ): Promise<MacroSeries>;
+  /**
+   * One venue's session snapshot: its index family plus market-wide breadth.
+   * `market` is the publisher's own venue id ("SET", "mai"); omitting it takes
+   * the publisher's primary board.
+   */
+  getMarketSnapshot?(market?: string): Promise<MarketSnapshot>;
+  /**
+   * Current central-bank policy rates. `countries` are ISO 3166-1 alpha-2 codes
+   * ("XM" for the euro area); omitting them returns the publisher's full set.
+   */
+  getPolicyRates?(countries?: string[]): Promise<PolicyRate[]>;
+  /**
+   * An exchange's market capitalisation by industry group and sector, with the
+   * published period history. `market` is the publisher's venue id.
+   */
+  getIndustryMarketCap?(market?: string): Promise<IndustryMarketCap>;
+  /** Where the mutual-fund industry's net asset value sits, by bucket. */
+  getFundIndustryAllocation?(): Promise<FundIndustryAllocation>;
+  /** The retail (physical) gold price a national trade association announces. */
+  getRetailGoldPrice?(): Promise<RetailGoldPrice>;
   /** SEC EDGAR company profile + recent filings, by ticker or CIK. */
   getCompanyFilings?(tickerOrCik: string): Promise<SecCompanyFilings>;
   /** SEC EDGAR XBRL headline financials, by ticker or CIK. */

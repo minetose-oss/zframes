@@ -80,6 +80,11 @@ import type {
   OfficialSeries,
   HomeValueIndex,
   RegionalHousingPrice,
+  MarketSnapshot,
+  PolicyRate,
+  IndustryMarketCap,
+  FundIndustryAllocation,
+  RetailGoldPrice,
 } from "@zframes/spec/types";
 
 import {
@@ -1247,16 +1252,23 @@ export function useTreasuryAverageRates(refreshMs = 6 * 60 * 60_000): {
   return { rates, isLoading };
 }
 
-/** US Treasury daily par yield curve, polled slowly (updates once per business day). */
-export function useYieldCurve(refreshMs = 6 * 60 * 60_000): {
+/**
+ * A sovereign daily par yield curve, polled slowly (updates once per business
+ * day). Defaults to the US Treasury's; `source` pins another publisher's, which
+ * first-match routing would otherwise never reach.
+ */
+export function useYieldCurve(
+  refreshMs = 6 * 60 * 60_000,
+  source?: string,
+): {
   curve: YieldCurve | null;
   isLoading: boolean;
 } {
-  const provider = useProviderFor("yield-curve");
+  const provider = useProviderFor("yield-curve", source);
   const { data: curve, isLoading } = usePolled<YieldCurve | null>(
     provider?.getYieldCurve ? () => provider.getYieldCurve!() : null,
     null,
-    [provider, refreshMs],
+    [provider, source, refreshMs],
     refreshMs,
   );
   return { curve, isLoading };
@@ -1279,16 +1291,21 @@ export function useTreasuryAuctions(
   return { auctions, isLoading };
 }
 
-/** US total public debt outstanding + recent trend, polled daily (Debt to the Penny updates each business day). */
+/**
+ * Total public debt outstanding + recent trend, polled daily (the US Debt to
+ * the Penny updates each business day; other ministries publish monthly).
+ * `source` pins a publisher other than the default one.
+ */
 export function useNationalDebt(
   days = 180,
   refreshMs = 6 * 60 * 60_000,
+  source?: string,
 ): { debt: NationalDebt | null; isLoading: boolean } {
-  const provider = useProviderFor("national-debt");
+  const provider = useProviderFor("national-debt", source);
   const { data: debt, isLoading } = usePolled<NationalDebt | null>(
     provider?.getNationalDebt ? () => provider.getNationalDebt!(days) : null,
     null,
-    [provider, days, refreshMs],
+    [provider, days, source, refreshMs],
     refreshMs,
   );
   return { debt, isLoading };
@@ -1663,14 +1680,15 @@ export function useCommodityVolIndex(
 export function useMacroReferenceSeries(
   seriesId: string,
   refreshMs = 6 * 60 * 60_000,
+  source?: string,
 ): { series: OfficialSeries | null; isLoading: boolean } {
-  const provider = useProviderFor("macro-reference-series");
+  const provider = useProviderFor("macro-reference-series", source);
   const { data: series, isLoading } = usePolled<OfficialSeries | null>(
     provider?.getMacroReferenceSeries && seriesId
       ? () => provider.getMacroReferenceSeries!(seriesId)
       : null,
     null,
-    [provider, seriesId, refreshMs],
+    [provider, seriesId, source, refreshMs],
     refreshMs,
   );
   return { series, isLoading };
@@ -1902,6 +1920,103 @@ export function useFearGreed(
     refreshMs,
   );
   return { points, isLoading };
+}
+
+// ── National markets & official documents ────────────────────────────────────
+
+/**
+ * One venue's session snapshot (index family + market breadth), polled on the
+ * minute — the publisher restamps it through the trading day.
+ */
+export function useMarketSnapshot(
+  market?: string,
+  refreshMs = 60_000,
+): { snapshot: MarketSnapshot | null; isLoading: boolean } {
+  const provider = useProviderFor("market-snapshot");
+  const { data: snapshot, isLoading } = usePolled<MarketSnapshot | null>(
+    provider?.getMarketSnapshot
+      ? () => provider.getMarketSnapshot!(market)
+      : null,
+    null,
+    [provider, market, refreshMs],
+    refreshMs,
+  );
+  return { snapshot, isLoading };
+}
+
+/**
+ * Central-bank policy rates, polled every ~6h — a rate changes a handful of
+ * times a year, on scheduled meeting dates.
+ */
+export function usePolicyRates(
+  countries?: readonly string[],
+  refreshMs = 6 * 60 * 60_000,
+): { rates: PolicyRate[]; isLoading: boolean } {
+  const provider = useProviderFor("policy-rates");
+  // Sorted for the same reason as useDayStatsState's symbols: order-variant
+  // tuples collapse to one effect identity and one provider cache key.
+  const key = countries ? [...countries].sort().join(",") : "*";
+  const wanted = key === "*" ? undefined : key.split(",").filter(Boolean);
+  const { data: rates, isLoading } = usePolled<PolicyRate[]>(
+    provider?.getPolicyRates ? () => provider.getPolicyRates!(wanted) : null,
+    [],
+    [provider, key, refreshMs],
+    refreshMs,
+  );
+  return { rates, isLoading };
+}
+
+/** An exchange's market cap by industry group and sector, polled every ~12h. */
+export function useIndustryMarketCap(
+  market?: string,
+  refreshMs = 12 * 60 * 60_000,
+): { caps: IndustryMarketCap | null; isLoading: boolean } {
+  const provider = useProviderFor("industry-market-cap");
+  const { data: caps, isLoading } = usePolled<IndustryMarketCap | null>(
+    provider?.getIndustryMarketCap
+      ? () => provider.getIndustryMarketCap!(market)
+      : null,
+    null,
+    [provider, market, refreshMs],
+    refreshMs,
+  );
+  return { caps, isLoading };
+}
+
+/** The fund industry's allocation by bucket, polled every ~12h (published periodically). */
+export function useFundIndustryAllocation(refreshMs = 12 * 60 * 60_000): {
+  allocation: FundIndustryAllocation | null;
+  isLoading: boolean;
+} {
+  const provider = useProviderFor("fund-industry-allocation");
+  const { data: allocation, isLoading } =
+    usePolled<FundIndustryAllocation | null>(
+      provider?.getFundIndustryAllocation
+        ? () => provider.getFundIndustryAllocation!()
+        : null,
+      null,
+      [provider, refreshMs],
+      refreshMs,
+    );
+  return { allocation, isLoading };
+}
+
+/**
+ * The retail (physical) gold quote a national trade association announces,
+ * polled every couple of minutes — it is revised several times on a busy day.
+ */
+export function useRetailGoldPrice(refreshMs = 2 * 60_000): {
+  price: RetailGoldPrice | null;
+  isLoading: boolean;
+} {
+  const provider = useProviderFor("retail-gold-price");
+  const { data: price, isLoading } = usePolled<RetailGoldPrice | null>(
+    provider?.getRetailGoldPrice ? () => provider.getRetailGoldPrice!() : null,
+    null,
+    [provider, refreshMs],
+    refreshMs,
+  );
+  return { price, isLoading };
 }
 
 // ── Portfolio (keyed tier) ───────────────────────────────────────────────────

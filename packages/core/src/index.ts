@@ -88,6 +88,11 @@ export {
   useEarningsCalendar,
   useAnalystRatings,
   useInstitutionalOwnership,
+  useMarketSnapshot,
+  usePolicyRates,
+  useIndustryMarketCap,
+  useFundIndustryAllocation,
+  useRetailGoldPrice,
 } from "./hooks";
 export {
   DashboardCurrencyProvider,

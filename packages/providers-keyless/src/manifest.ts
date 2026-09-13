@@ -298,6 +298,35 @@ const HOSTS = [
     reason:
       "Two families off one host: delayed option chains with greeks, and the commodity implied-volatility index history (GVZ, VXSLV, VXGDX, OVX).",
   },
+  // Thai official publishers. All CORS-blocked, hence relayed.
+  {
+    host: "www.thaibma.or.th",
+    proxied: true,
+    reason: "The Thai government bond yield curve, published daily.",
+  },
+  {
+    host: "api.settrade.com",
+    proxied: true,
+    reason: "SET and mai index levels with market breadth, restamped intraday.",
+  },
+  {
+    host: "dataservices.mof.go.th",
+    proxied: true,
+    reason:
+      "Thai public debt outstanding and its composition, published monthly.",
+  },
+  {
+    host: "dividend.sec.or.th",
+    proxied: true,
+    reason:
+      "SEC Thailand statistics CSVs; the WAF rejects any request carrying an Origin header, so the relay is the only path.",
+  },
+  {
+    host: "classic.goldtraders.or.th",
+    proxied: true,
+    reason:
+      "The Gold Traders Association's announced retail gold price, revised through the day.",
+  },
   // CORS-open hosts, fetched straight from the browser. No relay entry.
   {
     host: "api.hyperliquid.xyz",
@@ -382,6 +411,15 @@ const HOSTS = [
   {
     host: "api.bitkub.com",
     reason: "Bitkub tickers, candles and order book, THB-quoted.",
+  },
+  {
+    host: "stats.bis.org",
+    reason:
+      "BIS statistics: central-bank policy rates, effective exchange rates, property prices.",
+  },
+  {
+    host: "api.worldbank.org",
+    reason: "World Bank annual development indicators.",
   },
 ] as const;
 
@@ -518,6 +556,50 @@ const SOURCES: ProviderPluginManifest["sources"] = [
       'The real consolidated tape for US-listed stocks, DAILY bars only: no intraday, no crypto. Wants a plain US ticker like "NVDA". Pin it when a stock card should show the actual listing rather than its perp, since the HIP-3 perp tracks direction but its volume and open interest are Hyperliquid\'s book. It only answers for symbols a card names, so it cannot back a card that scans a whole universe.',
   },
   { id: "cboe", name: "Cboe", url: "https://www.cboe.com" },
+  {
+    id: "thaibma",
+    name: "ThaiBMA",
+    url: "https://www.thaibma.or.th",
+    notes:
+      "Thai government bond yield curve, daily; pin on a yield-curve card.",
+  },
+  {
+    id: "settrade",
+    name: "Settrade",
+    url: "https://www.settrade.com",
+    notes: "SET and mai index snapshot with market breadth; no per-stock data.",
+  },
+  {
+    id: "bis",
+    name: "BIS",
+    url: "https://data.bis.org",
+    notes:
+      "Central-bank policy rates and BIS series (effective exchange rates, property prices); series ids BIS:CBPOL:TH, BIS:EER:N:B:TH, BIS:SPP:TH.",
+  },
+  {
+    id: "mof-th",
+    name: "Thai Ministry of Finance",
+    url: "https://dataservices.mof.go.th",
+    notes:
+      "Thai public debt, monthly, million THB converted at the ministry's published rate; pin on a national-debt card.",
+  },
+  {
+    id: "sec-th",
+    name: "SEC Thailand",
+    url: "https://www.sec.or.th/secopendata",
+  },
+  {
+    id: "goldtraders",
+    name: "Gold Traders Association",
+    url: "https://www.goldtraders.or.th",
+  },
+  {
+    id: "worldbank",
+    name: "World Bank",
+    url: "https://data.worldbank.org",
+    notes:
+      "Annual World Bank indicators; series id WB:<INDICATOR>:<ISO3>, e.g. WB:NY.GDP.MKTP.CD:THA.",
+  },
 ];
 
 /**

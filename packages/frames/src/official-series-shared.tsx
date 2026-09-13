@@ -42,6 +42,7 @@ const CADENCE_LABEL: Record<OfficialSeries["frequency"], string> = {
   weekly: "weekly",
   monthly: "monthly",
   quarterly: "quarterly",
+  annual: "annual",
 };
 
 /**

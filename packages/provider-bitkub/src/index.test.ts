@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { BitkubProvider as BitkubProviderType } from "./index";
 
-// The four TtlCaches are module-level singletons, so each test gets a genuinely
-// fresh module (empty caches) via vi.resetModules() + a dynamic import — the
-// same isolation the GeckoTerminal/CoinGecko provider tests use, so a primed
-// value can't leak into a later error-path assertion.
+// The TtlCaches — three here plus the one behind the shared fx-rate primitive —
+// are module-level singletons, so each test gets a genuinely fresh module (empty
+// caches) via vi.resetModules() + a dynamic import, the same isolation the
+// GeckoTerminal/CoinGecko provider tests use, so a primed value can't leak into
+// a later error-path assertion.
 type Ctor = typeof BitkubProviderType;
 
 /** THB per USD used by every stub below, so expected USD values are exact. */
@@ -300,7 +301,7 @@ describe("BitkubProvider", () => {
       });
 
       await expect(new BitkubProvider().getDayStats()).rejects.toThrow(
-        "bitkub fx: no USD/THB rate",
+        "fx-rate: no USD/THB rate",
       );
     });
   });
@@ -633,7 +634,7 @@ describe("BitkubProvider", () => {
       });
 
       await expect(new BitkubProvider().getDayStats()).rejects.toThrow(
-        "bitkub fx: no USD/THB rate",
+        "fx-rate: no USD/THB rate",
       );
     });
 

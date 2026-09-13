@@ -87,6 +87,14 @@ import type {
   EarningsCalendarEntry,
   AnalystRatings,
   InstitutionalOwnership,
+  MarketSnapshot,
+  IndexQuote,
+  PolicyRate,
+  IndustryCap,
+  IndustryCapPeriod,
+  IndustryMarketCap,
+  FundIndustryAllocation,
+  RetailGoldPrice,
 } from "@zframes/spec";
 
 /**
@@ -577,6 +585,7 @@ const STEP_MS: Record<OfficialSeries["frequency"], number> = {
   weekly: 7 * DAY,
   monthly: 30 * DAY,
   quarterly: 91 * DAY,
+  annual: 365 * DAY,
 };
 
 /** Standard normal CDF (Abramowitz & Stegun 26.2.17). Black-Scholes below runs
@@ -862,6 +871,11 @@ export const DEMO_CAPABILITIES: readonly Capability[] = [
   "mortgage-rate",
   "home-value-index",
   "regional-housing-price",
+  "market-snapshot",
+  "policy-rates",
+  "industry-market-cap",
+  "fund-industry-allocation",
+  "retail-gold-price",
   "portfolio",
 ];
 
@@ -4708,6 +4722,297 @@ export class MockMarketDataProvider implements MarketDataProvider {
         };
       });
       return { series, level: resolved, source: "FHFA" };
+    });
+  }
+
+  // ── national markets & official documents ─────────────────────────────────
+
+  /** The venues a snapshot can be asked for, and their index families. */
+  private static readonly VENUES: Record<
+    string,
+    { name: string; indices: [string, string, number][] }
+  > = {
+    SET: {
+      name: "Stock Exchange of Thailand",
+      indices: [
+        ["SET", "SET Index", 1600],
+        ["SET50", "SET50 Index", 1070],
+        ["SET100", "SET100 Index", 2300],
+        ["sSET", "sSET Index", 660],
+        ["SETHD", "SET High Dividend 30", 1540],
+        ["SETESG", "SET ESG Index", 1015],
+      ],
+    },
+    mai: {
+      name: "Market for Alternative Investment",
+      indices: [["mai", "mai Index", 280]],
+    },
+  };
+
+  getMarketSnapshot(market?: string): Promise<MarketSnapshot> {
+    const id = MockMarketDataProvider.VENUES[market ?? ""] ? market! : "SET";
+    const venue = MockMarketDataProvider.VENUES[id];
+    const empty: MarketSnapshot = {
+      market: id,
+      name: venue.name,
+      status: "unknown",
+      asOf: BASELINE_NOW,
+      indices: [],
+      breadth: { gainers: 0, losers: 0, unchanged: 0 },
+      source: "demo",
+    };
+    return this.gate<MarketSnapshot>(empty, () => {
+      const indices: IndexQuote[] = venue.indices.map(
+        ([symbol, name, base]) => {
+          const r = rng(`snapshot:${id}:${symbol}`);
+          const changePct = round((r() * 2 - 1) * 1.4);
+          const last = round(base * (1 + changePct / 100));
+          const prior = round(base);
+          return {
+            symbol,
+            name,
+            last,
+            prior,
+            change: round(last - prior),
+            changePct,
+            high: round(last * (1 + r() * 0.006)),
+            low: round(last * (1 - r() * 0.006)),
+            volume: Math.round(r() * 9_000_000_000),
+            valueUsd: round(r() * 1_400_000_000, 0),
+          };
+        },
+      );
+      return {
+        market: id,
+        name: venue.name,
+        status: "closed",
+        statusLabel: "Closed",
+        asOf: BASELINE_NOW,
+        indices,
+        breadth: {
+          gainers: 150,
+          losers: 290,
+          unchanged: 220,
+          gainersVolume: 2_100_000_000,
+          losersVolume: 3_400_000_000,
+          unchangedVolume: 900_000_000,
+        },
+        source: "demo",
+      };
+    });
+  }
+
+  /** Policy rate per central bank, with the level it replaced. */
+  private static readonly POLICY_RATES: [string, string, number, number][] = [
+    ["TH", "Bank of Thailand", 1.5, 1.75],
+    ["US", "Federal Reserve", 4.25, 4.5],
+    ["XM", "European Central Bank", 2.0, 2.25],
+    ["JP", "Bank of Japan", 0.75, 0.5],
+    ["GB", "Bank of England", 4.0, 4.25],
+    ["CN", "People's Bank of China", 3.0, 3.1],
+    ["IN", "Reserve Bank of India", 5.5, 5.75],
+    ["KR", "Bank of Korea", 2.5, 2.75],
+  ];
+
+  getPolicyRates(countries?: string[]): Promise<PolicyRate[]> {
+    return this.gate<PolicyRate[]>([], () => {
+      const wanted = countries?.length
+        ? new Set(countries.map((c) => c.toUpperCase()))
+        : null;
+      return MockMarketDataProvider.POLICY_RATES.filter(
+        ([country]) => !wanted || wanted.has(country),
+      ).map(([country, bank, rate, prev]) => {
+        const r = rng(`policy:${country}`);
+        const changedOn = BASELINE_NOW - Math.floor(40 + r() * 500) * DAY;
+        return {
+          country,
+          bank,
+          rate,
+          date: isoDay(BASELINE_NOW),
+          prev,
+          changedOn: isoDay(changedOn),
+          source: "demo",
+        };
+      });
+    });
+  }
+
+  /** Group code → display name, in the order an exchange prints them. */
+  private static readonly INDUSTRY_GROUPS: [string, string, number][] = [
+    ["AGRO", "Agro & Food Industry", 34e9],
+    ["CONSUMP", "Consumer Products", 12e9],
+    ["FINCIAL", "Financials", 78e9],
+    ["INDUS", "Industrials", 30e9],
+    ["PROPCON", "Property & Construction", 42e9],
+    ["RESOURC", "Resources", 120e9],
+    ["SERVICE", "Services", 96e9],
+    ["TECH", "Technology", 68e9],
+  ];
+
+  /** Sector code → display name, parent group, and latest market cap, USD. */
+  private static readonly INDUSTRY_SECTORS: [string, string, string, number][] =
+    [
+      ["AGRI", "Agribusiness", "AGRO", 9e9],
+      ["FOOD", "Food & Beverage", "AGRO", 25e9],
+      ["FASHION", "Fashion", "CONSUMP", 4e9],
+      ["HOME", "Home & Office Products", "CONSUMP", 8e9],
+      ["BANK", "Banking", "FINCIAL", 48e9],
+      ["FIN", "Finance & Securities", "FINCIAL", 20e9],
+      ["INSUR", "Insurance", "FINCIAL", 10e9],
+      ["PETRO", "Petrochemicals & Chemicals", "INDUS", 30e9],
+      ["PROP", "Property Development", "PROPCON", 30e9],
+      ["CONMAT", "Construction Materials", "PROPCON", 12e9],
+      ["ENERG", "Energy & Utilities", "RESOURC", 120e9],
+      ["COMM", "Commerce", "SERVICE", 96e9],
+      ["ICT", "Information & Communication Technology", "TECH", 68e9],
+    ];
+
+  /** "2026 Q2" for a millisecond instant. */
+  private static quarterLabel(ms: number): string {
+    const d = new Date(ms);
+    return `${d.getUTCFullYear()} Q${Math.floor(d.getUTCMonth() / 3) + 1}`;
+  }
+
+  getIndustryMarketCap(market?: string): Promise<IndustryMarketCap> {
+    const id = market || "SET";
+    const empty: IndustryMarketCap = {
+      market: id,
+      asOf: isoDay(BASELINE_NOW),
+      period: MockMarketDataProvider.quarterLabel(BASELINE_NOW),
+      groups: [],
+      sectors: [],
+      history: [],
+      source: "demo",
+    };
+    return this.gate<IndustryMarketCap>(empty, () => {
+      const cap = (
+        code: string,
+        name: string,
+        value: number,
+        group?: string,
+      ): IndustryCap => {
+        const r = rng(`cap:${id}:${code}`);
+        return {
+          code,
+          name,
+          group,
+          value: round(value, 0),
+          prev: round(value * (0.94 + r() * 0.1), 0),
+        };
+      };
+      const groups = MockMarketDataProvider.INDUSTRY_GROUPS.map(
+        ([code, name, value]) => cap(code, name, value),
+      );
+      const sectors = MockMarketDataProvider.INDUSTRY_SECTORS.map(
+        ([code, name, group, value]) => cap(code, name, value, group),
+      );
+      const total = groups.reduce((sum, group) => sum + group.value, 0);
+      const r = rng(`caphistory:${id}`);
+      const quarters = 8;
+      const history: IndustryCapPeriod[] = Array.from(
+        { length: quarters },
+        (_, i) => {
+          // Oldest → newest, walking up to today's total so the latest period
+          // agrees with the group rows above it.
+          const back = quarters - 1 - i;
+          const time = BASELINE_NOW - back * 91 * DAY;
+          const scale = Math.pow(0.97, back) * (0.98 + r() * 0.04);
+          const byCode: Record<string, number> = {};
+          for (const entry of [...groups, ...sectors])
+            byCode[entry.code] = round(entry.value * scale, 0);
+          return {
+            period: MockMarketDataProvider.quarterLabel(time),
+            time,
+            total: round(total * scale, 0),
+            byCode,
+          };
+        },
+      );
+      return {
+        market: id,
+        asOf: isoDay(BASELINE_NOW),
+        period: MockMarketDataProvider.quarterLabel(BASELINE_NOW),
+        groups,
+        sectors,
+        history,
+        source: "demo",
+      };
+    });
+  }
+
+  /** Fund-industry buckets: publisher grouping, label, share of net assets. */
+  private static readonly FUND_BUCKETS: [string, string, number][] = [
+    ["listed domestic", "Listed Thai equity", 35],
+    ["unlisted domestic", "Thai fixed income", 30],
+    ["foreign", "Foreign equity", 20],
+    ["foreign", "Foreign fixed income", 10],
+    ["other", "Cash & other assets", 5],
+  ];
+
+  getFundIndustryAllocation(): Promise<FundIndustryAllocation> {
+    const totalNav = 180e9;
+    const empty: FundIndustryAllocation = {
+      asOf: isoDay(BASELINE_NOW),
+      period: MockMarketDataProvider.quarterLabel(BASELINE_NOW),
+      totalNav: 0,
+      buckets: [],
+      source: "demo",
+    };
+    return this.gate<FundIndustryAllocation>(empty, () => ({
+      asOf: isoDay(BASELINE_NOW),
+      period: MockMarketDataProvider.quarterLabel(BASELINE_NOW),
+      totalNav,
+      buckets: MockMarketDataProvider.FUND_BUCKETS.map(
+        ([group, label, sharePct]) => ({
+          group,
+          label,
+          value: round((totalNav * sharePct) / 100, 0),
+          sharePct,
+        }),
+      ),
+      source: "demo",
+    }));
+  }
+
+  getRetailGoldPrice(): Promise<RetailGoldPrice> {
+    // One Thai gold baht of 96.5% gold, the unit the association announces in.
+    const unitGrams = 15.244;
+    const purity = 0.965;
+    const fxRate = 1 / 32.5;
+    const local = {
+      bar: { buy: 67_950, sell: 68_050 },
+      ornament: { buy: 66_650, sell: 69_050 },
+    };
+    const empty: RetailGoldPrice = {
+      source: "demo",
+      quoteCurrency: "THB",
+      unit: "baht",
+      unitGrams,
+      purity,
+      bar: { buy: 0, sell: 0 },
+      ornament: { buy: 0, sell: 0 },
+      local: { bar: { buy: 0, sell: 0 }, ornament: { buy: 0, sell: 0 } },
+      fxRate,
+      updatedAt: BASELINE_NOW,
+    };
+    return this.gate<RetailGoldPrice>(empty, () => {
+      const toUsd = (thb: number) => round(thb * fxRate);
+      return {
+        source: "demo",
+        quoteCurrency: "THB",
+        unit: "baht",
+        unitGrams,
+        purity,
+        bar: { buy: toUsd(local.bar.buy), sell: toUsd(local.bar.sell) },
+        ornament: {
+          buy: toUsd(local.ornament.buy),
+          sell: toUsd(local.ornament.sell),
+        },
+        local,
+        fxRate,
+        updatedAt: BASELINE_NOW,
+        revision: 3,
+      };
     });
   }
 

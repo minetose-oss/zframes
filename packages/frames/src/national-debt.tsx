@@ -64,22 +64,29 @@ function NationalDebt({ config }: { config: z.output<typeof schema> }) {
         color="hsl(var(--zf-accent-hue, 242) 85% 72%)"
       />
 
-      {config.showSplit && (
-        <div className="grid grid-cols-2 gap-1.5 border-t border-white/[0.08] pt-2">
-          <div className="rounded bg-white/[0.04] px-2 py-1.5">
-            <div className="caption text-soft truncate">Held by public</div>
-            <div className="body-sm text-strong font-bold tabular-nums">
-              {formatCompactUsd(debt.heldByPublic)}
+      {/* The split is the US Treasury's; a publisher that splits its debt some
+          other way leaves both halves undefined, and the card drops the row
+          rather than printing two dashes. */}
+      {config.showSplit &&
+        debt.heldByPublic !== undefined &&
+        debt.intragovernmental !== undefined && (
+          <div className="grid grid-cols-2 gap-1.5 border-t border-white/[0.08] pt-2">
+            <div className="rounded bg-white/[0.04] px-2 py-1.5">
+              <div className="caption text-soft truncate">Held by public</div>
+              <div className="body-sm text-strong font-bold tabular-nums">
+                {formatCompactUsd(debt.heldByPublic)}
+              </div>
+            </div>
+            <div className="rounded bg-white/[0.04] px-2 py-1.5">
+              <div className="caption text-soft truncate">
+                Intragovernmental
+              </div>
+              <div className="body-sm text-strong font-bold tabular-nums">
+                {formatCompactUsd(debt.intragovernmental)}
+              </div>
             </div>
           </div>
-          <div className="rounded bg-white/[0.04] px-2 py-1.5">
-            <div className="caption text-soft truncate">Intragovernmental</div>
-            <div className="body-sm text-strong font-bold tabular-nums">
-              {formatCompactUsd(debt.intragovernmental)}
-            </div>
-          </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
