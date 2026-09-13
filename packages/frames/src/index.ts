@@ -197,6 +197,8 @@ export { nyfedSofrTermAveragesBarsFrame } from "./nyfed-sofr-term-averages-bars"
 export { nyfedFedFundsBandGaugeFrame } from "./nyfed-fed-funds-band-gauge";
 export { treasuryDebtCompositionAreaFrame } from "./treasury-debt-composition-area";
 export { ofrStressCategoryAreaFrame } from "./ofr-stress-category-area";
+export { officialSeriesFrame } from "./official-series";
+export { policyRateBoardFrame } from "./policy-rate-board";
 export { miseryIndexFrame } from "./misery-index";
 export { realWagesFrame } from "./real-wages";
 export { laborForceFlowFrame } from "./labor-force-flow";
@@ -469,6 +471,8 @@ import { nyfedSofrTermAveragesBarsFrame } from "./nyfed-sofr-term-averages-bars"
 import { nyfedFedFundsBandGaugeFrame } from "./nyfed-fed-funds-band-gauge";
 import { treasuryDebtCompositionAreaFrame } from "./treasury-debt-composition-area";
 import { ofrStressCategoryAreaFrame } from "./ofr-stress-category-area";
+import { officialSeriesFrame } from "./official-series";
+import { policyRateBoardFrame } from "./policy-rate-board";
 import { miseryIndexFrame } from "./misery-index";
 import { realWagesFrame } from "./real-wages";
 import { laborForceFlowFrame } from "./labor-force-flow";
@@ -740,6 +744,7 @@ export const allFrames: AnyFrameDefinition[] = [
   nyfedFedFundsBandGaugeFrame,
   nyfedReferenceRateBarsFrame,
   nyfedSofrTermAveragesBarsFrame,
+  officialSeriesFrame,
   ofrStressCategoryAreaFrame,
   ohlcvVolumeBarsFrame,
   oiTreemapFrame,
@@ -759,6 +764,7 @@ export const allFrames: AnyFrameDefinition[] = [
   orderBookDepthFrame,
   payrollsBarsFrame,
   piCycleFrame,
+  policyRateBoardFrame,
   pomodoroFrame,
   portfolioAllocationFrame,
   portfolioHoldingsFrame,

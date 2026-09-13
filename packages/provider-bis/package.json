@@ -1,0 +1,27 @@
+{
+  "name": "@zframes/provider-bis",
+  "version": "0.0.0",
+  "description": "Free, no-API-key zframes data provider for BIS statistics — central-bank policy rates (policy-rates) and the BIS statistical series (macro-reference-series).",
+  "license": "MIT",
+  "author": "Zentry",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zentryhq/zframes.git",
+    "directory": "packages/provider-bis"
+  },
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zframes/data-primitives": "workspace:*",
+    "@zframes/spec": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}

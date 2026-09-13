@@ -53,6 +53,7 @@ const DAG: Record<string, string[]> = {
   // `tests/capability-coverage.test.ts`, which reads this manifest).
   "providers-keyless": [
     "@zframes/provider-alternativeme",
+    "@zframes/provider-bis",
     "@zframes/provider-bitcoin-data",
     "@zframes/provider-bitkub",
     "@zframes/provider-blockchair",
@@ -78,8 +79,10 @@ const DAG: Record<string, string[]> = {
     "@zframes/provider-ofr",
     "@zframes/provider-polymarket",
     "@zframes/provider-sec",
+    "@zframes/provider-thaibma",
     "@zframes/provider-treasury",
     "@zframes/provider-ultrasound",
+    "@zframes/provider-worldbank",
     "@zframes/provider-zillow",
     "@zframes/spec",
   ],

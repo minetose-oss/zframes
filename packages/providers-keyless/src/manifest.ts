@@ -144,6 +144,10 @@ const CAPABILITIES: readonly Capability[] = [
   // provider-bitkub (also day-stats + ohlcv, reached by pinning
   // `source: "bitkub"`)
   "order-book",
+  // provider-thaibma (yield-curve, reachable by pinning source: "thaibma")
+  // provider-bis (also macro-reference-series, reachable by pinning source: "bis")
+  "policy-rates",
+  // provider-worldbank (macro-reference-series, pin source: "worldbank")
 ];
 
 /**

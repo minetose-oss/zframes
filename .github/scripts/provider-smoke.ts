@@ -530,6 +530,41 @@ const PROBES: Probe[] = [
     proxied: true,
   },
 
+  // ── National official data ────────────────────────────────────────────
+  // ThaiBMA publishes the curve as JSON behind a CORS wall; BIS and the World
+  // Bank are CORS-open, so only the first is proxied. The two BIS probes cover
+  // both capabilities: the multi-country policy-rate call (one request, rows
+  // interleaved by country) and one series off the `BIS:…` id grammar.
+  {
+    pkg: "provider-thaibma",
+    cls: "ThaibmaProvider",
+    method: "getYieldCurve",
+    args: [],
+    expect: "object",
+    proxied: true,
+  },
+  {
+    pkg: "provider-bis",
+    cls: "BisProvider",
+    method: "getPolicyRates",
+    args: [["TH", "US"]],
+    expect: "array",
+  },
+  {
+    pkg: "provider-bis",
+    cls: "BisProvider",
+    method: "getMacroReferenceSeries",
+    args: ["BIS:EER:N:TH"],
+    expect: "object",
+  },
+  {
+    pkg: "provider-worldbank",
+    cls: "WorldBankProvider",
+    method: "getMacroReferenceSeries",
+    args: ["WB:NY.GDP.MKTP.CD:THA"],
+    expect: "object",
+  },
+
   // ── Housing ───────────────────────────────────────────────────────────
   // Both read wide published CSVs, so these probes also cover the parsing that
   // silently shifts columns when a publisher edits the file (FHFA's files have

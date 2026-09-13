@@ -606,6 +606,19 @@ importers:
         specifier: ^5.8.0
         version: 5.9.3
 
+  packages/provider-bis:
+    dependencies:
+      '@zframes/data-primitives':
+        specifier: workspace:*
+        version: link:../data-primitives
+      '@zframes/spec':
+        specifier: workspace:*
+        version: link:../spec
+    devDependencies:
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
   packages/provider-bitcoin-data:
     dependencies:
       '@zframes/data-primitives':
@@ -941,6 +954,22 @@ importers:
         specifier: ^5.8.0
         version: 5.9.3
 
+  packages/provider-thaibma:
+    dependencies:
+      '@zframes/data-primitives':
+        specifier: workspace:*
+        version: link:../data-primitives
+      '@zframes/spec':
+        specifier: workspace:*
+        version: link:../spec
+      zod:
+        specifier: ^4.1.0
+        version: 4.4.3
+    devDependencies:
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
   packages/provider-treasury:
     dependencies:
       '@zframes/data-primitives':
@@ -980,6 +1009,22 @@ importers:
         specifier: ^5.8.0
         version: 5.9.3
 
+  packages/provider-worldbank:
+    dependencies:
+      '@zframes/data-primitives':
+        specifier: workspace:*
+        version: link:../data-primitives
+      '@zframes/spec':
+        specifier: workspace:*
+        version: link:../spec
+      zod:
+        specifier: ^4.1.0
+        version: 4.4.3
+    devDependencies:
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
   packages/provider-zillow:
     dependencies:
       '@zframes/data-primitives':
@@ -998,6 +1043,9 @@ importers:
       '@zframes/provider-alternativeme':
         specifier: workspace:*
         version: link:../provider-alternativeme
+      '@zframes/provider-bis':
+        specifier: workspace:*
+        version: link:../provider-bis
       '@zframes/provider-bitcoin-data':
         specifier: workspace:*
         version: link:../provider-bitcoin-data
@@ -1073,12 +1121,18 @@ importers:
       '@zframes/provider-sec':
         specifier: workspace:*
         version: link:../provider-sec
+      '@zframes/provider-thaibma':
+        specifier: workspace:*
+        version: link:../provider-thaibma
       '@zframes/provider-treasury':
         specifier: workspace:*
         version: link:../provider-treasury
       '@zframes/provider-ultrasound':
         specifier: workspace:*
         version: link:../provider-ultrasound
+      '@zframes/provider-worldbank':
+        specifier: workspace:*
+        version: link:../provider-worldbank
       '@zframes/provider-zillow':
         specifier: workspace:*
         version: link:../provider-zillow

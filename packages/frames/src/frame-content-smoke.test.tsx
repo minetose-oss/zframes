@@ -343,6 +343,8 @@ const NO_MONEY: Record<string, string> = {
   "nupl-cycle-chart": "NUPL % history",
   "nyfed-fed-funds-band-gauge": "EFFR vs the target band, in %",
   "nyfed-sofr-term-averages-bars": "SOFR term averages %",
+  "official-series":
+    "a published statistic in its own unit — an index level, a rate in % or a reported total, none of them convertible market money",
   "ofr-stress-category-area": "FSI category contributions, in index points",
   "ohlcv-volume-bars":
     "candle volume in the base asset (coins), which the currency layer deliberately never converts",
@@ -354,6 +356,7 @@ const NO_MONEY: Record<string, string> = {
   "options-vol-spread": "an implied-vol spread",
   "payrolls-bars": "monthly payroll job counts",
   "pi-cycle": "111DMA / 350DMA ratio",
+  "policy-rate-board": "central-bank policy rates, in %",
   pomodoro: "a timer",
   "portfolio-movers": "holdings ranked by 24h change %",
   "puell-multiple": "the Puell ratio",

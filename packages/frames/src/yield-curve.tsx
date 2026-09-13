@@ -44,7 +44,7 @@ function CurveSvg({ points }: { points: { label: string; rate: number }[] }) {
         vectorEffect="non-scaling-stroke"
         strokeLinejoin="round"
       />
-      {/* The curve draws EVERY tenor the Treasury publishes, while the pill row
+      {/* The curve draws EVERY tenor the publisher carries, while the pill row
           below shows only the maturities the config asks for — so most plotted
           points have their yield printed nowhere on the card. These invisible
           full-height columns (last, so they sit above the marks, and sharing the
@@ -74,9 +74,19 @@ function CurveSvg({ points }: { points: { label: string; rate: number }[] }) {
   );
 }
 
+/** Whose curve this is, so the head never states a publisher the card isn't reading. */
+const ISSUERS: Record<string, { title: string; publisher: string }> = {
+  thaibma: {
+    title: "Thai government bond curve",
+    publisher: "Thai government bonds",
+  },
+  treasury: { title: "Treasury yield curve", publisher: "U.S. Treasury" },
+};
+
 function YieldCurve({ config }: { config: z.output<typeof schema> }) {
-  const { curve, isLoading } = useYieldCurve();
+  const { curve, isLoading } = useYieldCurve(undefined, config.source);
   useHideTipOnUnmount();
+  const issuer = ISSUERS[config.source ?? "treasury"] ?? ISSUERS.treasury;
 
   if (isLoading) return <FrameStatus loading>loading yield curve…</FrameStatus>;
   if (!curve || curve.points.length < 2)
@@ -96,11 +106,11 @@ function YieldCurve({ config }: { config: z.output<typeof schema> }) {
     <div className="flex h-full min-h-0 flex-col gap-2">
       <CardHeader align="start">
         <CardHeader.Main>
-          <CardHeader.Eyebrow>Treasury yield curve</CardHeader.Eyebrow>
+          <CardHeader.Eyebrow>{issuer.title}</CardHeader.Eyebrow>
           {/* `ink="normal"`, not the sub-line's default `soft`: the
               publisher's own print date reads as data here. */}
           <CardHeader.Sub ink="normal">
-            U.S. Treasury · {curve.date}
+            {issuer.publisher} · {curve.date}
           </CardHeader.Sub>
         </CardHeader.Main>
         <CardHeader.Aside>

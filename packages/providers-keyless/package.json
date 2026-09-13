@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@zframes/provider-alternativeme": "workspace:*",
+    "@zframes/provider-bis": "workspace:*",
     "@zframes/provider-bitcoin-data": "workspace:*",
     "@zframes/provider-bitkub": "workspace:*",
     "@zframes/provider-blockchair": "workspace:*",
@@ -49,8 +50,10 @@
     "@zframes/provider-ofr": "workspace:*",
     "@zframes/provider-polymarket": "workspace:*",
     "@zframes/provider-sec": "workspace:*",
+    "@zframes/provider-thaibma": "workspace:*",
     "@zframes/provider-treasury": "workspace:*",
     "@zframes/provider-ultrasound": "workspace:*",
+    "@zframes/provider-worldbank": "workspace:*",
     "@zframes/provider-zillow": "workspace:*",
     "@zframes/spec": "workspace:*"
   },

@@ -1,6 +1,12 @@
 import { defineFrameMeta } from "@zframes/spec/frame";
 import { z } from "zod";
-import { widgetIcon, SOURCES, US_STATES, ZHVI_REGIONS } from "./shared";
+import {
+  widgetIcon,
+  SOURCES,
+  US_STATES,
+  ZHVI_REGIONS,
+  sourceField,
+} from "./shared";
 
 export const ratesBoardMeta = defineFrameMeta({
   name: "rates-board",
@@ -234,15 +240,19 @@ export const yieldCurveMeta = defineFrameMeta({
   iconUrl: widgetIcon("yield-curve"),
   layout: { w: 4, h: 3, minW: 3, minH: 2, maxH: 4 },
   description:
-    "The U.S. Treasury daily par yield curve — a line from 1-month to 30-year yields, the headline 2s10s spread (10Y minus 2Y; negative = inverted, the classic recession signal), and a configurable row of key maturities. Keyless official data from the U.S. Treasury, updated each business day; not a live intraday feed.",
-  interpretation: `The yield curve plots the interest rate the U.S. government pays to borrow at each maturity, from 1 month out to 30 years — one line, short maturities on the left, long on the right.
+    'A sovereign daily par yield curve — a line from 1-month to 30-year yields, the headline 2s10s spread (10Y minus 2Y; negative = inverted, the classic recession signal), and a configurable row of key maturities. Defaults to the U.S. Treasury curve; set `source: "thaibma"` for the Thai government bond curve. Keyless official data, updated each business day; not a live intraday feed.',
+  interpretation: `The yield curve plots the interest rate a government pays to borrow at each maturity, from 1 month out to 30 years — one line, short maturities on the left, long on the right. The card reads the U.S. Treasury curve by default, and the Thai government bond curve when it pins the Thai Bond Market Association as its source.
 
 Normally the line slopes upward: lenders demand more to lock their money up longer. The headline 2s10s spread is the 10-year yield minus the 2-year; when it is negative the curve is inverted, meaning short-term rates sit above long-term ones.
 
-An inversion is the classic recession warning, but the common misreading is timing: recessions have historically followed inversions by a year or more, and often begin as the curve steepens back to normal — the inversion itself is not the crash moment. Updates each business day.`,
+An inversion is the classic recession warning, but the common misreading is timing: recessions have historically followed inversions by a year or more, and often begin as the curve steepens back to normal — the inversion itself is not the crash moment. Two curves are also not comparable level for level: a Thai 10-year and a US 10-year price different currencies and different policy rates. Updates each business day.`,
   capabilities: ["yield-curve"],
-  source: SOURCES.treasury,
+  source: [SOURCES.treasury, SOURCES.thaibma],
   schema: z.object({
+    source: sourceField(
+      ["treasury", "thaibma"],
+      'Whose curve to draw — "treasury" (default, the U.S. Treasury par yield curve) or "thaibma" (the Thai government bond curve published by the Thai Bond Market Association). Omit for the US.',
+    ),
     maturities: z
       .array(
         z.enum([
@@ -266,6 +276,78 @@ An inversion is the classic recession warning, but the common misreading is timi
       .default(["3M", "2Y", "5Y", "10Y", "30Y"])
       .describe(
         "Maturities to show as labelled cells under the curve (the full curve line always shows every maturity).",
+      ),
+  }),
+});
+
+export const officialSeriesMeta = defineFrameMeta({
+  name: "official-series",
+  annotatable: true,
+  label: "Official Series",
+  category: "macro",
+  iconUrl: widgetIcon("official-series"),
+  layout: { w: 6, h: 4, minW: 3, minH: 3 },
+  description:
+    "Any published official statistic as a line chart with its latest print and move — FRED's US series, BIS statistics (policy rates, effective exchange rates, property prices, USD exchange rates) and World Bank annual indicators for any country. One frame over three keyless publishers; the series id picks the statistic and `source` picks the publisher.",
+  interpretation: `One official series, drawn over the chosen number of years, with the latest published value, when it printed, and how far it moved from the print before it.
+
+The header states the publisher's own cadence — daily, monthly, quarterly or annual — which is the thing to read first: an annual World Bank indicator has one point per year, so a ten-year window is ten dots, and the "latest" figure may describe a year that ended long ago. A move is shown in percent for a level (an index, an exchange rate, a dollar total) and in basis points for a rate, because a policy rate going 1.25 to 1.00 is a 25 bp cut, not a 20% fall.
+
+These are published statistics, not market prices: they are revised, they lag, and two countries' series are rarely comparable level for level — a property-price index rebased to 2010 says nothing about another country's rebased to 2015. Read the direction and the shape, not the absolute number.`,
+  capabilities: ["macro-reference-series"],
+  source: [SOURCES.fred, SOURCES.bis, SOURCES.worldbank],
+  schema: z.object({
+    seriesId: z
+      .string()
+      .min(1)
+      .describe(
+        'The publisher\'s series id. FRED (default): "CPIAUCSL" (CPI), "DFII10" (10Y TIPS real yield), "DTWEXBGS" (broad dollar), "T10YIE" (10Y breakeven), "REAINTRATREARAT10Y". BIS: "BIS:CBPOL:TH" (a central bank\'s policy rate), "BIS:EER:N:TH" / "BIS:EER:R:TH" (nominal / real effective exchange rate), "BIS:SPP:N:TH" / "BIS:SPP:R:TH" (residential property prices), "BIS:XRU:TH:THB" (units of the currency per USD). World Bank: "WB:<INDICATOR>:<ISO3>", e.g. "WB:NY.GDP.MKTP.CD:THA" (GDP in current US$) or "WB:FP.CPI.TOTL.ZG:THA" (annual inflation). The id must match the pinned source.',
+      ),
+    source: sourceField(
+      ["fred", "bis", "worldbank"],
+      'Which publisher owns this id — "fred" (default, the bare US series ids), "bis" (every "BIS:…" id) or "worldbank" (every "WB:…" id). Omit for FRED. Pinning the wrong publisher renders an error card, since no other source answers for an id family it does not publish.',
+    ),
+    years: z
+      .number()
+      .int()
+      .min(1)
+      .max(60)
+      .default(10)
+      .describe(
+        "How many years of history to chart. Longer than the series carries just shows all of it.",
+      ),
+  }),
+});
+
+export const policyRateBoardMeta = defineFrameMeta({
+  name: "policy-rate-board",
+  label: "Policy Rates",
+  category: "macro",
+  iconUrl: widgetIcon("policy-rate-board"),
+  layout: { w: 4, h: 4, minW: 3, minH: 3 },
+  description:
+    "Central-bank policy rates side by side — the current rate for each chosen country, its central bank, and how much it has moved since the last change. Keyless official data from the BIS, which publishes every major central bank's rate on one comparable basis; monthly end-of-period prints, not a live feed.",
+  interpretation: `The policy rate is the interest rate a country's central bank sets, and it is the anchor everything else in that economy is priced off — mortgages, deposits, the currency, and how expensive it is to hold risk.
+
+Each row is one country: the central bank's name, the current rate, and, when the rate has moved inside the published window, how many basis points it changed and when. A rate on hold for years shows no change line, which is itself information.
+
+The gap between two countries' rates is what drives their exchange rate over time: money flows toward the higher rate, all else equal, which is why a Thai board reads the Bank of Thailand's 1-2% against the Fed's 3-4% rather than in isolation. These are end-of-month prints, so a cut decided mid-month shows up at the month's end.`,
+  capabilities: ["policy-rates"],
+  source: SOURCES.bis,
+  schema: z.object({
+    countries: z
+      .array(z.string().length(2))
+      .min(1)
+      .max(14)
+      .default(["TH", "US", "XM", "JP", "GB", "CN"])
+      .describe(
+        'Which central banks to list, as ISO 3166-1 alpha-2 codes ("XM" for the euro area), in the order they should appear. The publisher carries TH, US, XM, JP, GB, CN, IN, KR, ID, MY, PH and AU; Singapore and Vietnam have no BIS policy rate and are silently skipped.',
+      ),
+    showChange: z
+      .boolean()
+      .default(true)
+      .describe(
+        "Show the basis-point move and the month the rate last changed under each bank's name.",
       ),
   }),
 });

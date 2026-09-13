@@ -1,4 +1,4 @@
-// The keyless market-data provider set — the 29 free, no-key providers, as ONE
+// The keyless market-data provider set — the 32 free, no-key providers, as ONE
 // factory both apps share. Runtime and explorer used to each keep an identical
 // copy of this list (apps/runtime/src/App.tsx, apps/explorer/app/lib/frames.ts);
 // adding a provider meant editing both and they drifted. Centralising it here
@@ -45,6 +45,9 @@ import { SecProvider } from "@zframes/provider-sec";
 import { NasdaqProvider } from "@zframes/provider-nasdaq";
 import { CboeProvider } from "@zframes/provider-cboe";
 import { TreasuryProvider } from "@zframes/provider-treasury";
+import { ThaibmaProvider } from "@zframes/provider-thaibma";
+import { BisProvider } from "@zframes/provider-bis";
+import { WorldBankProvider } from "@zframes/provider-worldbank";
 
 /** Provider constructors, in capability-routing order (see the header note). */
 const KEYLESS_PROVIDERS = [
@@ -83,6 +86,16 @@ const KEYLESS_PROVIDERS = [
   MempoolProvider,
   DeribitProvider,
   BitkubProvider,
+  // The national official-data cluster, all after the US publishers they sit
+  // beside: ThaibmaProvider also fulfils `yield-curve` and WorldBankProvider
+  // also fulfils `macro-reference-series`, so placing either earlier would
+  // repoint every existing US card at a foreign series. Here each stays
+  // reachable by pinning `source`, which is what a card wanting the Thai curve
+  // or a World Bank indicator asks for. BisProvider is the only provider for
+  // `policy-rates`, so its position is free.
+  ThaibmaProvider,
+  BisProvider,
+  WorldBankProvider,
 ] as const;
 
 /**

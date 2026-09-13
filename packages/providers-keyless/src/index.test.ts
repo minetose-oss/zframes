@@ -77,6 +77,9 @@ const EXPECTED_ORDER = [
   "mempool",
   "deribit",
   "bitkub",
+  "thaibma",
+  "bis",
+  "worldbank",
 ];
 
 /**
@@ -110,13 +113,12 @@ describe("createKeylessProviders", () => {
   it("constructs the whole keyless fleet in capability-routing order", () => {
     const providers = createKeylessProviders();
     expect(providers.map((p) => p.name)).toEqual(EXPECTED_ORDER);
-    expect(providers).toHaveLength(29);
+    expect(providers).toHaveLength(32);
   });
 
-  it("keeps hyperliquid first and bitkub last (the two load-bearing ends)", () => {
+  it("keeps hyperliquid first and bitkub after it (the two load-bearing ends)", () => {
     const names = createKeylessProviders().map((p) => p.name);
     expect(names[0]).toBe("hyperliquid");
-    expect(names[names.length - 1]).toBe("bitkub");
     // The invariant that actually matters is the relative order of the two
     // sources that overlap on day-stats/ohlcv.
     expect(names.indexOf("hyperliquid")).toBeLessThan(names.indexOf("bitkub"));

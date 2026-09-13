@@ -675,6 +675,9 @@ export const frameLoaders: Record<string, FrameLoader> = {
         (m) => m.nyfedSofrTermAveragesBarsFrame,
       ),
   },
+  "official-series": {
+    load: () => import("./official-series").then((m) => m.officialSeriesFrame),
+  },
   "ofr-stress-category-area": {
     load: () =>
       import("./ofr-stress-category-area").then(
@@ -754,6 +757,10 @@ export const frameLoaders: Record<string, FrameLoader> = {
   },
   "pi-cycle": {
     load: () => import("./pi-cycle").then((m) => m.piCycleFrame),
+  },
+  "policy-rate-board": {
+    load: () =>
+      import("./policy-rate-board").then((m) => m.policyRateBoardFrame),
   },
   pomodoro: { load: () => import("./pomodoro").then((m) => m.pomodoroFrame) },
   "portfolio-allocation": {
