@@ -3,24 +3,28 @@ import {
   RISK29_CATEGORY_IDS,
   Risk29HistorySchema,
   Risk29SnapshotSchema,
+  type Risk29Category,
+  type Risk29Snapshot,
 } from "./risk29";
 
 const NOW = "2026-09-16T02:00:00.000Z";
 
-function category(id: (typeof RISK29_CATEGORY_IDS)[number]) {
+function category(
+  id: (typeof RISK29_CATEGORY_IDS)[number],
+): Risk29Category {
   const available = id === "sentiment";
   return {
     id,
     label: id,
     weight: 1,
     score: available ? 50 : null,
-    state: available ? ("watch" as const) : ("unavailable" as const),
+    state: available ? "watch" : "unavailable",
     availableSignals: available ? 1 : 0,
     totalSignals: available ? 1 : 0,
   };
 }
 
-function validSnapshot() {
+function validSnapshot(): Risk29Snapshot {
   return {
     schemaVersion: "1",
     modelVersion: "test-model",
