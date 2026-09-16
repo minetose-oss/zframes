@@ -1,0 +1,70 @@
+{
+  "version": "1.0.0",
+  "title": "Risk29 Global Risk Monitor",
+  "author": "Investment Intelligence POC",
+  "grid": {
+    "mode": "flow-vertical",
+    "columns": 12,
+    "rowHeight": 92,
+    "rows": 6,
+    "gap": 12,
+    "paddingX": 12
+  },
+  "background": {
+    "type": "none"
+  },
+  "theme": {
+    "accentHue": 205,
+    "accentSat": 88,
+    "baseHue": 222,
+    "baseSat": 24,
+    "upColor": "#3fd08f",
+    "downColor": "#ff6b81",
+    "surface": "dark"
+  },
+  "currency": { "code": "USD" },
+  "typography": {
+    "fontFamily": "sans",
+    "numericStyle": "tabular",
+    "scale": 1
+  },
+  "appearance": {
+    "radius": 18,
+    "borderStrength": 0.22,
+    "surfaceOpacity": 1,
+    "density": 0.94,
+    "elevation": 1
+  },
+  "frames": [
+    {
+      "id": "risk29-score-main",
+      "frame": "risk29-score",
+      "position": { "x": 0, "y": 0, "w": 4, "h": 3 },
+      "config": { "refreshMs": 60000 }
+    },
+    {
+      "id": "risk29-categories-main",
+      "frame": "risk29-categories",
+      "position": { "x": 4, "y": 0, "w": 8, "h": 3 },
+      "config": { "refreshMs": 60000 }
+    },
+    {
+      "id": "risk29-changes-main",
+      "frame": "risk29-changes",
+      "position": { "x": 8, "y": 8, "w": 4, "h": 4 },
+      "config": { "refreshMs": 60000, "maxItems": 6 }
+    },
+    {
+      "id": "risk29-heatmap-main",
+      "frame": "risk29-heatmap",
+      "position": { "x": 0, "y": 3, "w": 12, "h": 5 },
+      "config": { "refreshMs": 60000, "maxSignals": 29 }
+    },
+    {
+      "id": "risk29-history-main",
+      "frame": "risk29-history",
+      "position": { "x": 0, "y": 8, "w": 8, "h": 4 },
+      "config": { "refreshMs": 300000, "days": 30, "showCategories": false }
+    }
+  ]
+}
