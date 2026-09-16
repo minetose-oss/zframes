@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 import httpx
 import pytest
 
+from risk29_engine.models import Risk29History, Risk29HistoryPoint
+from risk29_engine.publish import _coalesce_history
 from risk29_engine.published import PublishedSnapshotClient
 
 
@@ -96,3 +98,19 @@ async def test_published_client_rejects_malformed_payload():
 
     with pytest.raises(ValueError):
         await client.latest()
+
+
+def test_coalesce_history_replaces_duplicate_short_interval_points():
+    history = Risk29History(
+        generatedAt="2026-09-16T12:00:00+00:00",
+        points=[
+            Risk29HistoryPoint(time=1_000_000, score=30, state="normal"),
+            Risk29HistoryPoint(time=1_300_000, score=31, state="watch"),
+            Risk29HistoryPoint(time=5_000_000, score=32, state="watch"),
+        ],
+    )
+
+    coalesced = _coalesce_history(history, minimum_interval_seconds=1800)
+
+    assert [point.time for point in coalesced.points] == [1_300_000, 5_000_000]
+    assert [point.score for point in coalesced.points] == [31, 32]
