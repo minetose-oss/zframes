@@ -76,8 +76,10 @@ export function useRisk29Snapshot(refreshMs = 60_000): {
   isLoading: boolean;
   error: Error | null;
 } {
-  // POC bridge: these capability literals move into Capability in Phase 0C
-  // after the first end-to-end board proves the contract.
+  // POC bridge: keep the product-specific literals isolated until the visible
+  // Phase 0C card has been validated end-to-end. Promotion into Capability is
+  // the cleanup step after the POC contract is proven, not a prerequisite for
+  // rendering it.
   const provider = useProviderFor("risk29-snapshot" as Capability, "risk29");
   const { data: snapshot, isLoading, error } = useRisk29Polled<Risk29Snapshot>(
     provider?.getRisk29Snapshot ? () => provider.getRisk29Snapshot!() : null,
