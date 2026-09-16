@@ -32,11 +32,12 @@ class SourceClient(Protocol):
 class PublicSourceClient:
     timeout_seconds: float = 20.0
     retry_attempts: int = 2
-    # FRED is the only source hit several times per snapshot. Keep a small
-    # concurrency cap so a serverless cold start does not open seven parallel
-    # TLS/download sessions to the same public endpoint.
+    # Fetch FRED series concurrently. The request-level timeout is deliberately
+    # much lower on Vercel, so queuing seven series behind a small semaphore can
+    # exceed the serverless invocation limit even when each request times out
+    # correctly. Eight slots cover the current seven FRED-backed signals.
     _fred_semaphore: asyncio.Semaphore = field(
-        default_factory=lambda: asyncio.Semaphore(3), init=False, repr=False
+        default_factory=lambda: asyncio.Semaphore(8), init=False, repr=False
     )
 
     async def _get_text(self, url: str, *, params: dict[str, str] | None = None) -> str:
