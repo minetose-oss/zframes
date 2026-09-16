@@ -958,6 +958,9 @@ export const frameLoaders: Record<string, FrameLoader> = {
   "risk-reward": {
     load: () => import("./risk-reward").then((m) => m.riskRewardFrame),
   },
+  "risk29-score": {
+    load: () => import("./risk29-score").then((m) => m.risk29ScoreFrame),
+  },
   "rsi-momentum": {
     load: () => import("./rsi-momentum").then((m) => m.rsiMomentumFrame),
   },
