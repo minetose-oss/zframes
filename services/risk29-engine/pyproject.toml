@@ -21,6 +21,9 @@ test = [
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
+[tool.vercel]
+entrypoint = "risk29_engine.main:app"
+
 [build-system]
 requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
