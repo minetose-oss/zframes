@@ -566,6 +566,9 @@ importers:
       '@zframes/provider-demo':
         specifier: workspace:*
         version: link:../provider-demo
+      '@zframes/provider-risk29':
+        specifier: workspace:*
+        version: link:../provider-risk29
       '@zframes/provider-wallet':
         specifier: workspace:*
         version: link:../provider-wallet
@@ -962,6 +965,22 @@ importers:
       '@zframes/spec':
         specifier: workspace:*
         version: link:../spec
+    devDependencies:
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
+  packages/provider-risk29:
+    dependencies:
+      '@zframes/data-primitives':
+        specifier: workspace:*
+        version: link:../data-primitives
+      '@zframes/spec':
+        specifier: workspace:*
+        version: link:../spec
+      zod:
+        specifier: ^4.1.0
+        version: 4.4.3
     devDependencies:
       typescript:
         specifier: ^5.8.0
