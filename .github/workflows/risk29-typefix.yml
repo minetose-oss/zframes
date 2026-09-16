@@ -25,39 +25,16 @@ jobs:
 
           path = Path("packages/provider-demo/src/mock-provider.ts")
           text = path.read_text()
-          old = '''      categories: [
-        "macro",
-        "credit",
-        "valuation",
-        "sentiment",
-        "qualitative",
-        "liquidity",
-        "global",
-        "technical",
-      ].map(unavailableCategory),'''
-          new = '''      categories: (
-        [
-          "macro",
-          "credit",
-          "valuation",
-          "sentiment",
-          "qualitative",
-          "liquidity",
-          "global",
-          "technical",
-        ] as const
-      ).map(unavailableCategory),'''
+          old = '      categories: [\n        "macro",\n        "credit",\n        "valuation",\n        "sentiment",\n        "qualitative",\n        "liquidity",\n        "global",\n        "technical",\n      ].map(unavailableCategory),'
+          new = '      categories: (\n        [\n          "macro",\n          "credit",\n          "valuation",\n          "sentiment",\n          "qualitative",\n          "liquidity",\n          "global",\n          "technical",\n        ] as const\n      ).map(unavailableCategory),'
           if old not in text:
               raise SystemExit("Risk29 category map anchor not found")
           path.write_text(text.replace(old, new, 1))
-
-          # Keep this branch clean: the helper workflow removes itself in the same fix commit.
-          Path(".github/workflows/risk29-typefix.yml").unlink()
 
       - name: Commit fix
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add packages/provider-demo/src/mock-provider.ts .github/workflows/risk29-typefix.yml
+          git add packages/provider-demo/src/mock-provider.ts
           git commit -m "fix(risk29): type demo category ids as literals"
           git push origin HEAD:risk29-poc
