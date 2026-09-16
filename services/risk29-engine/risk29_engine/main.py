@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,14 +9,23 @@ from .engine import Risk29Engine
 from .models import Risk29History, Risk29Snapshot
 from .sources import PublicSourceClient
 
+is_vercel = os.getenv("VERCEL") == "1"
 source_client = PublicSourceClient(
-    timeout_seconds=float(os.getenv("RISK29_HTTP_TIMEOUT_SECONDS", "20"))
+    # Vercel must never wait on slow public upstreams long enough to hit the
+    # function invocation ceiling. On serverless we prefer a visible
+    # `unavailable` signal over a 504 for the entire snapshot.
+    timeout_seconds=float(
+        os.getenv("RISK29_HTTP_TIMEOUT_SECONDS", "2.5" if is_vercel else "20")
+    ),
+    retry_attempts=int(
+        os.getenv("RISK29_HTTP_RETRY_ATTEMPTS", "1" if is_vercel else "2")
+    ),
 )
 engine = Risk29Engine(source_client)
 
 app = FastAPI(
     title="Risk29 Engine",
-    version="0.1.0",
+    version="0.1.1",
     description="Versioned Risk29 calculation service consumed by zframes.",
 )
 
