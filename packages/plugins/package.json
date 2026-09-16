@@ -24,6 +24,7 @@
   "dependencies": {
     "@zframes/provider-binance": "workspace:*",
     "@zframes/provider-demo": "workspace:*",
+    "@zframes/provider-risk29": "workspace:*",
     "@zframes/provider-wallet": "workspace:*",
     "@zframes/providers-keyless": "workspace:*",
     "@zframes/spec": "workspace:*"
