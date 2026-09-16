@@ -19,7 +19,7 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
   if (!snapshot) return <FrameStatus>no current Risk29 snapshot</FrameStatus>;
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-2 gap-2 md:grid-cols-4">
+    <div className="grid h-full min-h-0 grid-cols-2 grid-rows-4 gap-1.5 sm:gap-2 md:grid-cols-4 md:grid-rows-2">
       {snapshot.categories.map((category) => {
         const color = risk29StateColor(category.state);
         const available = category.availableSignals;
@@ -29,19 +29,19 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
         return (
           <div
             key={category.id}
-            className="flex min-h-0 flex-col justify-between rounded-xl border border-white/[0.08] bg-white/[0.025] p-3"
+            className="flex min-h-0 flex-col justify-between overflow-hidden rounded-lg border border-white/[0.08] bg-white/[0.025] px-2 py-1.5 sm:rounded-xl sm:p-3"
           >
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex min-w-0 items-start justify-between gap-1 sm:gap-2">
               <div className="min-w-0">
-                <div className="caption text-soft truncate uppercase">
+                <div className="text-soft truncate text-[9px] leading-tight font-semibold uppercase sm:text-xs sm:font-normal">
                   {category.label}
                 </div>
-                <div className="caption text-soft mt-1">
+                <div className="text-soft mt-0.5 text-[8px] leading-none sm:mt-1 sm:text-xs sm:leading-normal">
                   weight {category.weight.toFixed(0)}%
                 </div>
               </div>
               <span
-                className="caption shrink-0 rounded-full border px-1.5 py-0.5 font-bold tracking-[0.06em]"
+                className="shrink-0 whitespace-nowrap rounded-full border px-1 py-0.5 text-[8px] leading-none font-bold tracking-[0.04em] sm:px-1.5 sm:text-xs sm:leading-normal sm:tracking-[0.06em]"
                 style={{
                   color,
                   borderColor: `color-mix(in srgb, ${color} 42%, transparent)`,
@@ -51,15 +51,22 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
               </span>
             </div>
 
-            <div className="mt-2 flex items-end justify-between gap-2">
-              <div className="metric-sm tabular-nums" style={{ color }}>
+            <div className="mt-1 flex min-w-0 items-end justify-between gap-1 sm:mt-2 sm:gap-2">
+              <div
+                className="min-w-0 text-lg leading-none font-bold tabular-nums sm:text-2xl"
+                style={{ color }}
+              >
                 {category.score === null ? "—" : category.score.toFixed(0)}
-                <span className="caption text-soft ml-1">/100</span>
+                <span className="text-soft ml-1 text-[8px] font-normal sm:text-xs">
+                  /100
+                </span>
               </div>
-              <div className="caption text-soft text-right">
+              <div className="text-soft shrink-0 text-right text-[8px] leading-tight sm:text-xs sm:leading-normal">
                 {availability}
-                <br />
-                signals
+                <span className="hidden sm:inline">
+                  <br />
+                  signals
+                </span>
               </div>
             </div>
           </div>
