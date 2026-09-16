@@ -58,6 +58,7 @@ export { dividerFrame } from "./divider";
 export { marqueeFrame } from "./marquee";
 export { diceFrame } from "./dice";
 export { riskRewardFrame } from "./risk-reward";
+export { risk29ScoreFrame } from "./risk29-score";
 export { stopwatchFrame } from "./stopwatch";
 export { sessionProgressFrame } from "./session-progress";
 export { btcFeesFrame } from "./btc-fees";
@@ -343,6 +344,7 @@ import { dividerFrame } from "./divider";
 import { marqueeFrame } from "./marquee";
 import { diceFrame } from "./dice";
 import { riskRewardFrame } from "./risk-reward";
+import { risk29ScoreFrame } from "./risk29-score";
 import { stopwatchFrame } from "./stopwatch";
 import { sessionProgressFrame } from "./session-progress";
 import { btcFeesFrame } from "./btc-fees";
@@ -835,6 +837,7 @@ export const allFrames: AnyFrameDefinition[] = [
   returnCalendarFrame,
   returnDistributionFrame,
   returnsProjectorFrame,
+  risk29ScoreFrame,
   riskRewardFrame,
   rsiMomentumFrame,
   rulesCardFrame,
