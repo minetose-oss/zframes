@@ -95,7 +95,10 @@ function GlobalRisk29({ config }: { config: z.output<typeof schema> }) {
         <CardHeader.Aside>
           <span
             className="caption rounded-full border px-2 py-0.5 font-bold tracking-[0.08em]"
-            style={{ color, borderColor: `color-mix(in srgb, ${color} 42%, transparent)` }}
+            style={{
+              color,
+              borderColor: `color-mix(in srgb, ${color} 42%, transparent)`,
+            }}
           >
             {stateLabel}
           </span>
@@ -106,7 +109,10 @@ function GlobalRisk29({ config }: { config: z.output<typeof schema> }) {
         <div className="min-w-0">
           <div
             className="metric-xl leading-none tabular-nums"
-            style={{ color, textShadow: `0 0 24px ${color}44` }}
+            style={{
+              color,
+              textShadow: `0 0 24px color-mix(in srgb, ${color} 28%, transparent)`,
+            }}
           >
             {snapshot.score.toFixed(1)}
             <span className="body-sm text-soft ml-1 font-normal">/ 100</span>
