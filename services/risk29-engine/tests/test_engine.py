@@ -54,6 +54,7 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
+    assert snapshot.modelVersion == "risk29-p1-engine-0.1.1"
     assert snapshot.thresholdVersion == "risk29-p1-provisional-v1"
     assert len(snapshot.signals) == 10
     assert snapshot.health.total == 10
@@ -107,3 +108,33 @@ async def test_one_source_failure_does_not_zero_the_model(tmp_path):
     liquidity = next(category for category in snapshot.categories if category.id == "liquidity")
     assert liquidity.state == "unavailable"
     assert liquidity.score is None
+
+
+class FredTimeoutSources(FakeSources):
+    async def fred(self, series_id: str):
+        raise TimeoutError(f"FRED timeout: {series_id}")
+
+
+@pytest.mark.asyncio
+async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
+    now = datetime(2026, 9, 16, 2, tzinfo=timezone.utc)
+    engine = Risk29Engine(
+        FredTimeoutSources(),
+        data_dir=tmp_path,
+        now_fn=lambda: now,
+    )
+
+    snapshot = await engine.latest(force=True)
+
+    assert snapshot.health.available == 3
+    assert snapshot.health.errored == 7
+    assert snapshot.score is None
+    assert snapshot.state == "unavailable"
+    assert snapshot.regime == "unavailable"
+
+    # Partial detail remains available for diagnosis; we only suppress the
+    # misleading aggregate score/regime.
+    macro = next(category for category in snapshot.categories if category.id == "macro")
+    liquidity = next(category for category in snapshot.categories if category.id == "liquidity")
+    assert macro.score is not None
+    assert liquidity.score is not None
