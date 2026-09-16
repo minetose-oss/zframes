@@ -938,16 +938,18 @@ export class MockMarketDataProvider implements MarketDataProvider {
       score: null,
       state: "unavailable",
       regime: "unavailable",
-      categories: [
-        "macro",
-        "credit",
-        "valuation",
-        "sentiment",
-        "qualitative",
-        "liquidity",
-        "global",
-        "technical",
-      ].map(unavailableCategory),
+      categories: (
+        [
+          "macro",
+          "credit",
+          "valuation",
+          "sentiment",
+          "qualitative",
+          "liquidity",
+          "global",
+          "technical",
+        ] as const
+      ).map(unavailableCategory),
       signals: [
         {
           id: "demo-vix",
