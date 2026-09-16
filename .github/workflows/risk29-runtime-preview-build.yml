@@ -1,0 +1,108 @@
+name: Risk29 actual runtime preview build
+
+on:
+  push:
+    branches: [risk29-runtime-preview]
+    paths:
+      - .github/workflows/risk29-runtime-preview-build.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: risk29-runtime-preview
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare Risk29 static runtime routes
+        run: |
+          mkdir -p apps/runtime/public/__zframes
+          cp risk29-dashboard.json apps/runtime/public/__zframes/dashboard.json
+          cat > apps/runtime/public/__zframes/providers <<'JSON'
+          {"plugins":[{"id":"risk29","name":"Risk29 Intelligence Engine"}]}
+          JSON
+
+      - name: Create preview build config
+        run: |
+          cat > apps/runtime/vite.preview.config.ts <<'TS'
+          import baseConfig from "./vite.config";
+          import { defineConfig, mergeConfig } from "vite";
+
+          const config = mergeConfig(baseConfig, {
+            build: {
+              outDir: "dist-preview",
+              cssCodeSplit: false,
+              assetsInlineLimit: 100_000_000,
+              rollupOptions: {
+                output: {
+                  inlineDynamicImports: true,
+                },
+              },
+            },
+          });
+
+          const output = config.build?.rollupOptions?.output;
+          if (output && !Array.isArray(output)) {
+            delete output.manualChunks;
+          }
+
+          export default defineConfig(config);
+          TS
+
+      - name: Build actual zframes runtime
+        run: |
+          node packages/frames/scripts/copy-widget-icons.mjs
+          cd apps/runtime
+          pnpm exec vite build --config vite.preview.config.ts --configLoader runner
+
+      - name: Inline runtime JS and CSS for static preview
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const root = path.join(process.cwd(), 'apps/runtime/dist-preview');
+          let html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+
+          html = html.replace(/<link[^>]+href="([^"]+\.css)"[^>]*>/g, (_m, href) => {
+            const file = path.join(root, href.replace(/^\//, ''));
+            const css = fs.readFileSync(file, 'utf8');
+            return `<style>${css}</style>`;
+          });
+
+          html = html.replace(/<script([^>]*)src="([^"]+\.js)"([^>]*)><\/script>/g, (_m, before, src, after) => {
+            const file = path.join(root, src.replace(/^\//, ''));
+            const js = fs.readFileSync(file, 'utf8').replace(/<\/script/gi, '<\\/script');
+            const attrs = `${before}${after}`.replace(/\s+crossorigin(?:="[^"]*")?/g, '');
+            return `<script${attrs}>${js}</script>`;
+          });
+
+          fs.rmSync('runtime-preview-site', { recursive: true, force: true });
+          fs.mkdirSync('runtime-preview-site/__zframes', { recursive: true });
+          fs.mkdirSync('runtime-preview-site/risk29', { recursive: true });
+          fs.writeFileSync('runtime-preview-site/index.html', html);
+          fs.copyFileSync(path.join(root, '__zframes/dashboard.json'), 'runtime-preview-site/__zframes/dashboard.json');
+          fs.copyFileSync(path.join(root, '__zframes/providers'), 'runtime-preview-site/__zframes/providers');
+          fs.copyFileSync(path.join(root, 'risk29/latest.json'), 'runtime-preview-site/risk29/latest.json');
+          fs.copyFileSync(path.join(root, 'risk29/history.json'), 'runtime-preview-site/risk29/history.json');
+          NODE
+
+      - name: Commit preview bundle
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f runtime-preview-site
+          git commit -m "build(risk29): generate actual runtime preview site"
+          git push origin HEAD:risk29-runtime-preview
