@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import csv
 import io
 import re
-from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta, timezone
 from typing import Protocol
 
 import httpx
@@ -30,23 +31,76 @@ class SourceClient(Protocol):
 @dataclass
 class PublicSourceClient:
     timeout_seconds: float = 20.0
+    retry_attempts: int = 2
+    # FRED is the only source hit several times per snapshot. Keep a small
+    # concurrency cap so a serverless cold start does not open seven parallel
+    # TLS/download sessions to the same public endpoint.
+    _fred_semaphore: asyncio.Semaphore = field(
+        default_factory=lambda: asyncio.Semaphore(3), init=False, repr=False
+    )
 
     async def _get_text(self, url: str, *, params: dict[str, str] | None = None) -> str:
-        timeout = httpx.Timeout(self.timeout_seconds)
-        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
-            response = await client.get(url, params=params, headers={"User-Agent": "risk29-engine/0.1"})
-            response.raise_for_status()
-            return response.text
+        timeout = httpx.Timeout(self.timeout_seconds, connect=min(10.0, self.timeout_seconds))
+        last_error: Exception | None = None
+        for attempt in range(max(1, self.retry_attempts)):
+            try:
+                async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+                    response = await client.get(
+                        url,
+                        params=params,
+                        headers={
+                            "User-Agent": "risk29-engine/0.1",
+                            "Accept": "text/csv,text/plain,*/*",
+                        },
+                    )
+                    response.raise_for_status()
+                    return response.text
+            except httpx.TransportError as exc:
+                last_error = exc
+                if attempt + 1 >= max(1, self.retry_attempts):
+                    raise
+                await asyncio.sleep(0.35 * (attempt + 1))
+        assert last_error is not None
+        raise last_error
 
     async def _get_json(self, url: str):
-        timeout = httpx.Timeout(self.timeout_seconds)
-        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
-            response = await client.get(url, headers={"User-Agent": "risk29-engine/0.1"})
-            response.raise_for_status()
-            return response.json()
+        timeout = httpx.Timeout(self.timeout_seconds, connect=min(10.0, self.timeout_seconds))
+        last_error: Exception | None = None
+        for attempt in range(max(1, self.retry_attempts)):
+            try:
+                async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+                    response = await client.get(
+                        url,
+                        headers={
+                            "User-Agent": "risk29-engine/0.1",
+                            "Accept": "application/json,*/*",
+                        },
+                    )
+                    response.raise_for_status()
+                    return response.json()
+            except httpx.TransportError as exc:
+                last_error = exc
+                if attempt + 1 >= max(1, self.retry_attempts):
+                    raise
+                await asyncio.sleep(0.35 * (attempt + 1))
+        assert last_error is not None
+        raise last_error
 
     async def fred(self, series_id: str) -> list[SeriesPoint]:
-        text = await self._get_text(FRED_URL, params={"id": series_id})
+        # Risk29 only needs enough daily history for MA200 / 20-session momentum.
+        # Asking FRED for the full lifetime of each series is needlessly heavy in
+        # a serverless function and was observed to cause ReadTimeouts on Vercel.
+        today = datetime.now(timezone.utc).date()
+        start = today - timedelta(days=550)
+        async with self._fred_semaphore:
+            text = await self._get_text(
+                FRED_URL,
+                params={
+                    "id": series_id,
+                    "cosd": start.isoformat(),
+                    "coed": today.isoformat(),
+                },
+            )
         rows = csv.reader(io.StringIO(text))
         header = next(rows, None)
         if not header or len(header) < 2:
