@@ -167,20 +167,7 @@ class Risk29Engine:
         configs: list[dict[str, Any]] = list(self.config.get("signals", []))
         signals = await asyncio.gather(*(self._build_signal(item, now) for item in configs))
         categories = self._aggregate_categories(signals, configs)
-        weighted = [
-            (category.score, category.weight)
-            for category in categories
-            if category.score is not None and category.weight > 0
-        ]
-        active_weight = sum(weight for _, weight in weighted)
-        overall = (
-            round(sum(score * weight for score, weight in weighted) / active_weight, 2)
-            if active_weight
-            else None
-        )
-        previous = self.store.load_latest()
-        changes = self._changes(previous, signals)
-        state = state_from_score(overall)
+
         health = Risk29Health(
             available=sum(
                 signal.state != "unavailable"
@@ -193,6 +180,43 @@ class Risk29Engine:
             errored=sum(signal.freshness == "error" for signal in signals),
             total=len(signals),
         )
+
+        weighted = [
+            (category.score, category.weight)
+            for category in categories
+            if category.score is not None and category.weight > 0
+        ]
+        active_weight = sum(weight for _, weight in weighted)
+
+        configured_categories = [
+            category
+            for category in categories
+            if category.totalSignals > 0 and category.weight > 0
+        ]
+        configured_weight = sum(category.weight for category in configured_categories)
+        available_weight = sum(
+            category.weight for category in configured_categories if category.score is not None
+        )
+        weight_coverage = available_weight / configured_weight if configured_weight else 0.0
+        signal_coverage = health.available / health.total if health.total else 0.0
+        min_signal_coverage = float(self.config.get("minimum_signal_coverage", 0.70))
+        min_weight_coverage = float(self.config.get("minimum_weight_coverage", 0.75))
+        enough_coverage = (
+            signal_coverage >= min_signal_coverage
+            and weight_coverage >= min_weight_coverage
+        )
+
+        # Missing data must never manufacture a reassuring low-risk reading.
+        # We keep partial category/signal detail visible, but the aggregate is
+        # unavailable until enough of the configured model is live.
+        overall = (
+            round(sum(score * weight for score, weight in weighted) / active_weight, 2)
+            if active_weight and enough_coverage
+            else None
+        )
+        previous = self.store.load_latest()
+        changes = self._changes(previous, signals)
+        state = state_from_score(overall)
         return Risk29Snapshot(
             modelVersion=self.model_version,
             thresholdVersion=self.threshold_version,
