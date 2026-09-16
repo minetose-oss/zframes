@@ -77,7 +77,7 @@ export function useRisk29Snapshot(refreshMs = 60_000): {
   // Phase 0C card has been validated end-to-end. Promotion into Capability is
   // the cleanup step after the POC contract is proven, not a prerequisite for
   // rendering it.
-  const provider = useProviderFor("risk29-snapshot" as Capability, "risk29");
+  const provider = useProviderFor("risk29-snapshot" as Capability);
   const {
     data: snapshot,
     isLoading,
@@ -96,7 +96,7 @@ export function useRisk29History(refreshMs = 5 * 60_000): {
   isLoading: boolean;
   error: Error | null;
 } {
-  const provider = useProviderFor("risk29-history" as Capability, "risk29");
+  const provider = useProviderFor("risk29-history" as Capability);
   const {
     data: history,
     isLoading,

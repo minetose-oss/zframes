@@ -33,7 +33,13 @@ import {
   investorFlowBarsMeta,
   closeHistoryMeta,
 } from "./schemas/markets";
-import { risk29ScoreMeta } from "./schemas/risk29";
+import {
+  risk29CategoriesMeta,
+  risk29ChangesMeta,
+  risk29HeatmapMeta,
+  risk29HistoryMeta,
+  risk29ScoreMeta,
+} from "./schemas/risk29";
 import {
   tvlTreemapMeta,
   bitcoinDominanceMeta,
@@ -374,6 +380,10 @@ export const frameMetas: FrameMeta[] = [
   priceTickerMeta,
   returnCalendarMeta,
   returnDistributionMeta,
+  risk29CategoriesMeta,
+  risk29ChangesMeta,
+  risk29HeatmapMeta,
+  risk29HistoryMeta,
   risk29ScoreMeta,
   rsiMomentumMeta,
   topMoversMeta,

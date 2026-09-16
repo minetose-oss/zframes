@@ -381,6 +381,11 @@ const NO_MONEY: Record<string, string> = {
   quote: "a user-authored quote",
   "real-wages": "real earnings vs CPI, in %",
   "reserve-risk": "the reserve-risk ratio",
+  "risk29-categories": "engine-supplied 0–100 category risk scores and weights",
+  "risk29-changes": "engine-supplied state transitions and score deltas",
+  "risk29-heatmap": "source-native observations plus 0–100 risk scores",
+  "risk29-history": "historical 0–100 aggregate/category risk scores",
+  "risk29-score": "engine-supplied 0–100 aggregate risk score and data health",
   "rsi-momentum": "RSI, 0–100",
   "rules-card": "user-authored rules",
   "sector-bars":

@@ -104,6 +104,7 @@ import type {
   BondMarketYear,
   RetailGoldPrice,
 } from "@zframes/spec";
+import type { Risk29History, Risk29Snapshot } from "@zframes/spec/risk29";
 
 /**
  * What the mock provider should pretend is happening:
@@ -890,6 +891,8 @@ export const DEMO_CAPABILITIES: readonly Capability[] = [
   "bond-market-stats",
   "bond-issuance",
   "retail-gold-price",
+  "risk29-snapshot",
+  "risk29-history",
   "portfolio",
 ];
 
@@ -912,6 +915,124 @@ export class MockMarketDataProvider implements MarketDataProvider {
     if (this.mode === "loading") return new Promise<T>(() => {});
     if (this.mode === "empty") return Promise.resolve(emptyValue);
     return Promise.resolve(build());
+  }
+
+  getRisk29Snapshot(): Promise<Risk29Snapshot> {
+    const generatedAt = new Date(BASELINE_NOW).toISOString();
+    const unavailableCategory = (
+      id: Risk29Snapshot["categories"][number]["id"],
+    ): Risk29Snapshot["categories"][number] => ({
+      id,
+      label: id,
+      weight: 0,
+      score: null,
+      state: "unavailable",
+      availableSignals: 0,
+      totalSignals: 0,
+    });
+    const empty: Risk29Snapshot = {
+      schemaVersion: "1",
+      modelVersion: "demo-risk29-v1",
+      thresholdVersion: "demo-risk29-v1",
+      generatedAt,
+      score: null,
+      state: "unavailable",
+      regime: "unavailable",
+      categories: [
+        "macro",
+        "credit",
+        "valuation",
+        "sentiment",
+        "qualitative",
+        "liquidity",
+        "global",
+        "technical",
+      ].map(unavailableCategory),
+      signals: [
+        {
+          id: "demo-vix",
+          label: "Demo VIX",
+          category: "sentiment",
+          source: "demo",
+          value: null,
+          unit: "index",
+          riskScore: null,
+          state: "unavailable",
+          asOf: null,
+          fetchedAt: generatedAt,
+          ageSeconds: null,
+          freshness: "error",
+          reason: "synthetic demo has no current observation",
+          thresholdVersion: "demo-risk29-v1",
+        },
+      ],
+      changes: [],
+      health: { available: 0, stale: 0, errored: 1, total: 1 },
+    };
+    return this.gate<Risk29Snapshot>(empty, () => ({
+      ...empty,
+      score: 48,
+      state: "watch",
+      regime: "neutral",
+      categories: empty.categories.map((category) =>
+        category.id === "sentiment"
+          ? {
+              ...category,
+              weight: 16,
+              score: 48,
+              state: "watch",
+              availableSignals: 1,
+              totalSignals: 1,
+            }
+          : category,
+      ),
+      signals: [
+        {
+          id: "demo-vix",
+          label: "Demo VIX",
+          category: "sentiment",
+          source: "demo",
+          value: 19.8,
+          unit: "index",
+          riskScore: 48,
+          state: "watch",
+          direction: "flat",
+          change: 0,
+          changeWindow: "1d",
+          asOf: generatedAt.slice(0, 10),
+          fetchedAt: generatedAt,
+          ageSeconds: 0,
+          freshness: "fresh",
+          thresholdVersion: "demo-risk29-v1",
+        },
+      ],
+      health: { available: 1, stale: 0, errored: 0, total: 1 },
+    }));
+  }
+
+  getRisk29History(): Promise<Risk29History> {
+    const generatedAt = new Date(BASELINE_NOW).toISOString();
+    return this.gate<Risk29History>(
+      { schemaVersion: "1", generatedAt, points: [] },
+      () => ({
+        schemaVersion: "1",
+        generatedAt,
+        points: [
+          {
+            time: BASELINE_NOW - DAY,
+            score: 46,
+            state: "watch",
+            categoryScores: { sentiment: 46 },
+          },
+          {
+            time: BASELINE_NOW,
+            score: 48,
+            state: "watch",
+            categoryScores: { sentiment: 48 },
+          },
+        ],
+      }),
+    );
   }
 
   // ── on-chain valuation / cycle ──────────────────────────────────────────
