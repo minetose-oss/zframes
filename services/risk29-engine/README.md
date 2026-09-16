@@ -65,6 +65,8 @@ The plugin then sends snapshot/history requests to that engine origin; the engin
 
 For the Phase 1B visual end-to-end preview we can also place a thin same-origin Vercel rewrite in front of the Phase 0 actual runtime: `/risk29/*` rewrites to the live engine while all other paths rewrite to the already-QA'd zframes runtime bundle. This proves live data wiring without rebuilding or duplicating presentation code.
 
+This preview topology is intentionally temporary. Production should use a durable engine deployment plus persistent history storage and explicit origins rather than relying on ephemeral preview rewrites.
+
 ## Reliability rules
 
 - A failed source becomes `freshness=error`, `state=unavailable`, `value=null`, `riskScore=null`.
