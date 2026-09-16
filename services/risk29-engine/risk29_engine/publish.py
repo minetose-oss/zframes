@@ -39,6 +39,23 @@ async def _seed_previous(base_url: str | None, data_dir: Path) -> None:
             (data_dir / name).write_text(validated.model_dump_json(indent=2))
 
 
+def _coalesce_history(
+    history: Risk29History,
+    *,
+    minimum_interval_seconds: int = 1800,
+) -> Risk29History:
+    """Collapse repeated CI/manual publishes inside the same short time window."""
+
+    minimum_interval_ms = minimum_interval_seconds * 1000
+    points = []
+    for point in history.points:
+        if points and point.time - points[-1].time < minimum_interval_ms:
+            points[-1] = point
+        else:
+            points.append(point)
+    return Risk29History(generatedAt=history.generatedAt, points=points)
+
+
 async def publish(
     output_dir: Path,
     *,
@@ -69,7 +86,7 @@ async def publish(
                 f"score={snapshot.score!r}"
             )
 
-        history = engine.history(365)
+        history = _coalesce_history(engine.history(365))
         (output_dir / "latest.json").write_text(snapshot.model_dump_json(indent=2) + "\n")
         (output_dir / "history.json").write_text(history.model_dump_json(indent=2) + "\n")
         return snapshot
