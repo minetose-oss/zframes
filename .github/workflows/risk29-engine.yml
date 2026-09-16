@@ -1,0 +1,30 @@
+name: Risk29 engine
+
+on:
+  push:
+    branches: [risk29-phase1]
+    paths:
+      - services/risk29-engine/**
+      - .github/workflows/risk29-engine.yml
+  pull_request:
+    paths:
+      - services/risk29-engine/**
+      - .github/workflows/risk29-engine.yml
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/risk29-engine/pyproject.toml
+      - name: Install engine
+        run: python -m pip install -e 'services/risk29-engine[test]'
+      - name: Compile
+        run: python -m compileall -q services/risk29-engine/risk29_engine
+      - name: Test
+        run: python -m pytest -q services/risk29-engine/tests
