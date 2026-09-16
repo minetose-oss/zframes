@@ -3,32 +3,17 @@ import {
   useRisk29History,
   useRisk29Snapshot,
 } from "@zframes/core/risk29";
-import type { Risk29State } from "@zframes/spec/risk29";
 import type { z } from "zod";
 import { CardHeader } from "./card-header";
 import { DOWN_COLOR, UP_COLOR } from "./format";
+import {
+  risk29StateColor,
+  risk29StateLabel,
+} from "./risk29-shared";
 import { risk29ScoreMeta } from "./schemas/risk29";
 import { FrameStatus } from "./ui";
 
 const schema = risk29ScoreMeta.schema;
-
-const WATCH_COLOR = "#facc15";
-const WARNING_COLOR = "#fb923c";
-
-function stateColor(state: Risk29State): string {
-  switch (state) {
-    case "normal":
-      return UP_COLOR;
-    case "watch":
-      return WATCH_COLOR;
-    case "warning":
-      return WARNING_COLOR;
-    case "alert":
-      return DOWN_COLOR;
-    case "unavailable":
-      return "currentColor";
-  }
-}
 
 function prettyRegime(regime: string): string {
   return regime
@@ -87,8 +72,8 @@ function GlobalRisk29({ config }: { config: z.output<typeof schema> }) {
       ? null
       : snapshot.score - previous.score;
 
-  const color = stateColor(snapshot.state);
-  const stateLabel = snapshot.state.toUpperCase();
+  const color = risk29StateColor(snapshot.state);
+  const stateLabel = risk29StateLabel(snapshot.state);
   const health = snapshot.health;
   const healthLabel = `${health.available}/${health.total} available`;
   const freshnessLabel =
@@ -134,8 +119,18 @@ function GlobalRisk29({ config }: { config: z.output<typeof schema> }) {
                 "no prior run"
               )
             ) : (
-              <span style={{ color: scoreDelta > 0 ? DOWN_COLOR : scoreDelta < 0 ? UP_COLOR : "currentColor" }}>
-                {scoreDelta > 0 ? "↑" : scoreDelta < 0 ? "↓" : "→"} {scoreDelta > 0 ? "+" : ""}
+              <span
+                style={{
+                  color:
+                    scoreDelta > 0
+                      ? DOWN_COLOR
+                      : scoreDelta < 0
+                        ? UP_COLOR
+                        : "currentColor",
+                }}
+              >
+                {scoreDelta > 0 ? "↑" : scoreDelta < 0 ? "↓" : "→"}{" "}
+                {scoreDelta > 0 ? "+" : ""}
                 {scoreDelta.toFixed(1)} vs prior
               </span>
             )}
