@@ -1,5 +1,7 @@
 threshold_version: risk29-p1-provisional-v1
-model_version: risk29-p1-engine-0.1.0
+model_version: risk29-p1-engine-0.1.1
+minimum_signal_coverage: 0.70
+minimum_weight_coverage: 0.75
 
 categories:
   macro: {label: Macro, weight: 18}
