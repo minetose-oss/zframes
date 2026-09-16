@@ -1,0 +1,52 @@
+name: Risk29 format refresh
+
+on:
+  push:
+    branches: [risk29-poc]
+    paths:
+      - .github/workflows/risk29-format.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: risk29-poc
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format Risk29 files
+        run: >-
+          pnpm exec prettier --write
+          apps/runtime/public/risk29
+          packages/core/src/risk29-hooks.tsx
+          packages/frames/src/risk29-categories.tsx
+          packages/frames/src/risk29-changes.tsx
+          packages/frames/src/risk29-heatmap.tsx
+          packages/frames/src/risk29-history.tsx
+          packages/frames/src/risk29-score.tsx
+          packages/frames/src/risk29-shared.ts
+          packages/frames/src/schemas/risk29.ts
+          packages/provider-risk29/src/index.test.ts
+          packages/provider-risk29/src/index.ts
+          packages/spec/src/risk29.test.ts
+          packages/spec/src/risk29.ts
+      - name: Commit formatting
+        run: |
+          if git diff --quiet; then
+            echo "Already formatted"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/runtime/public/risk29 packages/core/src/risk29-hooks.tsx packages/frames/src/risk29-categories.tsx packages/frames/src/risk29-changes.tsx packages/frames/src/risk29-heatmap.tsx packages/frames/src/risk29-history.tsx packages/frames/src/risk29-score.tsx packages/frames/src/risk29-shared.ts packages/frames/src/schemas/risk29.ts packages/provider-risk29/src/index.test.ts packages/provider-risk29/src/index.ts packages/spec/src/risk29.test.ts packages/spec/src/risk29.ts
+          git commit -m "style(risk29): apply prettier"
+          git push origin HEAD:risk29-poc
