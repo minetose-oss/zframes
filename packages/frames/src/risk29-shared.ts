@@ -72,10 +72,7 @@ export function risk29FreshnessColor(freshness: Risk29Freshness): string {
   }
 }
 
-export function formatRisk29Value(
-  value: number | null,
-  unit: string,
-): string {
+export function formatRisk29Value(value: number | null, unit: string): string {
   if (value === null || !Number.isFinite(value)) return "—";
 
   const magnitude = Math.abs(value);

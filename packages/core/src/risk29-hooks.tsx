@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Capability } from "@zframes/spec/types";
-import type {
-  Risk29History,
-  Risk29Snapshot,
-} from "@zframes/spec/risk29";
+import type { Risk29History, Risk29Snapshot } from "@zframes/spec/risk29";
 import { useProviderFor } from "./hooks";
 
 interface Risk29HookState<T> {
@@ -81,7 +78,11 @@ export function useRisk29Snapshot(refreshMs = 60_000): {
   // the cleanup step after the POC contract is proven, not a prerequisite for
   // rendering it.
   const provider = useProviderFor("risk29-snapshot" as Capability, "risk29");
-  const { data: snapshot, isLoading, error } = useRisk29Polled<Risk29Snapshot>(
+  const {
+    data: snapshot,
+    isLoading,
+    error,
+  } = useRisk29Polled<Risk29Snapshot>(
     provider?.getRisk29Snapshot ? () => provider.getRisk29Snapshot!() : null,
     refreshMs,
     [provider, refreshMs],
@@ -96,7 +97,11 @@ export function useRisk29History(refreshMs = 5 * 60_000): {
   error: Error | null;
 } {
   const provider = useProviderFor("risk29-history" as Capability, "risk29");
-  const { data: history, isLoading, error } = useRisk29Polled<Risk29History>(
+  const {
+    data: history,
+    isLoading,
+    error,
+  } = useRisk29Polled<Risk29History>(
     provider?.getRisk29History ? () => provider.getRisk29History!() : null,
     refreshMs,
     [provider, refreshMs],

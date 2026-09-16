@@ -1,15 +1,9 @@
 import { defineFrame } from "@zframes/core";
-import {
-  useRisk29History,
-  useRisk29Snapshot,
-} from "@zframes/core/risk29";
+import { useRisk29History, useRisk29Snapshot } from "@zframes/core/risk29";
 import type { z } from "zod";
 import { CardHeader } from "./card-header";
 import { DOWN_COLOR, UP_COLOR } from "./format";
-import {
-  risk29StateColor,
-  risk29StateLabel,
-} from "./risk29-shared";
+import { risk29StateColor, risk29StateLabel } from "./risk29-shared";
 import { risk29ScoreMeta } from "./schemas/risk29";
 import { FrameStatus } from "./ui";
 
@@ -53,7 +47,9 @@ function GlobalRisk29({ config }: { config: z.output<typeof schema> }) {
   // provider after a failed refresh. If the service cannot validate a current
   // payload, make that failure visible rather than showing an old score as live.
   if (snapshotError)
-    return <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>;
+    return (
+      <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>
+    );
 
   if (!snapshot || snapshot.score === null)
     return <FrameStatus>no current Risk29 score</FrameStatus>;

@@ -25,7 +25,8 @@ export class Risk29Provider {
   // Capability is still a closed union in upstream zframes. The POC contract
   // lives behind @zframes/spec/risk29 until we prove it; this one cast is the
   // temporary bridge. Phase 0B promotes the two strings into the shared union.
-  readonly capabilities = RISK29_CAPABILITIES as unknown as readonly Capability[];
+  readonly capabilities =
+    RISK29_CAPABILITIES as unknown as readonly Capability[];
 
   private readonly baseUrl: string;
   private readonly snapshotCache = new TtlCache<Risk29Snapshot>({

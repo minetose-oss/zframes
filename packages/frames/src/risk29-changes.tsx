@@ -3,10 +3,7 @@ import { useRisk29Snapshot } from "@zframes/core/risk29";
 import type { z } from "zod";
 import { risk29ChangesMeta } from "./schemas/risk29";
 import { FrameStatus, scrollAreaClass } from "./ui";
-import {
-  risk29StateColor,
-  risk29StateLabel,
-} from "./risk29-shared";
+import { risk29StateColor, risk29StateLabel } from "./risk29-shared";
 
 const schema = risk29ChangesMeta.schema;
 
@@ -16,7 +13,9 @@ function Risk29Changes({ config }: { config: z.output<typeof schema> }) {
   if (isLoading)
     return <FrameStatus loading>loading Risk29 changes…</FrameStatus>;
   if (error)
-    return <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>;
+    return (
+      <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>
+    );
   if (!snapshot) return <FrameStatus>no current Risk29 snapshot</FrameStatus>;
   if (snapshot.changes.length === 0)
     return <FrameStatus>no material changes since prior run</FrameStatus>;
@@ -48,9 +47,17 @@ function Risk29Changes({ config }: { config: z.output<typeof schema> }) {
               {delta !== null && (
                 <span
                   className="body-sm shrink-0 font-bold tabular-nums"
-                  style={{ color: delta > 0 ? risk29StateColor("alert") : delta < 0 ? risk29StateColor("normal") : "currentColor" }}
+                  style={{
+                    color:
+                      delta > 0
+                        ? risk29StateColor("alert")
+                        : delta < 0
+                          ? risk29StateColor("normal")
+                          : "currentColor",
+                  }}
                 >
-                  {delta > 0 ? "+" : ""}{delta.toFixed(0)}
+                  {delta > 0 ? "+" : ""}
+                  {delta.toFixed(0)}
                 </span>
               )}
             </div>

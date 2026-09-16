@@ -13,8 +13,12 @@ const RISK29_SOURCE = {
   url: "https://github.com/minetose-oss/zframes",
 };
 
-const snapshotCapability = ["risk29-snapshot"] as unknown as readonly Capability[];
-const historyCapability = ["risk29-history"] as unknown as readonly Capability[];
+const snapshotCapability = [
+  "risk29-snapshot",
+] as unknown as readonly Capability[];
+const historyCapability = [
+  "risk29-history",
+] as unknown as readonly Capability[];
 const snapshotAndHistoryCapabilities = [
   "risk29-snapshot",
   "risk29-history",
@@ -135,6 +139,8 @@ Optional category lines help identify which family drove the move. Missing categ
     showCategories: z
       .boolean()
       .default(false)
-      .describe("Overlay category score histories when present in the payload."),
+      .describe(
+        "Overlay category score histories when present in the payload.",
+      ),
   }),
 });

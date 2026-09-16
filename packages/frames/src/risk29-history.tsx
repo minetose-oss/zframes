@@ -60,9 +60,10 @@ function Risk29History({ config }: { config: z.output<typeof schema> }) {
             (index + 1) % CHART_COLORS_MULTI_SERIES.length
           ],
         data: points.flatMap((point) => {
-          const value = point.categoryScores[
-            categoryId as keyof typeof point.categoryScores
-          ];
+          const value =
+            point.categoryScores[
+              categoryId as keyof typeof point.categoryScores
+            ];
           return value === undefined
             ? []
             : [{ date: new Date(point.time).toISOString(), value }];
@@ -75,25 +76,28 @@ function Risk29History({ config }: { config: z.output<typeof schema> }) {
 
   if (isLoading && !history)
     return <FrameStatus loading>loading Risk29 history…</FrameStatus>;
-  if (error)
-    return <FrameStatus>Risk29 history unavailable</FrameStatus>;
+  if (error) return <FrameStatus>Risk29 history unavailable</FrameStatus>;
   if (series.length === 0 || series[0].data.length < 2)
     return <FrameStatus>not enough Risk29 history yet</FrameStatus>;
 
   const latest = series[0].data.at(-1)?.value;
   const first = series[0].data[0]?.value;
-  const delta = latest !== undefined && first !== undefined ? latest - first : null;
+  const delta =
+    latest !== undefined && first !== undefined ? latest - first : null;
 
   return (
     <ChartCard>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="caption text-soft uppercase">{config.days}D trend</div>
+          <div className="caption text-soft uppercase">
+            {config.days}D trend
+          </div>
           <div className="metric-sm text-strong tabular-nums">
             {latest?.toFixed(1)}
             {delta !== null && (
               <span className="caption text-soft ml-1.5">
-                {delta > 0 ? "+" : ""}{delta.toFixed(1)}
+                {delta > 0 ? "+" : ""}
+                {delta.toFixed(1)}
               </span>
             )}
           </div>
@@ -108,7 +112,13 @@ function Risk29History({ config }: { config: z.output<typeof schema> }) {
       <ChartCard.Body>
         <TimeSeriesChart
           series={series}
-          timeframe={config.days <= 31 ? ChartTimeframe["1M"] : config.days <= 92 ? ChartTimeframe["3M"] : ChartTimeframe["1Y"]}
+          timeframe={
+            config.days <= 31
+              ? ChartTimeframe["1M"]
+              : config.days <= 92
+                ? ChartTimeframe["3M"]
+                : ChartTimeframe["1Y"]
+          }
           fill
           yDomain={[0, 100]}
           formatValue={(value) => value.toFixed(1)}

@@ -20,7 +20,9 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
   if (isLoading)
     return <FrameStatus loading>loading Risk29 signals…</FrameStatus>;
   if (error)
-    return <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>;
+    return (
+      <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>
+    );
   if (!snapshot) return <FrameStatus>no current Risk29 snapshot</FrameStatus>;
 
   const signals = snapshot.signals.slice(0, config.maxSignals);
@@ -69,7 +71,9 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
                   className="body-sm text-right font-bold tabular-nums"
                   style={{ color: stateColor }}
                 >
-                  {signal.riskScore === null ? "—" : signal.riskScore.toFixed(0)}
+                  {signal.riskScore === null
+                    ? "—"
+                    : signal.riskScore.toFixed(0)}
                 </span>
 
                 <span

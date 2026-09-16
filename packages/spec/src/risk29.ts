@@ -36,11 +36,7 @@ export const Risk29StateSchema = z.enum([
 ]);
 export type Risk29State = z.infer<typeof Risk29StateSchema>;
 
-export const Risk29DirectionSchema = z.enum([
-  "improving",
-  "worsening",
-  "flat",
-]);
+export const Risk29DirectionSchema = z.enum(["improving", "worsening", "flat"]);
 export type Risk29Direction = z.infer<typeof Risk29DirectionSchema>;
 
 export const Risk29FreshnessSchema = z.enum([
@@ -187,7 +183,8 @@ export const Risk29SnapshotSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["categories"],
-        message: "Risk29 snapshot must contain each of the eight categories exactly once",
+        message:
+          "Risk29 snapshot must contain each of the eight categories exactly once",
       });
     } else {
       for (const id of RISK29_CATEGORY_IDS) {

@@ -13,7 +13,9 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
   if (isLoading)
     return <FrameStatus loading>loading Risk29 categories…</FrameStatus>;
   if (error)
-    return <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>;
+    return (
+      <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>
+    );
   if (!snapshot) return <FrameStatus>no current Risk29 snapshot</FrameStatus>;
 
   return (
@@ -40,17 +42,17 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
               </div>
               <span
                 className="caption shrink-0 rounded-full border px-1.5 py-0.5 font-bold tracking-[0.06em]"
-                style={{ color, borderColor: `color-mix(in srgb, ${color} 42%, transparent)` }}
+                style={{
+                  color,
+                  borderColor: `color-mix(in srgb, ${color} 42%, transparent)`,
+                }}
               >
                 {risk29StateLabel(category.state)}
               </span>
             </div>
 
             <div className="mt-2 flex items-end justify-between gap-2">
-              <div
-                className="metric-sm tabular-nums"
-                style={{ color }}
-              >
+              <div className="metric-sm tabular-nums" style={{ color }}>
                 {category.score === null ? "—" : category.score.toFixed(0)}
                 <span className="caption text-soft ml-1">/100</span>
               </div>
