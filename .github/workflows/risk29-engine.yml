@@ -10,6 +10,13 @@ on:
     paths:
       - services/risk29-engine/**
       - .github/workflows/risk29-engine.yml
+  schedule:
+    - cron: "30 1 * * *"
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   test:
@@ -28,3 +35,59 @@ jobs:
         run: python -m compileall -q services/risk29-engine/risk29_engine
       - name: Test
         run: python -m pytest -q services/risk29-engine/tests
+
+  publish-live:
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: risk29-live-publisher
+      cancel-in-progress: false
+    steps:
+      - name: Check out engine source
+        uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/risk29-engine/pyproject.toml
+
+      - name: Install engine
+        run: python -m pip install -e 'services/risk29-engine[test]'
+
+      - name: Calculate validated live snapshot
+        env:
+          RISK29_EXISTING_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/risk29-live-data/risk29
+          RISK29_PUBLISH_HTTP_TIMEOUT_SECONDS: "20"
+          RISK29_PUBLISH_RETRY_ATTEMPTS: "2"
+          RISK29_PUBLISH_MINIMUM_AVAILABLE: "7"
+        run: >-
+          python -m risk29_engine.publish
+          --output-dir /tmp/risk29-published
+          --existing-base-url "$RISK29_EXISTING_BASE_URL"
+          --minimum-available "$RISK29_PUBLISH_MINIMUM_AVAILABLE"
+
+      - name: Check out durable data branch
+        uses: actions/checkout@v7
+        with:
+          ref: risk29-live-data
+          path: risk29-live-data
+          fetch-depth: 1
+
+      - name: Publish latest and history JSON
+        run: |
+          mkdir -p risk29-live-data/risk29
+          cp /tmp/risk29-published/latest.json risk29-live-data/risk29/latest.json
+          cp /tmp/risk29-published/history.json risk29-live-data/risk29/history.json
+          cd risk29-live-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add risk29/latest.json risk29/history.json
+          if git diff --cached --quiet; then
+            echo "Risk29 publication unchanged"
+            exit 0
+          fi
+          git commit -m "data: refresh Risk29 live snapshot"
+          git push origin HEAD:risk29-live-data
