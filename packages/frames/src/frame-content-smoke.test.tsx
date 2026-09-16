@@ -930,7 +930,10 @@ describe("the currency classification covers the whole registry", () => {
     // volatility index and token counts. The money-bearing six went to CONVERTS
     // (real price, vs-macro, spec notional, both crypto profile cards, the two
     // protocol cards and the chain table), so the split holds here too.
-    expect(Object.keys(NO_MONEY).length).toBeLessThanOrEqual(167);
+    // Risk29 presentation cards render engine scores, states, source-native
+    // observations and freshness — never currency. Ratchet the bounded bucket
+    // for this POC rather than misclassifying those cards as money frames.
+    expect(Object.keys(NO_MONEY).length).toBeLessThanOrEqual(171);
     expect(Object.keys(CONVERTS).length).toBeGreaterThanOrEqual(70);
   });
 

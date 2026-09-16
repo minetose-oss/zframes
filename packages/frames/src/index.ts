@@ -58,6 +58,10 @@ export { dividerFrame } from "./divider";
 export { marqueeFrame } from "./marquee";
 export { diceFrame } from "./dice";
 export { riskRewardFrame } from "./risk-reward";
+export { risk29CategoriesFrame } from "./risk29-categories";
+export { risk29ChangesFrame } from "./risk29-changes";
+export { risk29HeatmapFrame } from "./risk29-heatmap";
+export { risk29HistoryFrame } from "./risk29-history";
 export { risk29ScoreFrame } from "./risk29-score";
 export { stopwatchFrame } from "./stopwatch";
 export { sessionProgressFrame } from "./session-progress";
@@ -344,6 +348,10 @@ import { dividerFrame } from "./divider";
 import { marqueeFrame } from "./marquee";
 import { diceFrame } from "./dice";
 import { riskRewardFrame } from "./risk-reward";
+import { risk29CategoriesFrame } from "./risk29-categories";
+import { risk29ChangesFrame } from "./risk29-changes";
+import { risk29HeatmapFrame } from "./risk29-heatmap";
+import { risk29HistoryFrame } from "./risk29-history";
 import { risk29ScoreFrame } from "./risk29-score";
 import { stopwatchFrame } from "./stopwatch";
 import { sessionProgressFrame } from "./session-progress";
@@ -837,6 +845,10 @@ export const allFrames: AnyFrameDefinition[] = [
   returnCalendarFrame,
   returnDistributionFrame,
   returnsProjectorFrame,
+  risk29CategoriesFrame,
+  risk29ChangesFrame,
+  risk29HeatmapFrame,
+  risk29HistoryFrame,
   risk29ScoreFrame,
   riskRewardFrame,
   rsiMomentumFrame,
