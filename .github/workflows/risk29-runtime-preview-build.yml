@@ -5,6 +5,14 @@ on:
     branches: [risk29-runtime-preview]
     paths:
       - .github/workflows/risk29-runtime-preview-build.yml
+      - packages/frames/src/risk29-*.tsx
+      - packages/frames/src/risk29-*.ts
+      - packages/frames/src/schemas/risk29.ts
+      - packages/core/src/risk29-hooks.tsx
+      - packages/provider-risk29/**
+      - packages/spec/src/risk29.ts
+      - risk29-dashboard.json
+      - apps/runtime/public/risk29/**
 
 permissions:
   contents: write
@@ -101,6 +109,10 @@ jobs:
 
       - name: Commit preview bundle
         run: |
+          if git diff --quiet -- runtime-preview-site; then
+            echo "Preview bundle unchanged"
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f runtime-preview-site
