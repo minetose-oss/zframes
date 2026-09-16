@@ -38,6 +38,31 @@ http://127.0.0.1:8000/risk29/latest.json
 http://127.0.0.1:8000/risk29/history.json?days=30
 ```
 
+## Phase 1B — Vercel preview deployment
+
+The service includes `app.py`, `requirements.txt`, and `vercel.json` so the directory can be imported as a standalone Vercel project.
+
+Recommended Vercel project settings:
+
+```text
+Root Directory: services/risk29-engine
+Framework Preset: Other / FastAPI auto-detect
+Build Command: leave empty
+Output Directory: leave empty
+```
+
+`app.py` points Vercel's writable state at `/tmp/risk29-engine`. This is sufficient for Phase 1B preview/runtime validation but **not durable history storage**: serverless instances can be recycled at any time. A persistent store is a later phase requirement before Risk29 history is considered production-grade.
+
+The zframes plugin can still use same-origin `/risk29/*` by default. For split deployments, the host page may set this before the runtime bundle loads:
+
+```html
+<script>
+  globalThis.__RISK29_BASE_URL__ = "https://your-risk29-engine.vercel.app";
+</script>
+```
+
+The plugin then sends snapshot/history requests to that engine origin; the engine enables GET CORS for preview use.
+
 ## Reliability rules
 
 - A failed source becomes `freshness=error`, `state=unavailable`, `value=null`, `riskScore=null`.
@@ -52,6 +77,7 @@ http://127.0.0.1:8000/risk29/history.json?days=30
 RISK29_DATA_DIR=/persistent/path
 RISK29_REFRESH_SECONDS=300
 RISK29_HTTP_TIMEOUT_SECONDS=20
+RISK29_CORS_ORIGINS=*
 ```
 
-No API keys are required for the Phase 1A source set.
+No API keys are required for the Phase 1A/1B source set.
