@@ -63,6 +63,8 @@ The zframes plugin can still use same-origin `/risk29/*` by default. For split d
 
 The plugin then sends snapshot/history requests to that engine origin; the engine enables GET CORS for preview use.
 
+For the Phase 1B visual end-to-end preview we can also place a thin same-origin Vercel rewrite in front of the Phase 0 actual runtime: `/risk29/*` rewrites to the live engine while all other paths rewrite to the already-QA'd zframes runtime bundle. This proves live data wiring without rebuilding or duplicating presentation code.
+
 ## Reliability rules
 
 - A failed source becomes `freshness=error`, `state=unavailable`, `value=null`, `riskScore=null`.
