@@ -4,10 +4,12 @@ import type { z } from "zod";
 import { risk29HeatmapMeta } from "./schemas/risk29";
 import { FrameStatus, scrollAreaClass, scrollAreaXClass } from "./ui";
 import {
+  formatRisk29Age,
   formatRisk29Value,
   risk29DirectionColor,
   risk29DirectionLabel,
   risk29FreshnessColor,
+  risk29FreshnessLabel,
   risk29StateColor,
   risk29StateLabel,
 } from "./risk29-shared";
@@ -29,26 +31,36 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
 
   return (
     <div className={`h-full min-h-0 ${scrollAreaXClass}`}>
-      <div className="flex h-full min-h-0 min-w-[760px] flex-col">
-        <div className="caption text-soft grid grid-cols-[minmax(150px,1.7fr)_minmax(80px,0.8fr)_minmax(100px,0.9fr)_72px_92px_100px_74px] gap-2 border-b border-white/[0.08] px-2 pb-2 uppercase tracking-[0.06em]">
+      <div className="flex h-full min-h-0 min-w-[860px] flex-col">
+        <div className="caption text-soft grid grid-cols-[minmax(150px,1.7fr)_minmax(80px,0.8fr)_minmax(100px,0.9fr)_72px_92px_100px_88px_64px] gap-2 border-b border-white/[0.08] px-2 pb-2 uppercase tracking-[0.06em]">
           <span>Signal</span>
           <span>Category</span>
           <span>Value</span>
           <span className="text-right">Risk</span>
           <span>State</span>
           <span>Direction</span>
-          <span>Fresh</span>
+          <span>Freshness</span>
+          <span className="text-right">Age</span>
         </div>
 
         <div className={scrollAreaClass}>
           {signals.map((signal) => {
             const stateColor = risk29StateColor(signal.state);
             const freshnessColor = risk29FreshnessColor(signal.freshness);
+            const unhealthy =
+              signal.freshness === "stale" || signal.freshness === "error";
 
             return (
               <div
                 key={signal.id}
-                className="grid grid-cols-[minmax(150px,1.7fr)_minmax(80px,0.8fr)_minmax(100px,0.9fr)_72px_92px_100px_74px] items-center gap-2 border-b border-white/[0.05] px-2 py-2 last:border-b-0"
+                className="grid grid-cols-[minmax(150px,1.7fr)_minmax(80px,0.8fr)_minmax(100px,0.9fr)_72px_92px_100px_88px_64px] items-center gap-2 border-b border-white/[0.05] px-2 py-2 last:border-b-0"
+                style={
+                  unhealthy
+                    ? {
+                        background: `color-mix(in srgb, ${freshnessColor} 7%, transparent)`,
+                      }
+                    : undefined
+                }
               >
                 <div className="min-w-0">
                   <div className="body-sm text-strong truncate font-semibold">
@@ -57,6 +69,15 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
                   <div className="caption text-soft truncate">
                     {signal.sourceSeries ?? signal.source}
                   </div>
+                  {signal.freshness === "error" && signal.reason ? (
+                    <div
+                      className="caption truncate font-medium"
+                      style={{ color: freshnessColor }}
+                      title={signal.reason}
+                    >
+                      {signal.reason}
+                    </div>
+                  ) : null}
                 </div>
 
                 <span className="caption text-soft truncate capitalize">
@@ -91,10 +112,18 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
                 </span>
 
                 <span
-                  className="caption truncate font-semibold uppercase"
+                  className="caption truncate font-semibold"
                   style={{ color: freshnessColor }}
                 >
-                  {signal.freshness}
+                  {risk29FreshnessLabel(signal.freshness)}
+                </span>
+
+                <span
+                  className="caption text-right font-medium tabular-nums"
+                  style={{ color: unhealthy ? freshnessColor : undefined }}
+                  title={signal.asOf ? `as of ${signal.asOf}` : undefined}
+                >
+                  {formatRisk29Age(signal.ageSeconds)}
                 </span>
               </div>
             );
