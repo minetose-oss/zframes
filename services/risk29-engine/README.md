@@ -65,6 +65,12 @@ The plugin then sends snapshot/history requests to that engine origin; the engin
 
 For the Phase 1B visual end-to-end preview we can also place a thin same-origin Vercel rewrite in front of the Phase 0 actual runtime: `/risk29/*` rewrites to the live engine while all other paths rewrite to the already-QA'd zframes runtime bundle. This proves live data wiring without rebuilding or duplicating presentation code.
 
+### Phase 1B.2 — published snapshot mode
+
+For serverless reliability, production serving reads a validated precomputed snapshot published by GitHub Actions to the dedicated `risk29-live-data` branch. Browser requests therefore do not wait on FRED, Treasury, OFR, or LBMA. The Vercel health endpoint reports `dataMode: published` when this path is active.
+
+This README change also intentionally touches the configured Vercel Root Directory so a newly connected Git integration can create the first deployment for the `risk29-phase1` branch.
+
 This preview topology is intentionally temporary. Production should use a durable engine deployment plus persistent history storage and explicit origins rather than relying on ephemeral preview rewrites.
 
 ## Reliability rules
