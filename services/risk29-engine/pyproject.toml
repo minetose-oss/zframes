@@ -21,8 +21,9 @@ test = [
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
-[tool.vercel]
-entrypoint = "risk29_engine.main:app"
+# Vercel auto-detects app.py in this project root. Keeping the entrypoint in
+# one place avoids bypassing app.py, which sets the published-snapshot runtime
+# environment before importing the package application.
 
 [build-system]
 requires = ["setuptools>=80"]
