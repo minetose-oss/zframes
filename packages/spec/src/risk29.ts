@@ -76,7 +76,10 @@ export const Risk29SignalSchema = z
     ageSeconds: z.number().nonnegative().nullable(),
     freshness: Risk29FreshnessSchema,
 
-    reason: z.string().min(1).optional(),
+    // The Python publisher serializes "no failure reason" as JSON null. Accept
+    // both omitted and null for healthy signals while still requiring a real
+    // message for freshness="error" below.
+    reason: z.string().min(1).nullable().optional(),
     thresholdVersion: z.string().min(1),
   })
   .superRefine((signal, ctx) => {
