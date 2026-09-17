@@ -3,7 +3,12 @@ import { useRisk29History, useRisk29Snapshot } from "@zframes/core/risk29";
 import type { z } from "zod";
 import { CardHeader } from "./card-header";
 import { DOWN_COLOR, UP_COLOR } from "./format";
-import { risk29StateColor, risk29StateLabel } from "./risk29-shared";
+import {
+  RISK29_MUTED,
+  risk29FreshnessColor,
+  risk29StateColor,
+  risk29StateLabel,
+} from "./risk29-shared";
 import { risk29ScoreMeta } from "./schemas/risk29";
 import { FrameStatus } from "./ui";
 
@@ -72,12 +77,15 @@ function GlobalRisk29({ config }: { config: z.output<typeof schema> }) {
   const stateLabel = risk29StateLabel(snapshot.state);
   const health = snapshot.health;
   const healthLabel = `${health.available}/${health.total} available`;
-  const freshnessLabel =
-    health.errored > 0
-      ? `${health.errored} error${health.errored === 1 ? "" : "s"}`
-      : health.stale > 0
-        ? `${health.stale} stale`
-        : "current";
+  const hasErrors = health.errored > 0;
+  const hasStale = health.stale > 0;
+  const freshnessKind = hasErrors ? "error" : hasStale ? "stale" : "fresh";
+  const freshnessColor = risk29FreshnessColor(freshnessKind);
+  const freshnessLabel = hasErrors
+    ? `${health.errored} ERROR${health.errored === 1 ? "" : "S"} — NOT LIVE`
+    : hasStale
+      ? `${health.stale} STALE — CHECK AGE`
+      : "ALL CURRENT";
 
   return (
     <div className="flex h-full min-h-0 flex-col justify-between gap-3">
@@ -139,16 +147,20 @@ function GlobalRisk29({ config }: { config: z.output<typeof schema> }) {
           </div>
         </div>
 
-        <div className="caption text-soft max-w-[46%] text-right leading-snug">
+        <div className="caption max-w-[48%] text-right leading-snug">
           <span className="text-normal">{healthLabel}</span>
           <br />
-          {freshnessLabel}
+          <span className="font-semibold" style={{ color: freshnessColor }}>
+            {freshnessLabel}
+          </span>
         </div>
       </div>
 
-      <div className="caption text-soft flex items-center justify-between gap-3 border-t border-white/[0.08] pt-2">
-        <span className="truncate">model {snapshot.modelVersion}</span>
-        <span className="shrink-0 tabular-nums">
+      <div className="caption flex items-center justify-between gap-3 border-t border-white/[0.08] pt-2">
+        <span className="truncate" style={{ color: RISK29_MUTED }}>
+          model {snapshot.modelVersion}
+        </span>
+        <span className="shrink-0 tabular-nums" style={{ color: RISK29_MUTED }}>
           {bangkokTime(snapshot.generatedAt)} BKK
         </span>
       </div>
