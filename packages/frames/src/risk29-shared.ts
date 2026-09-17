@@ -72,6 +72,36 @@ export function risk29FreshnessColor(freshness: Risk29Freshness): string {
   }
 }
 
+/** Human label used anywhere freshness must be understandable without colour. */
+export function risk29FreshnessLabel(freshness: Risk29Freshness): string {
+  switch (freshness) {
+    case "fresh":
+      return "FRESH";
+    case "delayed":
+      return "DELAYED";
+    case "stale":
+      return "STALE";
+    case "error":
+      return "ERROR";
+  }
+}
+
+/** Compact age text for signal rows. Null means the source did not provide age. */
+export function formatRisk29Age(ageSeconds: number | null): string {
+  if (ageSeconds === null || !Number.isFinite(ageSeconds) || ageSeconds < 0)
+    return "—";
+
+  if (ageSeconds < 60) return "<1m";
+  const minutes = Math.floor(ageSeconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours}h`;
+
+  const days = Math.floor(hours / 24);
+  return `${days}d`;
+}
+
 export function formatRisk29Value(value: number | null, unit: string): string {
   if (value === null || !Number.isFinite(value)) return "—";
 
