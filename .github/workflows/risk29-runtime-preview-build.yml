@@ -12,7 +12,6 @@ on:
       - packages/provider-risk29/**
       - packages/spec/src/risk29.ts
       - risk29-dashboard.json
-      - apps/runtime/public/risk29/**
 
 permissions:
   contents: write
@@ -35,7 +34,7 @@ jobs:
       - name: Install workspace
         run: pnpm install --frozen-lockfile
 
-      - name: Prepare Risk29 static runtime routes
+      - name: Prepare Risk29 runtime routes
         run: |
           mkdir -p apps/runtime/public/__zframes
           cp risk29-dashboard.json apps/runtime/public/__zframes/dashboard.json
@@ -76,7 +75,7 @@ jobs:
           cd apps/runtime
           pnpm exec vite build --config vite.preview.config.ts --configLoader runner
 
-      - name: Inline runtime JS and CSS for static preview
+      - name: Inline runtime JS and CSS for live preview
         run: |
           node <<'NODE'
           const fs = require('fs');
@@ -99,13 +98,36 @@ jobs:
 
           fs.rmSync('runtime-preview-site', { recursive: true, force: true });
           fs.mkdirSync('runtime-preview-site/__zframes', { recursive: true });
-          fs.mkdirSync('runtime-preview-site/risk29', { recursive: true });
           fs.writeFileSync('runtime-preview-site/index.html', html);
           fs.copyFileSync(path.join(root, '__zframes/dashboard.json'), 'runtime-preview-site/__zframes/dashboard.json');
           fs.copyFileSync(path.join(root, '__zframes/providers'), 'runtime-preview-site/__zframes/providers');
-          fs.copyFileSync(path.join(root, 'risk29/latest.json'), 'runtime-preview-site/risk29/latest.json');
-          fs.copyFileSync(path.join(root, 'risk29/history.json'), 'runtime-preview-site/risk29/history.json');
+
+          const vercel = {
+            rewrites: [
+              {
+                source: '/risk29/:path*',
+                destination: 'https://risk29-engine-phase1b-live.vercel.app/risk29/:path*',
+              },
+              {
+                source: '/healthz',
+                destination: 'https://risk29-engine-phase1b-live.vercel.app/healthz',
+              },
+            ],
+            headers: [
+              {
+                source: '/risk29/(.*)',
+                headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }],
+              },
+            ],
+          };
+          fs.writeFileSync('runtime-preview-site/vercel.json', JSON.stringify(vercel, null, 2) + '\n');
           NODE
+
+      - name: Verify preview contains no fixture Risk29 payloads
+        run: |
+          test ! -e runtime-preview-site/risk29/latest.json
+          test ! -e runtime-preview-site/risk29/history.json
+          grep -q 'risk29-engine-phase1b-live.vercel.app' runtime-preview-site/vercel.json
 
       - name: Commit preview bundle
         run: |
@@ -116,5 +138,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f runtime-preview-site
-          git commit -m "build(risk29): generate actual runtime preview site"
+          git commit -m "build(risk29): generate live actual-runtime preview site"
           git push origin HEAD:risk29-runtime-preview
