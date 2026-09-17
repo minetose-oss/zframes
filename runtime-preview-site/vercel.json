@@ -1,0 +1,23 @@
+{
+  "rewrites": [
+    {
+      "source": "/risk29/:path*",
+      "destination": "https://risk29-engine-phase1b-live.vercel.app/risk29/:path*"
+    },
+    {
+      "source": "/healthz",
+      "destination": "https://risk29-engine-phase1b-live.vercel.app/healthz"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/risk29/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=60, stale-while-revalidate=300"
+        }
+      ]
+    }
+  ]
+}
