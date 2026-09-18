@@ -77,9 +77,16 @@ function Risk29History({ config }: { config: z.output<typeof schema> }) {
   if (isLoading && !history)
     return <FrameStatus loading>loading Risk29 history…</FrameStatus>;
   if (error) return <FrameStatus>Risk29 history unavailable</FrameStatus>;
-  if (series.length === 0 || series[0].data.length < 2)
-    return <FrameStatus>not enough Risk29 history yet</FrameStatus>;
+  if (series.length === 0 || series[0].data.length < 2) {
+    const pointCount = series[0]?.data.length ?? 0;
+    return (
+      <FrameStatus>
+        collecting Risk29 history — {pointCount} point{pointCount === 1 ? "" : "s"} available
+      </FrameStatus>
+    );
+  }
 
+  const pointCount = series[0].data.length;
   const latest = series[0].data.at(-1)?.value;
   const first = series[0].data[0]?.value;
   const delta =
@@ -103,7 +110,7 @@ function Risk29History({ config }: { config: z.output<typeof schema> }) {
           </div>
         </div>
         <div className="caption text-soft text-right">
-          0–100 engine score
+          {pointCount} observations
           <br />
           higher = more risk
         </div>
