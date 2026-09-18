@@ -23,6 +23,59 @@ class WireModel(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
+
+class Risk29RegistrySignal(WireModel):
+    id: str
+    label: str
+    category: Risk29CategoryId
+    source: str
+    sourceSeries: str | None = None
+    unit: str
+    transform: str
+
+
+class Risk29RegistryCategory(WireModel):
+    id: Risk29CategoryId
+    label: str
+    weight: float = Field(ge=0)
+    configuredSignals: int = Field(ge=0)
+
+
+class Risk29Registry(WireModel):
+    schemaVersion: Literal["1"] = "1"
+    registryVersion: str
+    modelVersion: str
+    thresholdVersion: str
+    targetSignals: int = Field(ge=1)
+    configuredSignals: int = Field(ge=0)
+    remainingSignals: int = Field(ge=0)
+    categories: list[Risk29RegistryCategory]
+    signals: list[Risk29RegistrySignal]
+
+    @model_validator(mode="after")
+    def registry_invariants(self) -> "Risk29Registry":
+        signal_ids = [signal.id for signal in self.signals]
+        if len(signal_ids) != len(set(signal_ids)):
+            raise ValueError("registry signal ids must be unique")
+        if self.configuredSignals != len(self.signals):
+            raise ValueError("configuredSignals must equal registry signal count")
+        if self.configuredSignals > self.targetSignals:
+            raise ValueError("configuredSignals cannot exceed targetSignals")
+        if self.remainingSignals != self.targetSignals - self.configuredSignals:
+            raise ValueError("remainingSignals mismatch")
+        category_ids = [category.id for category in self.categories]
+        if len(category_ids) != 8 or len(set(category_ids)) != 8:
+            raise ValueError("registry must contain all eight categories exactly once")
+        configured_by_category = {
+            category_id: sum(signal.category == category_id for signal in self.signals)
+            for category_id in category_ids
+        }
+        for category in self.categories:
+            if category.configuredSignals != configured_by_category[category.id]:
+                raise ValueError(f"configured signal count mismatch for {category.id}")
+        return self
+
+
 class Risk29Signal(WireModel):
     id: str
     label: str
