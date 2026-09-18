@@ -3,6 +3,12 @@ import { createProviders } from "./plugin";
 
 const NOW = "2026-09-16T10:00:00.000Z";
 
+type Risk29Global = typeof globalThis & {
+  __RISK29_BASE_URL__?: string;
+};
+
+const risk29Global = globalThis as Risk29Global;
+
 const snapshot = {
   schemaVersion: "1",
   modelVersion: "risk29-p1-engine-0.1.1",
@@ -111,17 +117,13 @@ const snapshot = {
 };
 
 afterEach(() => {
-  delete (
-    globalThis as typeof globalThis & { __RISK29_BASE_URL__?: string }
-  ).__RISK29_BASE_URL__;
+  delete risk29Global.__RISK29_BASE_URL__;
   vi.unstubAllGlobals();
 });
 
 describe("Risk29 plugin", () => {
   it("uses __RISK29_BASE_URL__ for split live-engine deployments", async () => {
-    (
-      globalThis as typeof globalThis & { __RISK29_BASE_URL__?: string }
-    ).__RISK29_BASE_URL__ = "https://risk29.example/";
+    risk29Global.__RISK29_BASE_URL__ = "https://risk29.example/";
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify(snapshot), {
         status: 200,
