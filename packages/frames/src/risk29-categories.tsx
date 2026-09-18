@@ -33,10 +33,13 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
           >
             <div className="flex min-w-0 items-start justify-between gap-1 sm:gap-2">
               <div className="min-w-0">
-                <div className="text-soft truncate text-[9px] leading-tight font-semibold uppercase sm:text-xs sm:font-normal">
+                <div
+                  className="text-soft whitespace-nowrap text-[8px] leading-tight font-semibold uppercase tracking-[0.02em] sm:text-[10px] md:text-[11px] sm:font-normal"
+                  title={category.label}
+                >
                   {category.label}
                 </div>
-                <div className="text-soft mt-0.5 text-[8px] leading-none sm:mt-1 sm:text-xs sm:leading-normal">
+                <div className="text-soft mt-0.5 text-[8px] leading-none sm:mt-1 sm:text-[10px] sm:leading-normal">
                   weight {category.weight.toFixed(0)}%
                 </div>
               </div>
@@ -53,7 +56,7 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
 
             <div className="mt-1 flex min-w-0 items-end justify-between gap-1 sm:mt-2 sm:gap-2">
               <div
-                className="min-w-0 text-lg leading-none font-bold tabular-nums sm:text-2xl"
+                className="min-w-0 text-lg leading-[1.05] font-bold tabular-nums sm:text-xl md:text-2xl"
                 style={{ color }}
               >
                 {category.score === null ? "—" : category.score.toFixed(0)}
@@ -61,7 +64,7 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
                   /100
                 </span>
               </div>
-              <div className="text-soft shrink-0 text-right text-[8px] leading-tight sm:text-xs sm:leading-normal">
+              <div className="text-soft shrink-0 text-right text-[8px] leading-tight sm:text-[10px] sm:leading-normal md:text-xs">
                 {availability}
                 <span className="hidden sm:inline">
                   <br />
