@@ -1,0 +1,37 @@
+[project]
+name = "risk29-engine"
+version = "0.1.0"
+description = "Risk29 calculation service for the zframes investment intelligence dashboard"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "pydantic>=2.11,<3",
+  "pyyaml>=6.0,<7",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.4,<9",
+  "pytest-asyncio>=1.1,<2",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+# Vercel auto-detects app.py in this project root. Keeping the entrypoint in
+# one place avoids bypassing app.py, which sets the published-snapshot runtime
+# environment before importing the package application.
+
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["risk29_engine*"]
+
+[tool.setuptools.package-data]
+risk29_engine = ["signals.yaml"]

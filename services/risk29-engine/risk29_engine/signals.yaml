@@ -1,0 +1,200 @@
+threshold_version: risk29-p1-provisional-v1
+model_version: risk29-p1-engine-0.1.1
+minimum_signal_coverage: 0.70
+minimum_weight_coverage: 0.75
+
+categories:
+  macro:
+    label: Macro
+    weight: 18
+  credit:
+    label: Credit
+    weight: 14
+  valuation:
+    label: Valuation
+    weight: 12
+  sentiment:
+    label: Sentiment
+    weight: 16
+  qualitative:
+    label: Qualitative
+    weight: 6
+  liquidity:
+    label: Liquidity
+    weight: 14
+  global:
+    label: Global
+    weight: 10
+  technical:
+    label: Technical
+    weight: 10
+
+signals:
+  - id: vix
+    label: VIX
+    category: sentiment
+    source: FRED
+    source_series: VIXCLS
+    unit: index
+    fetch: fred
+    transform: piecewise_latest
+    points:
+      - [10, 10]
+      - [15, 25]
+      - [20, 50]
+      - [30, 80]
+      - [45, 100]
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 120
+
+  - id: sp500_trend
+    label: S&P 500 Trend
+    category: technical
+    source: FRED
+    source_series: SP500
+    unit: index
+    fetch: fred
+    transform: equity_trend
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 120
+
+  - id: nasdaq_trend
+    label: Nasdaq Trend
+    category: technical
+    source: FRED
+    source_series: NASDAQCOM
+    unit: index
+    fetch: fred
+    transform: equity_trend
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 120
+
+  - id: curve_2s10s
+    label: 2Y-10Y Curve
+    category: macro
+    source: U.S. Treasury
+    source_series: 2s10s
+    unit: pct-points
+    fetch: treasury_curve
+    transform: piecewise_latest
+    points:
+      - [-1.0, 100]
+      - [-0.5, 90]
+      - [0.0, 60]
+      - [0.5, 25]
+      - [1.5, 10]
+    freshness:
+      fresh_hours: 96
+      delayed_hours: 144
+
+  - id: hy_oas
+    label: US HY OAS
+    category: credit
+    source: FRED
+    source_series: BAMLH0A0HYM2
+    unit: percent
+    fetch: fred
+    transform: piecewise_latest
+    points:
+      - [2.0, 10]
+      - [3.0, 25]
+      - [4.0, 50]
+      - [6.0, 80]
+      - [9.0, 100]
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 120
+
+  - id: ig_oas
+    label: US IG OAS
+    category: credit
+    source: FRED
+    source_series: BAMLC0A0CM
+    unit: percent
+    fetch: fred
+    transform: piecewise_latest
+    points:
+      - [0.4, 10]
+      - [0.7, 25]
+      - [1.0, 50]
+      - [1.5, 80]
+      - [2.5, 100]
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 120
+
+  - id: real_yield_10y
+    label: 10Y TIPS Real Yield
+    category: macro
+    source: FRED
+    source_series: DFII10
+    unit: percent
+    fetch: fred
+    transform: piecewise_latest
+    points:
+      - [-1.0, 10]
+      - [0.0, 25]
+      - [1.5, 50]
+      - [2.5, 80]
+      - [4.0, 100]
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 120
+
+  - id: broad_dollar
+    label: Broad Dollar Index
+    category: global
+    source: FRED
+    source_series: DTWEXBGS
+    unit: index
+    fetch: fred
+    transform: momentum_20d
+    points:
+      - [-5.0, 15]
+      - [0.0, 35]
+      - [3.0, 60]
+      - [6.0, 80]
+      - [10.0, 100]
+    freshness:
+      fresh_hours: 96
+      delayed_hours: 144
+
+  - id: ofr_fsi
+    label: OFR Financial Stress
+    category: liquidity
+    source: OFR
+    source_series: OFR FSI
+    unit: index
+    fetch: ofr
+    transform: piecewise_latest
+    points:
+      - [-2.0, 5]
+      - [-1.0, 15]
+      - [0.0, 40]
+      - [1.0, 75]
+      - [3.0, 100]
+    freshness:
+      fresh_hours: 96
+      delayed_hours: 144
+
+  - id: gold_trend
+    label: Gold Trend
+    category: global
+    source: LBMA
+    source_series: XAU PM Fix
+    unit: usd/oz
+    fetch: lbma_gold
+    transform: momentum_20d
+    points:
+      - [-10.0, 15]
+      - [-3.0, 25]
+      - [0.0, 35]
+      - [8.0, 65]
+      - [15.0, 85]
+      - [25.0, 100]
+    freshness:
+      fresh_hours: 96
+      delayed_hours: 144
