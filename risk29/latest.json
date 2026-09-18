@@ -2,7 +2,7 @@
   "schemaVersion": "1",
   "modelVersion": "risk29-p1-engine-0.1.1",
   "thresholdVersion": "risk29-p1-provisional-v1",
-  "generatedAt": "2026-09-18T06:18:06.600964+00:00",
+  "generatedAt": "2026-09-18T06:18:32.615669+00:00",
   "score": 32.74,
   "state": "normal",
   "regime": "neutral",
@@ -96,8 +96,8 @@
       "change": 0.51,
       "changeWindow": "1d",
       "asOf": "2026-09-16",
-      "fetchedAt": "2026-09-18T06:18:06.600964+00:00",
-      "ageSeconds": 195486.600964,
+      "fetchedAt": "2026-09-18T06:18:32.615669+00:00",
+      "ageSeconds": 195512.615669,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p1-provisional-v1"
@@ -117,8 +117,8 @@
       "change": 1.138138,
       "changeWindow": "1d",
       "asOf": "2026-09-17",
-      "fetchedAt": "2026-09-18T06:18:06.600964+00:00",
-      "ageSeconds": 109086.600964,
+      "fetchedAt": "2026-09-18T06:18:32.615669+00:00",
+      "ageSeconds": 109112.615669,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p1-provisional-v1"
@@ -138,8 +138,8 @@
       "change": 1.693252,
       "changeWindow": "1d",
       "asOf": "2026-09-17",
-      "fetchedAt": "2026-09-18T06:18:06.600964+00:00",
-      "ageSeconds": 109086.600964,
+      "fetchedAt": "2026-09-18T06:18:32.615669+00:00",
+      "ageSeconds": 109112.615669,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p1-provisional-v1"
@@ -159,8 +159,8 @@
       "change": 0.0,
       "changeWindow": "1d",
       "asOf": "2026-09-17",
-      "fetchedAt": "2026-09-18T06:18:06.600964+00:00",
-      "ageSeconds": 109086.600964,
+      "fetchedAt": "2026-09-18T06:18:32.615669+00:00",
+      "ageSeconds": 109112.615669,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p1-provisional-v1"
@@ -180,8 +180,8 @@
       "change": -0.06,
       "changeWindow": "1d",
       "asOf": "2026-09-16",
-      "fetchedAt": "2026-09-18T06:18:06.600964+00:00",
-      "ageSeconds": 195486.600964,
+      "fetchedAt": "2026-09-18T06:18:32.615669+00:00",
+      "ageSeconds": 195512.615669,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p1-provisional-v1"
@@ -201,8 +201,8 @@
       "change": -0.02,
       "changeWindow": "1d",
       "asOf": "2026-09-16",
-      "fetchedAt": "2026-09-18T06:18:06.600964+00:00",
-      "ageSeconds": 195486.600964,
+      "fetchedAt": "2026-09-18T06:18:32.615669+00:00",
+      "ageSeconds": 195512.615669,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p1-provisional-v1"
@@ -222,8 +222,8 @@
       "change": 0.06,
       "changeWindow": "1d",
       "asOf": "2026-09-16",
-      "fetchedAt": "2026-09-18T06:18:06.600964+00:00",
-      "ageSeconds": 195486.600964,
+      "fetchedAt": "2026-09-18T06:18:32.615669+00:00",
+      "ageSeconds": 195512.615669,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p1-provisional-v1"
@@ -243,8 +243,8 @@
       "change": 0.113399,
       "changeWindow": "1d",
       "asOf": "2026-09-11",
-      "fetchedAt": "2026-09-18T06:18:06.600964+00:00",
-      "ageSeconds": 627486.600964,
+      "fetchedAt": "2026-09-18T06:18:32.615669+00:00",
+      "ageSeconds": 627512.615669,
       "freshness": "stale",
       "reason": null,
       "thresholdVersion": "risk29-p1-provisional-v1"
@@ -264,8 +264,8 @@
       "change": -0.018,
       "changeWindow": "1d",
       "asOf": "2026-09-15",
-      "fetchedAt": "2026-09-18T06:18:06.600964+00:00",
-      "ageSeconds": 281886.600964,
+      "fetchedAt": "2026-09-18T06:18:32.615669+00:00",
+      "ageSeconds": 281912.615669,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p1-provisional-v1"
@@ -285,31 +285,14 @@
       "change": 0.921861,
       "changeWindow": "1d",
       "asOf": "2026-09-17",
-      "fetchedAt": "2026-09-18T06:18:06.600964+00:00",
-      "ageSeconds": 109086.600964,
+      "fetchedAt": "2026-09-18T06:18:32.615669+00:00",
+      "ageSeconds": 109112.615669,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p1-provisional-v1"
     }
   ],
-  "changes": [
-    {
-      "signalId": "nasdaq_trend",
-      "label": "Nasdaq Trend",
-      "fromState": "warning",
-      "toState": "normal",
-      "scoreDelta": -48.0,
-      "summary": "Nasdaq Trend moved WARNING → NORMAL."
-    },
-    {
-      "signalId": "sp500_trend",
-      "label": "S&P 500 Trend",
-      "fromState": "warning",
-      "toState": "watch",
-      "scoreDelta": -24.0,
-      "summary": "S&P 500 Trend moved WARNING → WATCH."
-    }
-  ],
+  "changes": [],
   "health": {
     "available": 10,
     "stale": 1,
