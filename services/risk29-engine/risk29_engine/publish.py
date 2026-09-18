@@ -13,9 +13,10 @@ from .models import Risk29History, Risk29Snapshot
 from .sources import PublicSourceClient
 
 
-async def _seed_previous(base_url: str | None, data_dir: Path) -> None:
+async def _seed_previous(base_url: str | None, data_dir: Path) -> dict[str, str]:
+    status = {"latest": "missing", "history": "missing"}
     if not base_url:
-        return
+        return status
 
     base = base_url.rstrip("/")
     async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
@@ -23,6 +24,7 @@ async def _seed_previous(base_url: str | None, data_dir: Path) -> None:
             ("latest.json", Risk29Snapshot),
             ("history.json", Risk29History),
         ):
+            key = name.removesuffix(".json")
             try:
                 response = await client.get(
                     f"{base}/{name}",
@@ -33,10 +35,11 @@ async def _seed_previous(base_url: str | None, data_dir: Path) -> None:
                 response.raise_for_status()
                 validated = model.model_validate_json(response.text)
             except (httpx.HTTPError, ValueError):
-                # A missing/corrupt previous publication must not prevent a new
-                # healthy snapshot from being produced.
+                status[key] = "error"
                 continue
             (data_dir / name).write_text(validated.model_dump_json(indent=2))
+            status[key] = "loaded"
+    return status
 
 
 def _coalesce_history(
@@ -66,7 +69,12 @@ async def publish(
 
     with tempfile.TemporaryDirectory(prefix="risk29-publish-") as tmp:
         data_dir = Path(tmp)
-        await _seed_previous(existing_base_url, data_dir)
+        seed_status = await _seed_previous(existing_base_url, data_dir)
+        if existing_base_url and "error" in seed_status.values():
+            raise RuntimeError(
+                "Refusing to publish because the prior durable Risk29 "
+                f"publication could not be read safely: {seed_status}"
+            )
 
         source_client = PublicSourceClient(
             timeout_seconds=float(os.getenv("RISK29_PUBLISH_HTTP_TIMEOUT_SECONDS", "20")),
