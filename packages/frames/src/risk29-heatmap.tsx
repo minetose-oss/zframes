@@ -114,6 +114,7 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
                 <span
                   className="caption truncate font-semibold"
                   style={{ color: freshnessColor }}
+                  title={`${risk29FreshnessLabel(signal.freshness)} relative to source cadence`}
                 >
                   {risk29FreshnessLabel(signal.freshness)}
                 </span>
@@ -121,7 +122,11 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
                 <span
                   className="caption text-right font-medium tabular-nums"
                   style={{ color: unhealthy ? freshnessColor : undefined }}
-                  title={signal.asOf ? `as of ${signal.asOf}` : undefined}
+                  title={
+                    signal.asOf
+                      ? `source observation as of ${signal.asOf}`
+                      : "source observation time unavailable"
+                  }
                 >
                   {formatRisk29Age(signal.ageSeconds)}
                 </span>
