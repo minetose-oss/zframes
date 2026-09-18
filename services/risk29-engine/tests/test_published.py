@@ -7,7 +7,7 @@ import httpx
 import pytest
 
 from risk29_engine.models import Risk29History, Risk29HistoryPoint
-from risk29_engine.publish import _coalesce_history
+from risk29_engine.publish import _coalesce_history, publish
 from risk29_engine.published import PublishedSnapshotClient
 
 
@@ -114,3 +114,23 @@ def test_coalesce_history_replaces_duplicate_short_interval_points():
 
     assert [point.time for point in coalesced.points] == [1_300_000, 5_000_000]
     assert [point.score for point in coalesced.points] == [31, 32]
+
+
+@pytest.mark.asyncio
+async def test_publish_refuses_to_replace_durable_history_after_seed_error(
+    tmp_path, monkeypatch
+):
+    async def fake_seed_previous(base_url, data_dir):
+        return {"latest": "loaded", "history": "error"}
+
+    monkeypatch.setattr(
+        "risk29_engine.publish._seed_previous",
+        fake_seed_previous,
+    )
+
+    with pytest.raises(RuntimeError, match="prior durable Risk29 publication"):
+        await publish(
+            tmp_path / "out",
+            existing_base_url="https://example.test/risk29",
+            minimum_available=7,
+        )
