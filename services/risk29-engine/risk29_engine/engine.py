@@ -100,9 +100,10 @@ class JsonSnapshotStore:
         if history.points and point.time <= history.points[-1].time:
             return
         history.points.append(point)
-        # Local JSON is a Phase 1A store, not the final database. Bound it so a
-        # long-running dev service cannot grow forever.
-        history.points = history.points[-400:]
+        # Local JSON is a Phase 1A store, not the final database. Keep enough
+        # points for a full year at the production twice-daily cadence, plus
+        # headroom for manual publishes, while still bounding local growth.
+        history.points = history.points[-1200:]
         history.generatedAt = snapshot.generatedAt
         self.history_path.write_text(history.model_dump_json(indent=2))
 
