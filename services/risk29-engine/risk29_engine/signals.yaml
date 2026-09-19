@@ -228,7 +228,8 @@ signals:
       fresh_hours: 1488
       delayed_hours: 2208
 
-planned_signals:  - id: sahm_labor_deterioration
+planned_signals:
+  - id: sahm_labor_deterioration
     label: Sahm / Labor Deterioration
     category: macro
     source: FRED
