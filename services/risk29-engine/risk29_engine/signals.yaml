@@ -1,4 +1,4 @@
-registry_version: risk29-registry-v1
+registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p1-provisional-v1
 model_version: risk29-p1-engine-0.1.1
@@ -200,3 +200,145 @@ signals:
     freshness:
       fresh_hours: 96
       delayed_hours: 144
+
+planned_signals:
+  - id: core_inflation_momentum
+    label: Core Inflation Momentum
+    category: macro
+    source: BLS/FRED
+    source_series: CPILFESL
+    unit: percent
+    transform: core_inflation_3m_annualized_vs_12m
+
+  - id: sahm_labor_deterioration
+    label: Sahm / Labor Deterioration
+    category: macro
+    source: FRED
+    source_series: SAHMREALTIME
+    unit: pct-points
+    transform: sahm_level_and_change
+
+  - id: ccc_bb_stress_spread
+    label: CCC-BB Stress Spread
+    category: credit
+    source: ICE BofA/FRED
+    unit: percent
+    transform: ccc_minus_bb_spread
+
+  - id: baa_treasury_spread
+    label: Baa-Treasury Spread
+    category: credit
+    source: Moody's/FRED
+    source_series: BAA10Y
+    unit: percent
+    transform: piecewise_and_change
+
+  - id: sp500_forward_pe_percentile
+    label: S&P 500 Forward P/E Percentile
+    category: valuation
+    source: FactSet/Bigdata
+    unit: percentile
+    transform: rolling_10y_percentile
+
+  - id: equity_risk_premium
+    label: Equity Risk Premium
+    category: valuation
+    source: Earnings + FRED
+    unit: percent
+    transform: forward_earnings_yield_minus_real_yield
+
+  - id: cape_long_term_valuation
+    label: CAPE / Long-Term Valuation
+    category: valuation
+    source: Shiller
+    unit: percentile
+    transform: historical_percentile
+
+  - id: put_call_ratio
+    label: Put/Call Ratio
+    category: sentiment
+    source: CBOE
+    unit: ratio
+    transform: rolling_percentile
+
+  - id: aaii_bull_bear_spread
+    label: AAII Bull-Bear Spread
+    category: sentiment
+    source: AAII
+    unit: pct-points
+    transform: contrarian_percentile
+
+  - id: cftc_equity_positioning
+    label: CFTC Equity Positioning
+    category: sentiment
+    source: CFTC COT
+    unit: z-score
+    transform: net_positioning_zscore
+
+  - id: geopolitical_event_shock
+    label: Geopolitical / Event Shock
+    category: qualitative
+    source: GDELT + trusted news
+    unit: score
+    transform: event_severity_rubric
+
+  - id: policy_regime_shock
+    label: Policy / Regime Shock
+    category: qualitative
+    source: Fed/ECB/BoJ + official releases
+    unit: score
+    transform: policy_event_classifier
+
+  - id: chicago_fed_nfci
+    label: Chicago Fed NFCI
+    category: liquidity
+    source: Chicago Fed/FRED
+    source_series: NFCI
+    unit: index
+    transform: level_and_change
+
+  - id: us_net_liquidity
+    label: US Net Liquidity
+    category: liquidity
+    source: Fed/FRED
+    source_series: WALCL - WTREGEN - RRPONTSYD
+    unit: usd
+    transform: level_momentum_and_zscore
+
+  - id: sofr_iorb_funding_spread
+    label: SOFR-IORB Funding Spread
+    category: liquidity
+    source: NY Fed/FRED
+    source_series: SOFR - IORB
+    unit: pct-points
+    transform: spread_and_zscore
+
+  - id: oil_shock
+    label: Oil Shock
+    category: global
+    source: EIA/FRED
+    source_series: DCOILWTICO
+    unit: percent
+    transform: momentum_20d_plus_realized_vol
+
+  - id: cross_asset_correlation_spike
+    label: Cross-Asset Correlation Spike
+    category: global
+    source: Market prices
+    unit: z-score
+    transform: average_20d_correlation_zscore
+
+  - id: market_breadth
+    label: Market Breadth
+    category: technical
+    source: Constituent market data
+    unit: percent
+    transform: pct_above_200dma_plus_advance_decline
+
+  - id: realized_volatility_regime
+    label: Realized Volatility Regime
+    category: technical
+    source: S&P 500 prices
+    source_series: SP500
+    unit: percent
+    transform: rv20_vs_rv60_plus_percentile
