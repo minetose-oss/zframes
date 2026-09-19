@@ -17,6 +17,7 @@ Risk29CategoryId = Literal[
 Risk29State = Literal["normal", "watch", "warning", "alert", "unavailable"]
 Risk29Direction = Literal["improving", "worsening", "flat"]
 Risk29Freshness = Literal["fresh", "delayed", "stale", "error"]
+Risk29RegistryStatus = Literal["live", "planned"]
 
 
 class WireModel(BaseModel):
@@ -28,6 +29,7 @@ class Risk29RegistrySignal(WireModel):
     id: str
     label: str
     category: Risk29CategoryId
+    status: Risk29RegistryStatus
     source: str
     sourceSeries: str | None = None
     unit: str
@@ -39,6 +41,8 @@ class Risk29RegistryCategory(WireModel):
     label: str
     weight: float = Field(ge=0)
     configuredSignals: int = Field(ge=0)
+    liveSignals: int = Field(ge=0)
+    plannedSignals: int = Field(ge=0)
 
 
 class Risk29Registry(WireModel):
@@ -48,6 +52,8 @@ class Risk29Registry(WireModel):
     thresholdVersion: str
     targetSignals: int = Field(ge=1)
     configuredSignals: int = Field(ge=0)
+    liveSignals: int = Field(ge=0)
+    plannedSignals: int = Field(ge=0)
     remainingSignals: int = Field(ge=0)
     categories: list[Risk29RegistryCategory]
     signals: list[Risk29RegistrySignal]
@@ -66,13 +72,29 @@ class Risk29Registry(WireModel):
         category_ids = [category.id for category in self.categories]
         if len(category_ids) != 8 or len(set(category_ids)) != 8:
             raise ValueError("registry must contain all eight categories exactly once")
-        configured_by_category = {
-            category_id: sum(signal.category == category_id for signal in self.signals)
-            for category_id in category_ids
-        }
+        live_signals = sum(signal.status == "live" for signal in self.signals)
+        planned_signals = sum(signal.status == "planned" for signal in self.signals)
+        if self.liveSignals != live_signals:
+            raise ValueError("liveSignals mismatch")
+        if self.plannedSignals != planned_signals:
+            raise ValueError("plannedSignals mismatch")
+        if self.liveSignals + self.plannedSignals != self.configuredSignals:
+            raise ValueError("registry status counts must equal configuredSignals")
+
         for category in self.categories:
-            if category.configuredSignals != configured_by_category[category.id]:
+            category_signals = [
+                signal for signal in self.signals if signal.category == category.id
+            ]
+            if category.configuredSignals != len(category_signals):
                 raise ValueError(f"configured signal count mismatch for {category.id}")
+            if category.liveSignals != sum(
+                signal.status == "live" for signal in category_signals
+            ):
+                raise ValueError(f"live signal count mismatch for {category.id}")
+            if category.plannedSignals != sum(
+                signal.status == "planned" for signal in category_signals
+            ):
+                raise ValueError(f"planned signal count mismatch for {category.id}")
         return self
 
 
