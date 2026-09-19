@@ -2,6 +2,7 @@ from datetime import date, datetime, timezone
 
 from risk29_engine.scoring import (
     SeriesPoint,
+    core_inflation_momentum_features,
     equity_trend_score,
     freshness_from_date,
     piecewise,
@@ -38,3 +39,26 @@ def test_freshness_becomes_stale_after_configured_window():
     stale, _ = freshness_from_date(date(2026, 9, 1), now, 72, 120)
     assert fresh == "fresh"
     assert stale == "stale"
+
+
+
+def test_core_inflation_momentum_uses_monthly_3m_annualized_and_12m_gap():
+    points = []
+    for i in range(18):
+        month_index = (2025 * 12 + 3) + i
+        year, month_zero = divmod(month_index, 12)
+        points.append(
+            SeriesPoint(
+                date(year, month_zero + 1, 1),
+                300.0 * ((1.0025) ** i),
+            )
+        )
+
+    current_3m, current_gap, previous_3m, previous_gap = (
+        core_inflation_momentum_features(points)
+    )
+
+    assert 2.9 < current_3m < 3.2
+    assert abs(current_gap) < 0.2
+    assert previous_3m is not None
+    assert previous_gap is not None
