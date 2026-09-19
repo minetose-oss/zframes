@@ -4,7 +4,9 @@ from pathlib import Path
 
 import pytest
 import yaml
+from fastapi.testclient import TestClient
 
+from risk29_engine.main import app
 from risk29_engine.registry import build_registry
 
 
@@ -63,3 +65,16 @@ def test_registry_rejects_unknown_category():
 
     with pytest.raises(ValueError, match="references unknown category"):
         build_registry(config)
+
+
+def test_registry_endpoint_exposes_live_and_planned_counts():
+    response = TestClient(app).get("/risk29/registry.json")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["registryVersion"] == "risk29-proposed-v1"
+    assert payload["targetSignals"] == 29
+    assert payload["configuredSignals"] == 29
+    assert payload["liveSignals"] == 10
+    assert payload["plannedSignals"] == 19
+    assert payload["remainingSignals"] == 0
