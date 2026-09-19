@@ -46,6 +46,48 @@ def pct_change(points: Sequence[SeriesPoint], periods: int) -> float | None:
     return ((latest - previous) / previous) * 100.0
 
 
+def annualized_pct_change(
+    points: Sequence[SeriesPoint],
+    periods: int,
+    *,
+    periods_per_year: int = 12,
+) -> float | None:
+    if len(points) <= periods:
+        return None
+    latest = points[-1].value
+    previous = points[-1 - periods].value
+    if previous <= 0 or latest <= 0:
+        return None
+    exponent = periods_per_year / periods
+    return ((latest / previous) ** exponent - 1.0) * 100.0
+
+
+def core_inflation_momentum_features(
+    points: Sequence[SeriesPoint],
+) -> tuple[float, float, float | None, float | None]:
+    """
+    Return current 3m annualized core-CPI inflation, its gap versus 12m YoY,
+    and the prior-observation versions of both features.
+
+    CPILFESL is a monthly index. Using observation-count periods instead of
+    calendar-day offsets keeps the transform robust to release timing.
+    """
+    current_3m = annualized_pct_change(points, 3)
+    current_12m = pct_change(points, 12)
+    if current_3m is None or current_12m is None:
+        raise ValueError("core inflation momentum requires at least 13 observations")
+
+    previous_3m = annualized_pct_change(points[:-1], 3)
+    previous_12m = pct_change(points[:-1], 12)
+    current_gap = current_3m - current_12m
+    previous_gap = (
+        previous_3m - previous_12m
+        if previous_3m is not None and previous_12m is not None
+        else None
+    )
+    return current_3m, current_gap, previous_3m, previous_gap
+
+
 def one_day_change(points: Sequence[SeriesPoint], percent: bool) -> float | None:
     if len(points) < 2:
         return None

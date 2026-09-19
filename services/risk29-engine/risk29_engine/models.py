@@ -17,10 +17,85 @@ Risk29CategoryId = Literal[
 Risk29State = Literal["normal", "watch", "warning", "alert", "unavailable"]
 Risk29Direction = Literal["improving", "worsening", "flat"]
 Risk29Freshness = Literal["fresh", "delayed", "stale", "error"]
+Risk29RegistryStatus = Literal["live", "planned"]
 
 
 class WireModel(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+
+
+class Risk29RegistrySignal(WireModel):
+    id: str
+    label: str
+    category: Risk29CategoryId
+    status: Risk29RegistryStatus
+    source: str
+    sourceSeries: str | None = None
+    unit: str
+    transform: str
+
+
+class Risk29RegistryCategory(WireModel):
+    id: Risk29CategoryId
+    label: str
+    weight: float = Field(ge=0)
+    configuredSignals: int = Field(ge=0)
+    liveSignals: int = Field(ge=0)
+    plannedSignals: int = Field(ge=0)
+
+
+class Risk29Registry(WireModel):
+    schemaVersion: Literal["1"] = "1"
+    registryVersion: str
+    modelVersion: str
+    thresholdVersion: str
+    targetSignals: int = Field(ge=1)
+    configuredSignals: int = Field(ge=0)
+    liveSignals: int = Field(ge=0)
+    plannedSignals: int = Field(ge=0)
+    remainingSignals: int = Field(ge=0)
+    categories: list[Risk29RegistryCategory]
+    signals: list[Risk29RegistrySignal]
+
+    @model_validator(mode="after")
+    def registry_invariants(self) -> "Risk29Registry":
+        signal_ids = [signal.id for signal in self.signals]
+        if len(signal_ids) != len(set(signal_ids)):
+            raise ValueError("registry signal ids must be unique")
+        if self.configuredSignals != len(self.signals):
+            raise ValueError("configuredSignals must equal registry signal count")
+        if self.configuredSignals > self.targetSignals:
+            raise ValueError("configuredSignals cannot exceed targetSignals")
+        if self.remainingSignals != self.targetSignals - self.configuredSignals:
+            raise ValueError("remainingSignals mismatch")
+        category_ids = [category.id for category in self.categories]
+        if len(category_ids) != 8 or len(set(category_ids)) != 8:
+            raise ValueError("registry must contain all eight categories exactly once")
+        live_signals = sum(signal.status == "live" for signal in self.signals)
+        planned_signals = sum(signal.status == "planned" for signal in self.signals)
+        if self.liveSignals != live_signals:
+            raise ValueError("liveSignals mismatch")
+        if self.plannedSignals != planned_signals:
+            raise ValueError("plannedSignals mismatch")
+        if self.liveSignals + self.plannedSignals != self.configuredSignals:
+            raise ValueError("registry status counts must equal configuredSignals")
+
+        for category in self.categories:
+            category_signals = [
+                signal for signal in self.signals if signal.category == category.id
+            ]
+            if category.configuredSignals != len(category_signals):
+                raise ValueError(f"configured signal count mismatch for {category.id}")
+            if category.liveSignals != sum(
+                signal.status == "live" for signal in category_signals
+            ):
+                raise ValueError(f"live signal count mismatch for {category.id}")
+            if category.plannedSignals != sum(
+                signal.status == "planned" for signal in category_signals
+            ):
+                raise ValueError(f"planned signal count mismatch for {category.id}")
+        return self
 
 
 class Risk29Signal(WireModel):

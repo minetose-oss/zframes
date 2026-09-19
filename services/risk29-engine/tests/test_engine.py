@@ -14,6 +14,17 @@ class FakeSources:
         first = self.end - timedelta(days=count - 1)
         return [SeriesPoint(first + timedelta(days=i), start + step * i) for i in range(count)]
 
+    def _monthly_series(self, start: float, growth: float, count: int = 24):
+        end_month = self.end.year * 12 + (self.end.month - 1)
+        first_month = end_month - (count - 1)
+        points = []
+        for i in range(count):
+            month_index = first_month + i
+            year, month_zero = divmod(month_index, 12)
+            observed = date(year, month_zero + 1, 1)
+            points.append(SeriesPoint(observed, start * ((1 + growth) ** i)))
+        return points
+
     async def fred(self, series_id: str):
         if series_id == "VIXCLS":
             return self._series(17.0, 0.015)
@@ -29,6 +40,8 @@ class FakeSources:
             return self._series(1.6, 0.0005)
         if series_id == "DTWEXBGS":
             return self._series(118.0, 0.01)
+        if series_id == "CPILFESL":
+            return self._monthly_series(300.0, 0.0025)
         raise AssertionError(series_id)
 
     async def treasury_curve(self):
@@ -54,12 +67,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p1-engine-0.1.1"
-    assert snapshot.thresholdVersion == "risk29-p1-provisional-v1"
-    assert len(snapshot.signals) == 10
-    assert snapshot.health.total == 10
+    assert snapshot.modelVersion == "risk29-p2-engine-0.2.0"
+    assert snapshot.thresholdVersion == "risk29-p2-provisional-v1"
+    assert len(snapshot.signals) == 11
+    assert snapshot.health.total == 11
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 10
+    assert snapshot.health.available == 11
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -72,6 +85,11 @@ async def test_engine_builds_contract_and_history(tmp_path):
         "global",
         "technical",
     ]
+    inflation = next(signal for signal in snapshot.signals if signal.id == "core_inflation_momentum")
+    assert inflation.value is not None
+    assert inflation.changeWindow == "1m"
+    assert inflation.sourceSeries == "CPILFESL"
+
     valuation = next(category for category in snapshot.categories if category.id == "valuation")
     qualitative = next(category for category in snapshot.categories if category.id == "qualitative")
     assert valuation.score is None and valuation.state == "unavailable"
@@ -127,7 +145,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.health.available == 3
-    assert snapshot.health.errored == 7
+    assert snapshot.health.errored == 8
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
     assert snapshot.regime == "unavailable"
