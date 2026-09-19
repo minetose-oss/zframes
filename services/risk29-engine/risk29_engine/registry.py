@@ -58,6 +58,12 @@ def build_registry(config: dict[str, Any]) -> Risk29Registry:
 
     target_signals = int(config.get("target_signal_count", 29))
     configured_signals = len(signals)
+    signal_ids = [signal.id for signal in signals]
+    if len(signal_ids) != len(set(signal_ids)):
+        raise ValueError("registry signal ids must be unique")
+    if configured_signals > target_signals:
+        raise ValueError("configuredSignals cannot exceed targetSignals")
+
     live_signals = sum(signal.status == "live" for signal in signals)
     planned_signals = sum(signal.status == "planned" for signal in signals)
 
