@@ -1,3 +1,5 @@
+registry_version: risk29-registry-v1
+target_signal_count: 29
 threshold_version: risk29-p1-provisional-v1
 model_version: risk29-p1-engine-0.1.1
 minimum_signal_coverage: 0.70
