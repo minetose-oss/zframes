@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
-threshold_version: risk29-p1-provisional-v1
-model_version: risk29-p1-engine-0.1.1
+threshold_version: risk29-p2-provisional-v1
+model_version: risk29-p2-engine-0.2.0
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -201,16 +201,34 @@ signals:
       fresh_hours: 96
       delayed_hours: 144
 
-planned_signals:
   - id: core_inflation_momentum
     label: Core Inflation Momentum
     category: macro
     source: BLS/FRED
     source_series: CPILFESL
     unit: percent
+    fetch: fred
     transform: core_inflation_3m_annualized_vs_12m
+    level_weight: 0.70
+    acceleration_weight: 0.30
+    points:
+      - [1.0, 10]
+      - [2.0, 25]
+      - [3.0, 50]
+      - [4.0, 70]
+      - [6.0, 95]
+    acceleration_points:
+      - [-2.0, 10]
+      - [-1.0, 20]
+      - [0.0, 35]
+      - [1.0, 65]
+      - [2.0, 90]
+      - [3.0, 100]
+    freshness:
+      fresh_hours: 1488
+      delayed_hours: 2208
 
-  - id: sahm_labor_deterioration
+planned_signals:  - id: sahm_labor_deterioration
     label: Sahm / Labor Deterioration
     category: macro
     source: FRED
