@@ -21,6 +21,7 @@ from .models import (
 )
 from .scoring import (
     SeriesPoint,
+    core_inflation_momentum_features,
     direction_from_scores,
     equity_trend_score,
     freshness_from_date,
@@ -248,8 +249,21 @@ class Risk29Engine:
                 float(freshness_cfg.get("fresh_hours", 72)),
                 float(freshness_cfg.get("delayed_hours", 120)),
             )
-            change_percent = str(cfg.get("transform")) in {"equity_trend", "momentum_20d"}
-            change = one_day_change(points, percent=change_percent)
+            transform = str(cfg.get("transform"))
+            if transform == "core_inflation_3m_annualized_vs_12m":
+                current_3m, _gap, previous_3m, _previous_gap = (
+                    core_inflation_momentum_features(points)
+                )
+                signal_value = current_3m
+                change = (
+                    current_3m - previous_3m if previous_3m is not None else None
+                )
+                change_window = "1m" if change is not None else None
+            else:
+                signal_value = latest.value
+                change_percent = transform in {"equity_trend", "momentum_20d"}
+                change = one_day_change(points, percent=change_percent)
+                change_window = "1d" if change is not None else None
             state = state_from_score(score)
             return Risk29Signal(
                 id=signal_id,
@@ -258,13 +272,13 @@ class Risk29Engine:
                 source=str(cfg["source"]),
                 sourceSeries=str(cfg.get("source_series")) if cfg.get("source_series") else None,
                 sourceUrl=SOURCE_URLS.get(fetch_kind),
-                value=round(latest.value, 6),
+                value=round(signal_value, 6),
                 unit=str(cfg["unit"]),
                 riskScore=round(score, 2),
                 state=state,
                 direction=direction_from_scores(score, previous_score),
                 change=round(change, 6) if change is not None else None,
-                changeWindow="1d" if change is not None else None,
+                changeWindow=change_window,
                 asOf=latest.date.isoformat(),
                 fetchedAt=fetched_at,
                 ageSeconds=age_seconds,
@@ -321,6 +335,26 @@ class Risk29Engine:
             current = piecewise(feature, knots)
             previous_feature = pct_change(points[:-1], 20) if len(points) >= 22 else None
             previous = piecewise(previous_feature, knots) if previous_feature is not None else None
+            return current, previous
+        if transform == "core_inflation_3m_annualized_vs_12m":
+            current_3m, current_gap, previous_3m, previous_gap = (
+                core_inflation_momentum_features(points)
+            )
+            acceleration_knots = cfg.get("acceleration_points") or []
+            level_weight = float(cfg.get("level_weight", 0.7))
+            acceleration_weight = float(cfg.get("acceleration_weight", 0.3))
+            if abs(level_weight + acceleration_weight - 1.0) > 1e-9:
+                raise ValueError("core inflation weights must sum to 1")
+            current = (
+                piecewise(current_3m, knots) * level_weight
+                + piecewise(current_gap, acceleration_knots) * acceleration_weight
+            )
+            previous = (
+                piecewise(previous_3m, knots) * level_weight
+                + piecewise(previous_gap, acceleration_knots) * acceleration_weight
+                if previous_3m is not None and previous_gap is not None
+                else None
+            )
             return current, previous
         raise ValueError(f"unknown transform {transform}")
 
