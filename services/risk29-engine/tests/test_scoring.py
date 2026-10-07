@@ -8,6 +8,7 @@ from risk29_engine.scoring import (
     freshness_from_date,
     level_change_features,
     piecewise,
+    spread_series,
     state_from_score,
 )
 
@@ -99,3 +100,21 @@ def test_level_change_features_tracks_spread_widening():
     assert change > 0.6
     assert previous is not None
     assert previous_change is not None
+
+
+
+def test_spread_series_aligns_matching_dates_only():
+    left = [
+        SeriesPoint(date(2026, 1, 1), 8.0),
+        SeriesPoint(date(2026, 1, 2), 8.4),
+        SeriesPoint(date(2026, 1, 3), 8.7),
+    ]
+    right = [
+        SeriesPoint(date(2026, 1, 2), 2.0),
+        SeriesPoint(date(2026, 1, 3), 2.1),
+    ]
+
+    spread = spread_series(left, right)
+
+    assert [point.date for point in spread] == [date(2026, 1, 2), date(2026, 1, 3)]
+    assert [round(point.value, 2) for point in spread] == [6.4, 6.6]
