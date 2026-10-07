@@ -36,6 +36,22 @@ def piecewise(value: float, points: Sequence[Sequence[float]]) -> float:
     return clamp(ordered[-1][1])
 
 
+def spread_series(
+    left: Sequence[SeriesPoint],
+    right: Sequence[SeriesPoint],
+) -> list[SeriesPoint]:
+    right_by_date = {point.date: point.value for point in right}
+    points = [
+        SeriesPoint(point.date, point.value - right_by_date[point.date])
+        for point in left
+        if point.date in right_by_date
+    ]
+    if not points:
+        raise ValueError("spread series has no overlapping observations")
+    points.sort(key=lambda point: point.date)
+    return points
+
+
 def pct_change(points: Sequence[SeriesPoint], periods: int) -> float | None:
     if len(points) <= periods:
         return None
