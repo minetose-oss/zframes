@@ -94,6 +94,26 @@ describe("Risk29SnapshotSchema hardening", () => {
     expect(() => Risk29SnapshotSchema.parse(snapshot)).toThrow();
   });
 
+  it("accepts explicit nulls emitted by the engine for optional signal fields", () => {
+    const snapshot = validSnapshot();
+    snapshot.signals[0] = {
+      ...snapshot.signals[0],
+      value: null,
+      riskScore: null,
+      state: "unavailable",
+      direction: null,
+      change: null,
+      changeWindow: null,
+      asOf: null,
+      ageSeconds: null,
+      freshness: "error",
+      reason: "source failed",
+    };
+    snapshot.health = { available: 0, stale: 0, errored: 1, total: 1 };
+
+    expect(() => Risk29SnapshotSchema.parse(snapshot)).not.toThrow();
+  });
+
   it("requires unavailable signals to carry null value and score", () => {
     const snapshot = validSnapshot();
     snapshot.signals[0] = {
