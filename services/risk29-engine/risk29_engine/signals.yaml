@@ -228,15 +228,33 @@ signals:
       fresh_hours: 1488
       delayed_hours: 2208
 
-planned_signals:
   - id: sahm_labor_deterioration
     label: Sahm / Labor Deterioration
     category: macro
     source: FRED
     source_series: SAHMREALTIME
     unit: pct-points
+    fetch: fred
     transform: sahm_level_and_change
+    level_weight: 0.80
+    change_weight: 0.20
+    points:
+      - [0.0, 10]
+      - [0.2, 25]
+      - [0.35, 50]
+      - [0.5, 80]
+      - [0.75, 100]
+    change_points:
+      - [-0.2, 10]
+      - [0.0, 30]
+      - [0.1, 50]
+      - [0.2, 75]
+      - [0.4, 100]
+    freshness:
+      fresh_hours: 1488
+      delayed_hours: 2208
 
+planned_signals:
   - id: ccc_bb_stress_spread
     label: CCC-BB Stress Spread
     category: credit
