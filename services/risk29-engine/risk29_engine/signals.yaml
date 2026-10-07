@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v1
-model_version: risk29-p2-engine-0.2.0
+model_version: risk29-p2-engine-0.2.1
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -228,16 +228,7 @@ signals:
       fresh_hours: 1488
       delayed_hours: 2208
 
-planned_signals:
-  - id: sahm_labor_deterioration
-    label: Sahm / Labor Deterioration
-    category: macro
-    source: FRED
-    source_series: SAHMREALTIME
-    unit: pct-points
-    transform: sahm_level_and_change
-
-  - id: ccc_bb_stress_spread
+planned_signals:  - id: ccc_bb_stress_spread
     label: CCC-BB Stress Spread
     category: credit
     source: ICE BofA/FRED
