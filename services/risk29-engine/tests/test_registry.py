@@ -33,8 +33,8 @@ def test_registry_reports_proposed_29_with_10_live_and_19_planned():
     assert registry.registryVersion == "risk29-proposed-v1"
     assert registry.targetSignals == 29
     assert registry.configuredSignals == 29
-    assert registry.liveSignals == 13
-    assert registry.plannedSignals == 16
+    assert registry.liveSignals == 14
+    assert registry.plannedSignals == 15
     assert registry.remainingSignals == 0
     assert len(registry.categories) == 8
     assert len(registry.signals) == 29
@@ -47,8 +47,8 @@ def test_registry_reports_proposed_29_with_10_live_and_19_planned():
 def test_registry_keeps_planned_signals_out_of_executable_engine_config():
     config = _config()
 
-    assert len(config["signals"]) == 13
-    assert len(config["planned_signals"]) == 16
+    assert len(config["signals"]) == 14
+    assert len(config["planned_signals"]) == 15
 
 
 def test_registry_signal_ids_are_unique():
@@ -75,6 +75,6 @@ def test_registry_endpoint_exposes_live_and_planned_counts():
     assert payload["registryVersion"] == "risk29-proposed-v1"
     assert payload["targetSignals"] == 29
     assert payload["configuredSignals"] == 29
-    assert payload["liveSignals"] == 13
-    assert payload["plannedSignals"] == 16
+    assert payload["liveSignals"] == 14
+    assert payload["plannedSignals"] == 15
     assert payload["remainingSignals"] == 0
