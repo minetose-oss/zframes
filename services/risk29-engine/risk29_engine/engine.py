@@ -30,6 +30,7 @@ from .scoring import (
     pct_change,
     piecewise,
     regime_from_score,
+    sahm_labor_deterioration_features,
     state_from_score,
 )
 from .sources import LBMA_GOLD_URL, OFR_URL, FRED_URL, SourceClient
@@ -259,6 +260,13 @@ class Risk29Engine:
                     current_3m - previous_3m if previous_3m is not None else None
                 )
                 change_window = "1m" if change is not None else None
+            elif transform == "sahm_level_and_change":
+                current, change_3m, _previous, _previous_change_3m = (
+                    sahm_labor_deterioration_features(points)
+                )
+                signal_value = current
+                change = change_3m
+                change_window = "3m"
             else:
                 signal_value = latest.value
                 change_percent = transform in {"equity_trend", "momentum_20d"}
@@ -353,6 +361,26 @@ class Risk29Engine:
                 piecewise(previous_3m, knots) * level_weight
                 + piecewise(previous_gap, acceleration_knots) * acceleration_weight
                 if previous_3m is not None and previous_gap is not None
+                else None
+            )
+            return current, previous
+        if transform == "sahm_level_and_change":
+            current_level, current_change, previous_level, previous_change = (
+                sahm_labor_deterioration_features(points)
+            )
+            change_knots = cfg.get("change_points") or []
+            level_weight = float(cfg.get("level_weight", 0.8))
+            change_weight = float(cfg.get("change_weight", 0.2))
+            if abs(level_weight + change_weight - 1.0) > 1e-9:
+                raise ValueError("Sahm labor weights must sum to 1")
+            current = (
+                piecewise(current_level, knots) * level_weight
+                + piecewise(current_change or 0.0, change_knots) * change_weight
+            )
+            previous = (
+                piecewise(previous_level, knots) * level_weight
+                + piecewise(previous_change, change_knots) * change_weight
+                if previous_level is not None and previous_change is not None
                 else None
             )
             return current, previous
