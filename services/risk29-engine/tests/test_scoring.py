@@ -4,6 +4,7 @@ from risk29_engine.scoring import (
     SeriesPoint,
     core_inflation_momentum_features,
     equity_trend_score,
+    sahm_labor_deterioration_features,
     freshness_from_date,
     piecewise,
     state_from_score,
@@ -62,3 +63,23 @@ def test_core_inflation_momentum_uses_monthly_3m_annualized_and_12m_gap():
     assert abs(current_gap) < 0.2
     assert previous_3m is not None
     assert previous_gap is not None
+
+
+
+def test_sahm_labor_deterioration_tracks_level_and_three_month_change():
+    points = [
+        SeriesPoint(date(2026, month, 1), value)
+        for month, value in zip(
+            range(1, 7),
+            [0.10, 0.12, 0.14, 0.18, 0.24, 0.31],
+        )
+    ]
+
+    current, change_3m, previous, previous_change_3m = (
+        sahm_labor_deterioration_features(points)
+    )
+
+    assert current == 0.31
+    assert round(change_3m or 0, 2) == 0.17
+    assert previous == 0.24
+    assert round(previous_change_3m or 0, 2) == 0.12
