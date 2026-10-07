@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v1
-model_version: risk29-p2-engine-0.2.3
+model_version: risk29-p2-engine-0.2.4
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -313,6 +313,36 @@ signals:
       fresh_hours: 72
       delayed_hours: 120
 
+  - id: chicago_fed_nfci
+    label: Chicago Fed NFCI
+    category: liquidity
+    source: Chicago Fed/FRED
+    source_series: NFCI
+    unit: index
+    fetch: fred
+    transform: piecewise_and_change
+    level_weight: 0.80
+    change_weight: 0.20
+    change_periods: 13
+    change_window: 3m
+    points:
+      - [-1.0, 10]
+      - [-0.5, 20]
+      - [0.0, 40]
+      - [0.5, 65]
+      - [1.0, 85]
+      - [2.0, 100]
+    change_points:
+      - [-0.5, 10]
+      - [-0.25, 20]
+      - [0.0, 30]
+      - [0.25, 55]
+      - [0.5, 75]
+      - [1.0, 100]
+    freshness:
+      fresh_hours: 240
+      delayed_hours: 336
+
 planned_signals:
   - id: sp500_forward_pe_percentile
     label: S&P 500 Forward P/E Percentile
@@ -369,14 +399,6 @@ planned_signals:
     source: Fed/ECB/BoJ + official releases
     unit: score
     transform: policy_event_classifier
-
-  - id: chicago_fed_nfci
-    label: Chicago Fed NFCI
-    category: liquidity
-    source: Chicago Fed/FRED
-    source_series: NFCI
-    unit: index
-    transform: level_and_change
 
   - id: us_net_liquidity
     label: US Net Liquidity

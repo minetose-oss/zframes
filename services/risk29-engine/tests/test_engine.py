@@ -50,6 +50,8 @@ class FakeSources:
             return self._series(8.5, 0.010)
         if series_id == "BAMLH0A1HYBB":
             return self._series(2.0, 0.002)
+        if series_id == "NFCI":
+            return self._series(-0.6, 0.001, 80)
         raise AssertionError(series_id)
 
     async def treasury_curve(self):
@@ -75,12 +77,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.2.3"
+    assert snapshot.modelVersion == "risk29-p2-engine-0.2.4"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v1"
-    assert len(snapshot.signals) == 14
-    assert snapshot.health.total == 14
+    assert len(snapshot.signals) == 15
+    assert snapshot.health.total == 15
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 14
+    assert snapshot.health.available == 15
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -115,6 +117,11 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert ccc_bb.value > 0
     assert ccc_bb.changeWindow == "3m"
     assert ccc_bb.sourceSeries == "BAMLH0A3HYC - BAMLH0A1HYBB"
+
+    nfci = next(signal for signal in snapshot.signals if signal.id == "chicago_fed_nfci")
+    assert nfci.value is not None
+    assert nfci.changeWindow == "3m"
+    assert nfci.sourceSeries == "NFCI"
 
     valuation = next(category for category in snapshot.categories if category.id == "valuation")
     qualitative = next(category for category in snapshot.categories if category.id == "qualitative")
@@ -171,7 +178,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.health.available == 3
-    assert snapshot.health.errored == 11
+    assert snapshot.health.errored == 12
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
     assert snapshot.regime == "unavailable"
