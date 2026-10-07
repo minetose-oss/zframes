@@ -42,6 +42,8 @@ class FakeSources:
             return self._series(118.0, 0.01)
         if series_id == "CPILFESL":
             return self._monthly_series(300.0, 0.0025)
+        if series_id == "SAHMREALTIME":
+            return self._monthly_series(0.18, 0.03)
         raise AssertionError(series_id)
 
     async def treasury_curve(self):
@@ -67,12 +69,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.2.0"
+    assert snapshot.modelVersion == "risk29-p2-engine-0.2.1"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v1"
-    assert len(snapshot.signals) == 11
-    assert snapshot.health.total == 11
+    assert len(snapshot.signals) == 12
+    assert snapshot.health.total == 12
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 11
+    assert snapshot.health.available == 12
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -89,6 +91,11 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert inflation.value is not None
     assert inflation.changeWindow == "1m"
     assert inflation.sourceSeries == "CPILFESL"
+
+    sahm = next(signal for signal in snapshot.signals if signal.id == "sahm_labor_deterioration")
+    assert sahm.value is not None
+    assert sahm.changeWindow == "3m"
+    assert sahm.sourceSeries == "SAHMREALTIME"
 
     valuation = next(category for category in snapshot.categories if category.id == "valuation")
     qualitative = next(category for category in snapshot.categories if category.id == "qualitative")
@@ -145,7 +152,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.health.available == 3
-    assert snapshot.health.errored == 8
+    assert snapshot.health.errored == 9
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
     assert snapshot.regime == "unavailable"
