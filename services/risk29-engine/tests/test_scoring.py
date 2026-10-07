@@ -6,6 +6,7 @@ from risk29_engine.scoring import (
     equity_trend_score,
     sahm_labor_deterioration_features,
     freshness_from_date,
+    level_change_features,
     piecewise,
     state_from_score,
 )
@@ -83,3 +84,18 @@ def test_sahm_labor_deterioration_tracks_level_and_three_month_change():
     assert round(change_3m or 0, 2) == 0.17
     assert previous == 0.24
     assert round(previous_change_3m or 0, 2) == 0.12
+
+
+
+def test_level_change_features_tracks_spread_widening():
+    points = [
+        SeriesPoint(date(2026, 1, 1), 1.5 + i * 0.01)
+        for i in range(70)
+    ]
+
+    current, change, previous, previous_change = level_change_features(points, 63)
+
+    assert current > 2.0
+    assert change > 0.6
+    assert previous is not None
+    assert previous_change is not None
