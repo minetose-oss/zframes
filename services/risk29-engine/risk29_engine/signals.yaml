@@ -228,7 +228,16 @@ signals:
       fresh_hours: 1488
       delayed_hours: 2208
 
-planned_signals:  - id: ccc_bb_stress_spread
+planned_signals:
+  - id: sahm_labor_deterioration
+    label: Sahm / Labor Deterioration
+    category: macro
+    source: FRED
+    source_series: SAHMREALTIME
+    unit: pct-points
+    transform: sahm_level_and_change
+
+  - id: ccc_bb_stress_spread
     label: CCC-BB Stress Spread
     category: credit
     source: ICE BofA/FRED
