@@ -35,7 +35,9 @@ export function risk29StateLabel(state: Risk29State): string {
   return state === "unavailable" ? "NO DATA" : state.toUpperCase();
 }
 
-export function risk29DirectionLabel(direction?: Risk29Direction | null): string {
+export function risk29DirectionLabel(
+  direction?: Risk29Direction | null,
+): string {
   switch (direction) {
     case "improving":
       return "↓ improving";
@@ -48,7 +50,9 @@ export function risk29DirectionLabel(direction?: Risk29Direction | null): string
   }
 }
 
-export function risk29DirectionColor(direction?: Risk29Direction | null): string {
+export function risk29DirectionColor(
+  direction?: Risk29Direction | null,
+): string {
   switch (direction) {
     case "improving":
       return UP_COLOR;
