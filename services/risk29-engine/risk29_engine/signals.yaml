@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v1
-model_version: risk29-p2-engine-0.2.1
+model_version: risk29-p2-engine-0.2.2
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -254,6 +254,34 @@ signals:
       fresh_hours: 1488
       delayed_hours: 2208
 
+  - id: baa_treasury_spread
+    label: Baa-Treasury Spread
+    category: credit
+    source: Moody's/FRED
+    source_series: BAA10Y
+    unit: percent
+    fetch: fred
+    transform: piecewise_and_change
+    level_weight: 0.80
+    change_weight: 0.20
+    change_periods: 63
+    change_window: 3m
+    points:
+      - [1.0, 10]
+      - [1.5, 25]
+      - [2.0, 45]
+      - [3.0, 70]
+      - [5.0, 100]
+    change_points:
+      - [-0.5, 10]
+      - [0.0, 30]
+      - [0.5, 60]
+      - [1.0, 85]
+      - [2.0, 100]
+    freshness:
+      fresh_hours: 96
+      delayed_hours: 144
+
 planned_signals:
   - id: ccc_bb_stress_spread
     label: CCC-BB Stress Spread
@@ -261,14 +289,6 @@ planned_signals:
     source: ICE BofA/FRED
     unit: percent
     transform: ccc_minus_bb_spread
-
-  - id: baa_treasury_spread
-    label: Baa-Treasury Spread
-    category: credit
-    source: Moody's/FRED
-    source_series: BAA10Y
-    unit: percent
-    transform: piecewise_and_change
 
   - id: sp500_forward_pe_percentile
     label: S&P 500 Forward P/E Percentile
