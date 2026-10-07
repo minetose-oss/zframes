@@ -88,6 +88,29 @@ def core_inflation_momentum_features(
     return current_3m, current_gap, previous_3m, previous_gap
 
 
+def sahm_labor_deterioration_features(
+    points: Sequence[SeriesPoint],
+) -> tuple[float, float | None, float | None, float | None]:
+    """
+    Return the current Sahm-rule indicator, its three-observation change,
+    and the prior-observation versions used for direction scoring.
+
+    SAHMREALTIME is already expressed in percentage points, so the transform
+    intentionally scores the published indicator directly rather than
+    reconstructing it from unemployment-rate inputs.
+    """
+    if len(points) < 4:
+        raise ValueError("Sahm labor deterioration requires at least 4 observations")
+
+    current = points[-1].value
+    change_3m = current - points[-4].value
+    previous = points[-2].value
+    previous_change_3m = (
+        previous - points[-5].value if len(points) >= 5 else None
+    )
+    return current, change_3m, previous, previous_change_3m
+
+
 def one_day_change(points: Sequence[SeriesPoint], percent: bool) -> float | None:
     if len(points) < 2:
         return None
