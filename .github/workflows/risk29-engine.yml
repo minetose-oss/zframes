@@ -2,7 +2,7 @@ name: Risk29 engine
 
 on:
   push:
-    branches: [risk29-phase1]
+    branches: [risk29-phase1, risk29-phase2]
     paths:
       - services/risk29-engine/**
       - .github/workflows/risk29-engine.yml
