@@ -25,6 +25,7 @@ from .scoring import (
     direction_from_scores,
     equity_trend_score,
     freshness_from_date,
+    level_change_features,
     mean_score,
     one_day_change,
     pct_change,
@@ -267,6 +268,14 @@ class Risk29Engine:
                 signal_value = current
                 change = change_3m
                 change_window = "3m"
+            elif transform == "piecewise_and_change":
+                periods = int(cfg.get("change_periods", 63))
+                current, level_change, _previous, _previous_change = (
+                    level_change_features(points, periods)
+                )
+                signal_value = current
+                change = level_change
+                change_window = str(cfg.get("change_window", "3m"))
             else:
                 signal_value = latest.value
                 change_percent = transform in {"equity_trend", "momentum_20d"}
@@ -376,6 +385,27 @@ class Risk29Engine:
             current = (
                 piecewise(current_level, knots) * level_weight
                 + piecewise(current_change or 0.0, change_knots) * change_weight
+            )
+            previous = (
+                piecewise(previous_level, knots) * level_weight
+                + piecewise(previous_change, change_knots) * change_weight
+                if previous_level is not None and previous_change is not None
+                else None
+            )
+            return current, previous
+        if transform == "piecewise_and_change":
+            periods = int(cfg.get("change_periods", 63))
+            current_level, current_change, previous_level, previous_change = (
+                level_change_features(points, periods)
+            )
+            change_knots = cfg.get("change_points") or []
+            level_weight = float(cfg.get("level_weight", 0.8))
+            change_weight = float(cfg.get("change_weight", 0.2))
+            if abs(level_weight + change_weight - 1.0) > 1e-9:
+                raise ValueError("level-and-change weights must sum to 1")
+            current = (
+                piecewise(current_level, knots) * level_weight
+                + piecewise(current_change, change_knots) * change_weight
             )
             previous = (
                 piecewise(previous_level, knots) * level_weight
