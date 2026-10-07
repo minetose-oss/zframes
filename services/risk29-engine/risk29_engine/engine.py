@@ -32,6 +32,7 @@ from .scoring import (
     piecewise,
     regime_from_score,
     sahm_labor_deterioration_features,
+    spread_series,
     state_from_score,
 )
 from .sources import LBMA_GOLD_URL, OFR_URL, FRED_URL, SourceClient
@@ -49,6 +50,7 @@ CATEGORY_ORDER = [
 
 SOURCE_URLS = {
     "fred": FRED_URL,
+    "fred_spread": FRED_URL,
     "ofr": OFR_URL,
     "lbma_gold": LBMA_GOLD_URL,
     "treasury_curve": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates",
@@ -326,6 +328,14 @@ class Risk29Engine:
         fetch_kind = str(cfg["fetch"])
         if fetch_kind == "fred":
             return await self.sources.fred(str(cfg["source_series"]))
+        if fetch_kind == "fred_spread":
+            left_id = str(cfg["source_series_left"])
+            right_id = str(cfg["source_series_right"])
+            left, right = await asyncio.gather(
+                self.sources.fred(left_id),
+                self.sources.fred(right_id),
+            )
+            return spread_series(left, right)
         if fetch_kind == "treasury_curve":
             return await self.sources.treasury_curve()
         if fetch_kind == "ofr":
