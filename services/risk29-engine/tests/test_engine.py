@@ -52,6 +52,10 @@ class FakeSources:
             return self._series(2.0, 0.002)
         if series_id == "NFCI":
             return self._series(-0.6, 0.001, 80)
+        if series_id == "SOFR":
+            return self._series(3.50, 0.0005)
+        if series_id == "IORB":
+            return self._series(3.50, 0.0002)
         raise AssertionError(series_id)
 
     async def treasury_curve(self):
@@ -77,12 +81,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.2.4"
+    assert snapshot.modelVersion == "risk29-p2-engine-0.2.5"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v1"
-    assert len(snapshot.signals) == 15
-    assert snapshot.health.total == 15
+    assert len(snapshot.signals) == 16
+    assert snapshot.health.total == 16
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 15
+    assert snapshot.health.available == 16
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -123,6 +127,13 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert nfci.changeWindow == "3m"
     assert nfci.sourceSeries == "NFCI"
 
+    sofr_iorb = next(
+        signal for signal in snapshot.signals if signal.id == "sofr_iorb_funding_spread"
+    )
+    assert sofr_iorb.value is not None
+    assert sofr_iorb.changeWindow == "1d"
+    assert sofr_iorb.sourceSeries == "SOFR - IORB"
+
     valuation = next(category for category in snapshot.categories if category.id == "valuation")
     qualitative = next(category for category in snapshot.categories if category.id == "qualitative")
     assert valuation.score is None and valuation.state == "unavailable"
@@ -159,8 +170,8 @@ async def test_one_source_failure_does_not_zero_the_model(tmp_path):
     liquidity = next(category for category in snapshot.categories if category.id == "liquidity")
     assert liquidity.state != "unavailable"
     assert liquidity.score is not None
-    assert liquidity.availableSignals == 1
-    assert liquidity.totalSignals == 2
+    assert liquidity.availableSignals == 2
+    assert liquidity.totalSignals == 3
 
 
 class FredTimeoutSources(FakeSources):
@@ -180,7 +191,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.health.available == 3
-    assert snapshot.health.errored == 12
+    assert snapshot.health.errored == 13
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
     assert snapshot.regime == "unavailable"

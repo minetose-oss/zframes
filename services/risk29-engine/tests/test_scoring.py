@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from risk29_engine.scoring import (
     SeriesPoint,
@@ -8,6 +8,7 @@ from risk29_engine.scoring import (
     freshness_from_date,
     level_change_features,
     piecewise,
+    rolling_zscore_features,
     spread_series,
     state_from_score,
 )
@@ -118,3 +119,23 @@ def test_spread_series_aligns_matching_dates_only():
 
     assert [point.date for point in spread] == [date(2026, 1, 2), date(2026, 1, 3)]
     assert [round(point.value, 2) for point in spread] == [6.4, 6.6]
+
+
+def test_rolling_zscore_features_flags_latest_spread_jump():
+    start = date(2026, 1, 1)
+    points = [
+        SeriesPoint(start + timedelta(days=i), 0.01)
+        for i in range(60)
+    ]
+    points.append(SeriesPoint(start + timedelta(days=60), 0.10))
+
+    level, zscore, previous_level, previous_zscore = rolling_zscore_features(
+        points,
+        lookback=60,
+        min_observations=60,
+    )
+
+    assert level == 0.10
+    assert zscore > 5
+    assert previous_level == 0.01
+    assert previous_zscore == 0.0

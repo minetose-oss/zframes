@@ -31,6 +31,7 @@ from .scoring import (
     pct_change,
     piecewise,
     regime_from_score,
+    rolling_zscore_features,
     sahm_labor_deterioration_features,
     spread_series,
     state_from_score,
@@ -270,6 +271,10 @@ class Risk29Engine:
                 signal_value = current
                 change = change_3m
                 change_window = "3m"
+            elif transform == "spread_and_zscore":
+                signal_value = latest.value
+                change = one_day_change(points, percent=False)
+                change_window = "1d" if change is not None else None
             elif transform == "piecewise_and_change":
                 periods = int(cfg.get("change_periods", 63))
                 current, level_change, _previous, _previous_change = (
@@ -400,6 +405,32 @@ class Risk29Engine:
                 piecewise(previous_level, knots) * level_weight
                 + piecewise(previous_change, change_knots) * change_weight
                 if previous_level is not None and previous_change is not None
+                else None
+            )
+            return current, previous
+        if transform == "spread_and_zscore":
+            lookback = int(cfg.get("zscore_lookback", 252))
+            min_observations = int(cfg.get("zscore_min_observations", 60))
+            current_level, current_zscore, previous_level, previous_zscore = (
+                rolling_zscore_features(
+                    points,
+                    lookback=lookback,
+                    min_observations=min_observations,
+                )
+            )
+            zscore_knots = cfg.get("zscore_points") or []
+            level_weight = float(cfg.get("level_weight", 0.6))
+            zscore_weight = float(cfg.get("zscore_weight", 0.4))
+            if abs(level_weight + zscore_weight - 1.0) > 1e-9:
+                raise ValueError("spread-and-zscore weights must sum to 1")
+            current = (
+                piecewise(current_level, knots) * level_weight
+                + piecewise(current_zscore, zscore_knots) * zscore_weight
+            )
+            previous = (
+                piecewise(previous_level, knots) * level_weight
+                + piecewise(previous_zscore, zscore_knots) * zscore_weight
+                if previous_level is not None and previous_zscore is not None
                 else None
             )
             return current, previous

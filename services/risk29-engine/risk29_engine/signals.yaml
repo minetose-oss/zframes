@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v1
-model_version: risk29-p2-engine-0.2.4
+model_version: risk29-p2-engine-0.2.5
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -343,6 +343,38 @@ signals:
       fresh_hours: 240
       delayed_hours: 336
 
+  - id: sofr_iorb_funding_spread
+    label: SOFR-IORB Funding Spread
+    category: liquidity
+    source: NY Fed/FRED
+    source_series: SOFR - IORB
+    source_series_left: SOFR
+    source_series_right: IORB
+    unit: pct-points
+    fetch: fred_spread
+    transform: spread_and_zscore
+    level_weight: 0.60
+    zscore_weight: 0.40
+    zscore_lookback: 252
+    zscore_min_observations: 60
+    points:
+      - [-0.10, 5]
+      - [-0.05, 10]
+      - [0.0, 25]
+      - [0.02, 40]
+      - [0.05, 60]
+      - [0.10, 80]
+      - [0.20, 100]
+    zscore_points:
+      - [-1.0, 10]
+      - [0.0, 25]
+      - [1.0, 50]
+      - [2.0, 75]
+      - [3.0, 100]
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 120
+
 planned_signals:
   - id: sp500_forward_pe_percentile
     label: S&P 500 Forward P/E Percentile
@@ -407,14 +439,6 @@ planned_signals:
     source_series: WALCL - WTREGEN - RRPONTSYD
     unit: usd
     transform: level_momentum_and_zscore
-
-  - id: sofr_iorb_funding_spread
-    label: SOFR-IORB Funding Spread
-    category: liquidity
-    source: NY Fed/FRED
-    source_series: SOFR - IORB
-    unit: pct-points
-    transform: spread_and_zscore
 
   - id: oil_shock
     label: Oil Shock

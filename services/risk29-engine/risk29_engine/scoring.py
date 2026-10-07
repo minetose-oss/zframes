@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
-from statistics import fmean
+from statistics import fmean, pstdev
 from typing import Iterable, Sequence
 
 from .models import Risk29Direction, Risk29Freshness, Risk29State
@@ -143,6 +143,40 @@ def level_change_features(
         else None
     )
     return current_level, current_change, previous_level, previous_change
+
+
+def rolling_zscore_features(
+    points: Sequence[SeriesPoint],
+    *,
+    lookback: int = 252,
+    min_observations: int = 60,
+) -> tuple[float, float, float | None, float | None]:
+    if lookback < 2:
+        raise ValueError("rolling z-score lookback must be at least 2")
+    if min_observations < 2:
+        raise ValueError("rolling z-score minimum observations must be at least 2")
+
+    def _zscore(sequence: Sequence[SeriesPoint]) -> float | None:
+        window = sequence[-lookback:]
+        if len(window) < min_observations:
+            return None
+        values = [point.value for point in window]
+        mean = fmean(values)
+        sigma = pstdev(values)
+        if sigma <= 1e-12:
+            return 0.0
+        return (values[-1] - mean) / sigma
+
+    current_zscore = _zscore(points)
+    if current_zscore is None:
+        raise ValueError(
+            f"rolling z-score requires at least {min_observations} observations"
+        )
+
+    current_level = points[-1].value
+    previous_level = points[-2].value if len(points) >= 2 else None
+    previous_zscore = _zscore(points[:-1]) if len(points) >= 2 else None
+    return current_level, current_zscore, previous_level, previous_zscore
 
 
 def one_day_change(points: Sequence[SeriesPoint], percent: bool) -> float | None:
