@@ -46,6 +46,10 @@ class FakeSources:
             return self._monthly_series(0.18, 0.03)
         if series_id == "BAA10Y":
             return self._series(1.7, 0.001)
+        if series_id == "BAMLH0A3HYC":
+            return self._series(8.5, 0.010)
+        if series_id == "BAMLH0A1HYBB":
+            return self._series(2.0, 0.002)
         raise AssertionError(series_id)
 
     async def treasury_curve(self):
@@ -71,12 +75,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.2.2"
+    assert snapshot.modelVersion == "risk29-p2-engine-0.2.3"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v1"
-    assert len(snapshot.signals) == 13
-    assert snapshot.health.total == 13
+    assert len(snapshot.signals) == 14
+    assert snapshot.health.total == 14
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 13
+    assert snapshot.health.available == 14
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -103,6 +107,14 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert baa.value is not None
     assert baa.changeWindow == "3m"
     assert baa.sourceSeries == "BAA10Y"
+
+    ccc_bb = next(
+        signal for signal in snapshot.signals if signal.id == "ccc_bb_stress_spread"
+    )
+    assert ccc_bb.value is not None
+    assert ccc_bb.value > 0
+    assert ccc_bb.changeWindow == "3m"
+    assert ccc_bb.sourceSeries == "BAMLH0A3HYC - BAMLH0A1HYBB"
 
     valuation = next(category for category in snapshot.categories if category.id == "valuation")
     qualitative = next(category for category in snapshot.categories if category.id == "qualitative")
@@ -159,7 +171,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.health.available == 3
-    assert snapshot.health.errored == 10
+    assert snapshot.health.errored == 11
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
     assert snapshot.regime == "unavailable"
