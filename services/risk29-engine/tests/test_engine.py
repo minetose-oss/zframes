@@ -157,8 +157,10 @@ async def test_one_source_failure_does_not_zero_the_model(tmp_path):
     assert snapshot.health.errored == 1
     assert snapshot.score is not None
     liquidity = next(category for category in snapshot.categories if category.id == "liquidity")
-    assert liquidity.state == "unavailable"
-    assert liquidity.score is None
+    assert liquidity.state != "unavailable"
+    assert liquidity.score is not None
+    assert liquidity.availableSignals == 1
+    assert liquidity.totalSignals == 2
 
 
 class FredTimeoutSources(FakeSources):
