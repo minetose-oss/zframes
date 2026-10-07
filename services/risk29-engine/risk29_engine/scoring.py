@@ -111,6 +111,24 @@ def sahm_labor_deterioration_features(
     return current, change_3m, previous, previous_change_3m
 
 
+def level_change_features(
+    points: Sequence[SeriesPoint],
+    periods: int,
+) -> tuple[float, float, float | None, float | None]:
+    if periods < 1 or len(points) <= periods:
+        raise ValueError(f"level-and-change transform requires at least {periods + 1} observations")
+
+    current_level = points[-1].value
+    current_change = current_level - points[-1 - periods].value
+    previous_level = points[-2].value if len(points) >= 2 else None
+    previous_change = (
+        previous_level - points[-2 - periods].value
+        if previous_level is not None and len(points) > periods + 1
+        else None
+    )
+    return current_level, current_change, previous_level, previous_change
+
+
 def one_day_change(points: Sequence[SeriesPoint], percent: bool) -> float | None:
     if len(points) < 2:
         return None
