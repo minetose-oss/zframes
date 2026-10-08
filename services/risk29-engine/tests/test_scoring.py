@@ -7,6 +7,7 @@ from risk29_engine.scoring import (
     sahm_labor_deterioration_features,
     freshness_from_date,
     level_change_features,
+    net_liquidity_series,
     piecewise,
     rolling_zscore_features,
     spread_series,
@@ -139,3 +140,27 @@ def test_rolling_zscore_features_flags_latest_spread_jump():
     assert zscore > 5
     assert previous_level == 0.01
     assert previous_zscore == 0.0
+
+
+def test_net_liquidity_series_aligns_units_and_missing_days():
+    assets = [
+        SeriesPoint(date(2026, 1, 7), 6_600_000.0),
+        SeriesPoint(date(2026, 1, 14), 6_620_000.0),
+    ]
+    tga = [
+        SeriesPoint(date(2026, 1, 7), 900_000.0),
+        SeriesPoint(date(2026, 1, 14), 850_000.0),
+    ]
+    rrp = [
+        SeriesPoint(date(2026, 1, 6), 5.0),
+        SeriesPoint(date(2026, 1, 13), 4.0),
+    ]
+
+    combined = net_liquidity_series(assets, tga, rrp)
+
+    assert [point.date for point in combined] == [
+        date(2026, 1, 7),
+        date(2026, 1, 14),
+    ]
+    assert combined[0].value == 5_695.0
+    assert combined[1].value == 5_766.0
