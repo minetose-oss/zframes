@@ -27,6 +27,7 @@ from .scoring import (
     freshness_from_date,
     level_change_features,
     mean_score,
+    net_liquidity_series,
     one_day_change,
     pct_change,
     piecewise,
@@ -52,6 +53,7 @@ CATEGORY_ORDER = [
 SOURCE_URLS = {
     "fred": FRED_URL,
     "fred_spread": FRED_URL,
+    "fred_net_liquidity": FRED_URL,
     "ofr": OFR_URL,
     "lbma_gold": LBMA_GOLD_URL,
     "treasury_curve": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates",
@@ -271,6 +273,11 @@ class Risk29Engine:
                 signal_value = current
                 change = change_3m
                 change_window = "3m"
+            elif transform == "level_momentum_and_zscore":
+                signal_value = latest.value
+                momentum_periods = int(cfg.get("momentum_periods", 4))
+                change = pct_change(points, momentum_periods)
+                change_window = str(cfg.get("change_window", "4w"))
             elif transform == "spread_and_zscore":
                 signal_value = latest.value
                 change = one_day_change(points, percent=False)
@@ -341,6 +348,16 @@ class Risk29Engine:
                 self.sources.fred(right_id),
             )
             return spread_series(left, right)
+        if fetch_kind == "fred_net_liquidity":
+            assets_id = str(cfg["source_series_assets"])
+            tga_id = str(cfg["source_series_tga"])
+            rrp_id = str(cfg["source_series_rrp"])
+            assets, tga, rrp = await asyncio.gather(
+                self.sources.fred(assets_id),
+                self.sources.fred(tga_id),
+                self.sources.fred(rrp_id),
+            )
+            return net_liquidity_series(assets, tga, rrp)
         if fetch_kind == "treasury_curve":
             return await self.sources.treasury_curve()
         if fetch_kind == "ofr":
