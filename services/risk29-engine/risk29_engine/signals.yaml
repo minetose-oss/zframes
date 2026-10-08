@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v1
-model_version: risk29-p2-engine-0.2.5
+model_version: risk29-p2-engine-0.2.6
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -185,10 +185,10 @@ signals:
   - id: gold_trend
     label: Gold Trend
     category: global
-    source: LBMA
-    source_series: XAU PM Fix
-    unit: usd/oz
-    fetch: lbma_gold
+    source: Nasdaq/FRED
+    source_series: NASDAQQGLDI
+    unit: index
+    fetch: fred
     transform: momentum_20d
     points:
       - [-10.0, 15]
@@ -375,6 +375,40 @@ signals:
       fresh_hours: 72
       delayed_hours: 120
 
+  - id: us_net_liquidity
+    label: US Net Liquidity
+    category: liquidity
+    source: Fed/NY Fed/FRED
+    source_series: WALCL - WTREGEN - RRPONTSYD
+    source_series_assets: WALCL
+    source_series_tga: WTREGEN
+    source_series_rrp: RRPONTSYD
+    unit: usd-billions
+    fetch: fred_net_liquidity
+    transform: level_momentum_and_zscore
+    momentum_periods: 4
+    change_window: 4w
+    momentum_weight: 0.60
+    zscore_weight: 0.40
+    zscore_lookback: 52
+    zscore_min_observations: 26
+    momentum_points:
+      - [-10.0, 100]
+      - [-5.0, 85]
+      - [-2.0, 65]
+      - [0.0, 40]
+      - [2.0, 25]
+      - [5.0, 10]
+    zscore_points:
+      - [-2.0, 100]
+      - [-1.0, 75]
+      - [0.0, 40]
+      - [1.0, 20]
+      - [2.0, 10]
+    freshness:
+      fresh_hours: 240
+      delayed_hours: 336
+
 planned_signals:
   - id: sp500_forward_pe_percentile
     label: S&P 500 Forward P/E Percentile
@@ -431,14 +465,6 @@ planned_signals:
     source: Fed/ECB/BoJ + official releases
     unit: score
     transform: policy_event_classifier
-
-  - id: us_net_liquidity
-    label: US Net Liquidity
-    category: liquidity
-    source: Fed/FRED
-    source_series: WALCL - WTREGEN - RRPONTSYD
-    unit: usd
-    transform: level_momentum_and_zscore
 
   - id: oil_shock
     label: Oil Shock
