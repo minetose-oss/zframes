@@ -24,7 +24,11 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
         const color = risk29StateColor(category.state);
         const available = category.availableSignals;
         const total = category.totalSignals;
-        const availability = total > 0 ? `${available}/${total}` : "0/0";
+        const isPlanned = total === 0;
+        const availability = isPlanned ? "not live" : `${available}/${total}`;
+        const stateLabel = isPlanned
+          ? "PLANNED"
+          : risk29StateLabel(category.state);
 
         return (
           <div
@@ -47,7 +51,7 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
                   borderColor: `color-mix(in srgb, ${color} 42%, transparent)`,
                 }}
               >
-                {risk29StateLabel(category.state)}
+                {stateLabel}
               </span>
             </div>
 
