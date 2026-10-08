@@ -25,6 +25,13 @@ class FakeSources:
             points.append(SeriesPoint(observed, start * ((1 + growth) ** i)))
         return points
 
+    def _weekly_series(self, start: float, step: float, count: int = 80):
+        first = self.end - timedelta(days=7 * (count - 1))
+        return [
+            SeriesPoint(first + timedelta(days=7 * i), start + step * i)
+            for i in range(count)
+        ]
+
     async def fred(self, series_id: str):
         if series_id == "VIXCLS":
             return self._series(17.0, 0.015)
@@ -56,6 +63,14 @@ class FakeSources:
             return self._series(3.50, 0.0005)
         if series_id == "IORB":
             return self._series(3.50, 0.0002)
+        if series_id == "NASDAQQGLDI":
+            return self._series(2200.0, 1.5)
+        if series_id == "WALCL":
+            return self._weekly_series(6_600_000.0, 1_500.0)
+        if series_id == "WTREGEN":
+            return self._weekly_series(850_000.0, -250.0)
+        if series_id == "RRPONTSYD":
+            return self._series(8.0, -0.01)
         raise AssertionError(series_id)
 
     async def treasury_curve(self):
@@ -81,12 +96,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.2.5"
+    assert snapshot.modelVersion == "risk29-p2-engine-0.2.6"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v1"
-    assert len(snapshot.signals) == 16
-    assert snapshot.health.total == 16
+    assert len(snapshot.signals) == 17
+    assert snapshot.health.total == 17
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 16
+    assert snapshot.health.available == 17
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -134,6 +149,18 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert sofr_iorb.changeWindow == "1d"
     assert sofr_iorb.sourceSeries == "SOFR - IORB"
 
+    gold = next(signal for signal in snapshot.signals if signal.id == "gold_trend")
+    assert gold.value is not None
+    assert gold.source == "Nasdaq/FRED"
+    assert gold.sourceSeries == "NASDAQQGLDI"
+
+    net_liquidity = next(
+        signal for signal in snapshot.signals if signal.id == "us_net_liquidity"
+    )
+    assert net_liquidity.value is not None
+    assert net_liquidity.changeWindow == "4w"
+    assert net_liquidity.sourceSeries == "WALCL - WTREGEN - RRPONTSYD"
+
     valuation = next(category for category in snapshot.categories if category.id == "valuation")
     qualitative = next(category for category in snapshot.categories if category.id == "qualitative")
     assert valuation.score is None and valuation.state == "unavailable"
@@ -170,8 +197,8 @@ async def test_one_source_failure_does_not_zero_the_model(tmp_path):
     liquidity = next(category for category in snapshot.categories if category.id == "liquidity")
     assert liquidity.state != "unavailable"
     assert liquidity.score is not None
-    assert liquidity.availableSignals == 2
-    assert liquidity.totalSignals == 3
+    assert liquidity.availableSignals == 3
+    assert liquidity.totalSignals == 4
 
 
 class FredTimeoutSources(FakeSources):
@@ -190,8 +217,8 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
 
     snapshot = await engine.latest(force=True)
 
-    assert snapshot.health.available == 3
-    assert snapshot.health.errored == 13
+    assert snapshot.health.available == 2
+    assert snapshot.health.errored == 15
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
     assert snapshot.regime == "unavailable"
