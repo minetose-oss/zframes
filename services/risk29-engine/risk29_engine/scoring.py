@@ -52,6 +52,64 @@ def spread_series(
     return points
 
 
+def net_liquidity_series(
+    assets: Sequence[SeriesPoint],
+    treasury_general_account: Sequence[SeriesPoint],
+    reverse_repo: Sequence[SeriesPoint],
+    *,
+    max_lag_days: int = 10,
+) -> list[SeriesPoint]:
+    """
+    Build the common market proxy: Fed assets - Treasury General Account - ON RRP.
+
+    WALCL and WTREGEN are reported in millions of dollars while RRPONTSYD is
+    reported in billions. The derived series is normalized to billions of
+    dollars and anchored to the weekly Fed-balance-sheet observation dates.
+    Missing components are never replaced with zero; the latest observation on
+    or before the anchor date is used only when it is recent enough.
+    """
+    if not assets or not treasury_general_account or not reverse_repo:
+        raise ValueError("net liquidity requires all three component series")
+
+    asset_points = sorted(assets, key=lambda point: point.date)
+    tga_points = sorted(treasury_general_account, key=lambda point: point.date)
+    rrp_points = sorted(reverse_repo, key=lambda point: point.date)
+
+    tga_index = -1
+    rrp_index = -1
+    combined: list[SeriesPoint] = []
+
+    for asset in asset_points:
+        while (
+            tga_index + 1 < len(tga_points)
+            and tga_points[tga_index + 1].date <= asset.date
+        ):
+            tga_index += 1
+        while (
+            rrp_index + 1 < len(rrp_points)
+            and rrp_points[rrp_index + 1].date <= asset.date
+        ):
+            rrp_index += 1
+
+        if tga_index < 0 or rrp_index < 0:
+            continue
+
+        tga = tga_points[tga_index]
+        rrp = rrp_points[rrp_index]
+        if (asset.date - tga.date).days > max_lag_days:
+            continue
+        if (asset.date - rrp.date).days > max_lag_days:
+            continue
+
+        # WALCL/WTREGEN: millions USD. RRPONTSYD: billions USD.
+        value_billions = (asset.value - tga.value) / 1000.0 - rrp.value
+        combined.append(SeriesPoint(asset.date, value_billions))
+
+    if not combined:
+        raise ValueError("net liquidity series has no aligned recent observations")
+    return combined
+
+
 def pct_change(points: Sequence[SeriesPoint], periods: int) -> float | None:
     if len(points) <= periods:
         return None
