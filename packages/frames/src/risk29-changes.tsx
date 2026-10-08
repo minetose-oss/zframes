@@ -36,8 +36,9 @@ function Risk29Changes({ config }: { config: z.output<typeof schema> }) {
             No material state changes
           </div>
           <div className="caption text-soft mt-1 leading-snug">
-            No signal changed Risk29 state since the prior run. Current highest-risk
-            live signals are shown below.
+            No signal changed Risk29 state since the prior run.
+            <br />
+            Current highest-risk live signals are shown below.
           </div>
         </div>
 
