@@ -17,8 +17,67 @@ function Risk29Changes({ config }: { config: z.output<typeof schema> }) {
       <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>
     );
   if (!snapshot) return <FrameStatus>no current Risk29 snapshot</FrameStatus>;
-  if (snapshot.changes.length === 0)
-    return <FrameStatus>no material changes since prior run</FrameStatus>;
+
+  if (snapshot.changes.length === 0) {
+    const focus = [...snapshot.signals]
+      .filter(
+        (signal) =>
+          signal.riskScore !== null &&
+          signal.state !== "unavailable" &&
+          signal.freshness !== "error",
+      )
+      .sort((a, b) => (b.riskScore ?? 0) - (a.riskScore ?? 0))
+      .slice(0, 3);
+
+    return (
+      <div className={`flex h-full min-h-0 flex-col gap-2 ${scrollAreaClass}`}>
+        <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-3">
+          <div className="caption text-soft font-bold tracking-[0.06em] uppercase">
+            No material state changes
+          </div>
+          <div className="caption text-soft mt-1 leading-snug">
+            No signal changed Risk29 state since the prior run. Current highest-risk
+            live signals are shown below.
+          </div>
+        </div>
+
+        {focus.map((signal) => {
+          const color = risk29StateColor(signal.state);
+          return (
+            <div
+              key={signal.id}
+              className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-3"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="body-sm text-strong truncate font-semibold">
+                    {signal.label}
+                  </div>
+                  <div className="caption text-soft mt-1 capitalize">
+                    Current focus · {signal.category}
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div
+                    className="body-sm font-bold tabular-nums"
+                    style={{ color }}
+                  >
+                    {signal.riskScore?.toFixed(0)}
+                  </div>
+                  <div
+                    className="caption mt-0.5 font-bold tracking-[0.05em]"
+                    style={{ color }}
+                  >
+                    {risk29StateLabel(signal.state)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   const changes = [...snapshot.changes]
     .sort((a, b) => Math.abs(b.scoreDelta ?? 0) - Math.abs(a.scoreDelta ?? 0))
