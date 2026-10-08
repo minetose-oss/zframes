@@ -425,6 +425,42 @@ class Risk29Engine:
                 else None
             )
             return current, previous
+        if transform == "level_momentum_and_zscore":
+            momentum_periods = int(cfg.get("momentum_periods", 4))
+            zscore_lookback = int(cfg.get("zscore_lookback", 52))
+            zscore_min_observations = int(cfg.get("zscore_min_observations", 26))
+            current_level, current_zscore, previous_level, previous_zscore = (
+                rolling_zscore_features(
+                    points,
+                    lookback=zscore_lookback,
+                    min_observations=zscore_min_observations,
+                )
+            )
+            current_momentum = pct_change(points, momentum_periods)
+            previous_momentum = pct_change(points[:-1], momentum_periods)
+            if current_momentum is None:
+                raise ValueError("net liquidity momentum requires more observations")
+
+            momentum_knots = cfg.get("momentum_points") or []
+            zscore_knots = cfg.get("zscore_points") or []
+            momentum_weight = float(cfg.get("momentum_weight", 0.6))
+            zscore_weight = float(cfg.get("zscore_weight", 0.4))
+            if abs(momentum_weight + zscore_weight - 1.0) > 1e-9:
+                raise ValueError("net-liquidity weights must sum to 1")
+
+            current = (
+                piecewise(current_momentum, momentum_knots) * momentum_weight
+                + piecewise(current_zscore, zscore_knots) * zscore_weight
+            )
+            previous = (
+                piecewise(previous_momentum, momentum_knots) * momentum_weight
+                + piecewise(previous_zscore, zscore_knots) * zscore_weight
+                if previous_level is not None
+                and previous_momentum is not None
+                and previous_zscore is not None
+                else None
+            )
+            return current, previous
         if transform == "spread_and_zscore":
             lookback = int(cfg.get("zscore_lookback", 252))
             min_observations = int(cfg.get("zscore_min_observations", 60))
