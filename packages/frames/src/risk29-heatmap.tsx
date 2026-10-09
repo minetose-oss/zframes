@@ -54,7 +54,10 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
                 </div>
                 <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[9px] leading-tight">
                   <span style={{ color: stateColor }}>
-                    risk {signal.riskScore === null ? "—" : signal.riskScore.toFixed(0)}
+                    risk{" "}
+                    {signal.riskScore === null
+                      ? "—"
+                      : signal.riskScore.toFixed(0)}
                   </span>
                   <span className="text-soft">·</span>
                   <span style={{ color: stateColor }}>
@@ -125,7 +128,9 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
                     className="body-sm text-right font-bold tabular-nums"
                     style={{ color: stateColor }}
                   >
-                    {signal.riskScore === null ? "—" : signal.riskScore.toFixed(0)}
+                    {signal.riskScore === null
+                      ? "—"
+                      : signal.riskScore.toFixed(0)}
                   </span>
 
                   <span
