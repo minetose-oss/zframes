@@ -58,14 +58,14 @@ function Risk29Categories({ config }: { config: z.output<typeof schema> }) {
                   </span>
                 ) : (
                   <>
-                    <span
-                      className="font-bold tabular-nums"
-                      style={{ color }}
-                    >
-                      {category.score === null ? "—" : category.score.toFixed(0)}
+                    <span className="font-bold tabular-nums" style={{ color }}>
+                      {category.score === null
+                        ? "—"
+                        : category.score.toFixed(0)}
                     </span>
                     <span className="text-soft">
-                      {" "}/100 · weight {category.weight.toFixed(0)}%
+                      {" "}
+                      /100 · weight {category.weight.toFixed(0)}%
                     </span>
                   </>
                 )}
