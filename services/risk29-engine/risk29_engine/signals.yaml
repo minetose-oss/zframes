@@ -161,8 +161,10 @@ signals:
       - [6.0, 80]
       - [10.0, 100]
     freshness:
-      fresh_hours: 96
-      delayed_hours: 144
+      # H.10 can publish daily observations with a multi-day reporting lag.
+      # Keep source-lag awareness separate from missing/error handling.
+      fresh_hours: 240
+      delayed_hours: 336
 
   - id: ofr_fsi
     label: OFR Financial Stress
