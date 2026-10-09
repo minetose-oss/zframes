@@ -28,9 +28,9 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
   const signals = snapshot.signals.slice(0, config.maxSignals);
 
   return (
-    <div className="h-full min-h-0">
-      <div className={`h-full min-h-0 sm:hidden ${scrollAreaClass}`}>
-        <div className="caption text-soft grid grid-cols-[minmax(0,1fr)_68px_88px] gap-2 border-b border-white/[0.08] px-1 pb-2 uppercase tracking-[0.06em]">
+    <div className="h-full min-h-0 min-w-0">
+      <div className={`h-full min-h-0 min-w-0 overflow-x-hidden sm:hidden ${scrollAreaClass}`}>
+        <div className="caption text-soft grid grid-cols-[minmax(0,1fr)_64px_minmax(74px,96px)] gap-2 border-b border-white/[0.08] px-1 pb-2 uppercase tracking-[0.06em]">
           <span>Signal</span>
           <span>Category</span>
           <span className="text-right">Value</span>
@@ -43,7 +43,7 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
           return (
             <div
               key={signal.id}
-              className="grid grid-cols-[minmax(0,1fr)_68px_88px] items-start gap-2 border-b border-white/[0.05] px-1 py-2.5 last:border-b-0"
+              className="grid grid-cols-[minmax(0,1fr)_64px_minmax(74px,96px)] items-start gap-2 border-b border-white/[0.05] px-1 py-2.5 last:border-b-0"
             >
               <div className="min-w-0">
                 <div className="body-sm text-strong leading-tight font-semibold">
@@ -77,7 +77,7 @@ function Risk29Heatmap({ config }: { config: z.output<typeof schema> }) {
                 {signal.category}
               </span>
 
-              <span className="body-sm text-normal whitespace-nowrap pt-0.5 text-right tabular-nums">
+              <span className="min-w-0 break-words pt-0.5 text-right text-[11px] leading-tight tabular-nums">
                 {formatRisk29Value(signal.value, signal.unit)}
               </span>
             </div>
