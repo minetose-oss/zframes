@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1",
-  "modelVersion": "risk29-p2-engine-0.2.6",
-  "thresholdVersion": "risk29-p2-provisional-v1",
-  "generatedAt": "2026-10-10T07:44:44.204459+00:00",
-  "score": 30.28,
-  "state": "normal",
+  "modelVersion": "risk29-p2-engine-0.3.0",
+  "thresholdVersion": "risk29-p2-provisional-v2",
+  "generatedAt": "2026-10-10T07:46:02.589960+00:00",
+  "score": 37.99,
+  "state": "watch",
   "regime": "neutral",
   "categories": [
     {
@@ -29,10 +29,10 @@
       "id": "valuation",
       "label": "Valuation",
       "weight": 12.0,
-      "score": null,
-      "state": "unavailable",
-      "availableSignals": 0,
-      "totalSignals": 0
+      "score": 90.67,
+      "state": "alert",
+      "availableSignals": 2,
+      "totalSignals": 2
     },
     {
       "id": "sentiment",
@@ -96,11 +96,11 @@
       "change": 0.33,
       "changeWindow": "1d",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 200684.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 200762.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "sp500_trend",
@@ -117,11 +117,11 @@
       "change": 0.594692,
       "changeWindow": "1d",
       "asOf": "2026-10-09",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 114284.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 114362.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "nasdaq_trend",
@@ -138,11 +138,11 @@
       "change": 0.63556,
       "changeWindow": "1d",
       "asOf": "2026-10-09",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 114284.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 114362.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "curve_2s10s",
@@ -159,11 +159,11 @@
       "change": -0.03,
       "changeWindow": "1d",
       "asOf": "2026-10-09",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 114284.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 114362.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "hy_oas",
@@ -180,11 +180,11 @@
       "change": 0.06,
       "changeWindow": "1d",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 200684.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 200762.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "ig_oas",
@@ -201,11 +201,11 @@
       "change": 0.0,
       "changeWindow": "1d",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 200684.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 200762.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "real_yield_10y",
@@ -222,11 +222,11 @@
       "change": -0.05,
       "changeWindow": "1d",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 200684.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 200762.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "broad_dollar",
@@ -243,11 +243,11 @@
       "change": -0.331231,
       "changeWindow": "1d",
       "asOf": "2026-10-02",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 719084.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 719162.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "ofr_fsi",
@@ -264,11 +264,11 @@
       "change": 0.223,
       "changeWindow": "1d",
       "asOf": "2026-10-07",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 287084.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 287162.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "gold_trend",
@@ -285,11 +285,11 @@
       "change": 1.180734,
       "changeWindow": "1d",
       "asOf": "2026-10-09",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 114284.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 114362.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "core_inflation_momentum",
@@ -306,11 +306,11 @@
       "change": 0.331873,
       "changeWindow": "1m",
       "asOf": "2026-08-01",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 6075884.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 6075962.58996,
       "freshness": "delayed",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "sahm_labor_deterioration",
@@ -327,11 +327,11 @@
       "change": -0.07,
       "changeWindow": "3m",
       "asOf": "2026-09-01",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 3397484.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 3397562.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "baa_treasury_spread",
@@ -348,11 +348,11 @@
       "change": -0.1,
       "changeWindow": "3m",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 200684.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 200762.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "ccc_bb_stress_spread",
@@ -369,11 +369,11 @@
       "change": 2.44,
       "changeWindow": "3m",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 200684.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 200762.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "chicago_fed_nfci",
@@ -390,11 +390,11 @@
       "change": 0.022,
       "changeWindow": "3m",
       "asOf": "2026-10-02",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 719084.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 719162.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "sofr_iorb_funding_spread",
@@ -411,11 +411,11 @@
       "change": -0.01,
       "changeWindow": "1d",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 200684.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 200762.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
     },
     {
       "id": "us_net_liquidity",
@@ -432,18 +432,60 @@
       "change": 0.13859,
       "changeWindow": "4w",
       "asOf": "2026-10-07",
-      "fetchedAt": "2026-10-10T07:44:44.204459+00:00",
-      "ageSeconds": 287084.204459,
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 287162.58996,
       "freshness": "fresh",
       "reason": null,
-      "thresholdVersion": "risk29-p2-provisional-v1"
+      "thresholdVersion": "risk29-p2-provisional-v2"
+    },
+    {
+      "id": "cape_long_term_valuation",
+      "label": "CAPE / Long-Term Valuation",
+      "category": "valuation",
+      "source": "Robert Shiller",
+      "sourceSeries": "CAPE",
+      "sourceUrl": "https://shillerdata.com/",
+      "value": 40.710609,
+      "unit": "x",
+      "riskScore": 91.42,
+      "state": "alert",
+      "direction": "flat",
+      "change": 0.129734,
+      "changeWindow": "1m",
+      "asOf": "2026-10-01",
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 805562.58996,
+      "freshness": "fresh",
+      "reason": null,
+      "thresholdVersion": "risk29-p2-provisional-v2"
+    },
+    {
+      "id": "equity_risk_premium",
+      "label": "Excess CAPE Yield (ERP Proxy)",
+      "category": "valuation",
+      "source": "Robert Shiller",
+      "sourceSeries": "Excess CAPE Yield",
+      "sourceUrl": "https://shillerdata.com/",
+      "value": 0.005572,
+      "unit": "percent",
+      "riskScore": 89.92,
+      "state": "alert",
+      "direction": "flat",
+      "change": -0.002626,
+      "changeWindow": "1m",
+      "asOf": "2026-10-01",
+      "fetchedAt": "2026-10-10T07:46:02.589960+00:00",
+      "ageSeconds": 805562.58996,
+      "freshness": "fresh",
+      "reason": null,
+      "thresholdVersion": "risk29-p2-provisional-v2"
     }
   ],
   "changes": [],
   "health": {
-    "available": 17,
+    "available": 19,
     "stale": 0,
     "errored": 0,
-    "total": 17
+    "total": 19
   }
 }
