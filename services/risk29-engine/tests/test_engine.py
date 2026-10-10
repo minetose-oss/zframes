@@ -32,6 +32,21 @@ class FakeSources:
             for i in range(count)
         ]
 
+    def _monthly_level_series(self, start: float, step: float, count: int = 24):
+        end_month = self.end.year * 12 + (self.end.month - 1)
+        first_month = end_month - (count - 1)
+        points = []
+        for i in range(count):
+            month_index = first_month + i
+            year, month_zero = divmod(month_index, 12)
+            points.append(
+                SeriesPoint(
+                    date(year, month_zero + 1, 1),
+                    start + step * i,
+                )
+            )
+        return points
+
     async def fred(self, series_id: str):
         if series_id == "VIXCLS":
             return self._series(17.0, 0.015)
@@ -82,6 +97,13 @@ class FakeSources:
     async def lbma_gold(self):
         return self._series(3200, 2.0, 240)
 
+    async def shiller(self, metric: str):
+        if metric == "cape":
+            return self._monthly_level_series(30.0, 0.4)
+        if metric == "excess_cape_yield":
+            return self._monthly_level_series(3.0, -0.08)
+        raise AssertionError(metric)
+
 
 @pytest.mark.asyncio
 async def test_engine_builds_contract_and_history(tmp_path):
@@ -96,12 +118,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.2.6"
-    assert snapshot.thresholdVersion == "risk29-p2-provisional-v1"
-    assert len(snapshot.signals) == 17
-    assert snapshot.health.total == 17
+    assert snapshot.modelVersion == "risk29-p2-engine-0.3.0"
+    assert snapshot.thresholdVersion == "risk29-p2-provisional-v2"
+    assert len(snapshot.signals) == 19
+    assert snapshot.health.total == 19
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 17
+    assert snapshot.health.available == 19
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -161,9 +183,23 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert net_liquidity.changeWindow == "4w"
     assert net_liquidity.sourceSeries == "WALCL - WTREGEN - RRPONTSYD"
 
+    cape = next(signal for signal in snapshot.signals if signal.id == "cape_long_term_valuation")
+    assert cape.value is not None
+    assert cape.source == "Robert Shiller"
+    assert cape.sourceSeries == "CAPE"
+    assert cape.changeWindow == "1m"
+
+    erp = next(signal for signal in snapshot.signals if signal.id == "equity_risk_premium")
+    assert erp.value is not None
+    assert erp.source == "Robert Shiller"
+    assert erp.sourceSeries == "Excess CAPE Yield"
+    assert erp.changeWindow == "1m"
+
     valuation = next(category for category in snapshot.categories if category.id == "valuation")
     qualitative = next(category for category in snapshot.categories if category.id == "qualitative")
-    assert valuation.score is None and valuation.state == "unavailable"
+    assert valuation.score is not None and valuation.state != "unavailable"
+    assert valuation.availableSignals == 2
+    assert valuation.totalSignals == 2
     assert qualitative.score is None and qualitative.state == "unavailable"
 
     history = engine.history(30)
@@ -217,7 +253,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
 
     snapshot = await engine.latest(force=True)
 
-    assert snapshot.health.available == 2
+    assert snapshot.health.available == 4
     assert snapshot.health.errored == 15
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
