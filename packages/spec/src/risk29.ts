@@ -65,9 +65,9 @@ export const Risk29SignalSchema = z
     riskScore: ScoreSchema.nullable(),
     state: Risk29StateSchema,
 
-    direction: Risk29DirectionSchema.optional(),
+    direction: Risk29DirectionSchema.nullable().optional(),
     change: z.number().finite().nullable().optional(),
-    changeWindow: z.string().min(1).optional(),
+    changeWindow: z.string().min(1).nullable().optional(),
 
     // Some publishers stamp a date, others a full timestamp. Keep the publisher
     // stamp opaque here; fetchedAt/generatedAt carry strict machine timestamps.
@@ -76,7 +76,7 @@ export const Risk29SignalSchema = z
     ageSeconds: z.number().nonnegative().nullable(),
     freshness: Risk29FreshnessSchema,
 
-    reason: z.string().min(1).optional(),
+    reason: z.string().min(1).nullable().optional(),
     thresholdVersion: z.string().min(1),
   })
   .superRefine((signal, ctx) => {

@@ -1,10 +1,16 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from risk29_engine.scoring import (
     SeriesPoint,
+    core_inflation_momentum_features,
     equity_trend_score,
+    sahm_labor_deterioration_features,
     freshness_from_date,
+    level_change_features,
+    net_liquidity_series,
     piecewise,
+    rolling_zscore_features,
+    spread_series,
     state_from_score,
 )
 
@@ -38,3 +44,123 @@ def test_freshness_becomes_stale_after_configured_window():
     stale, _ = freshness_from_date(date(2026, 9, 1), now, 72, 120)
     assert fresh == "fresh"
     assert stale == "stale"
+
+
+
+def test_core_inflation_momentum_uses_monthly_3m_annualized_and_12m_gap():
+    points = []
+    for i in range(18):
+        month_index = (2025 * 12 + 3) + i
+        year, month_zero = divmod(month_index, 12)
+        points.append(
+            SeriesPoint(
+                date(year, month_zero + 1, 1),
+                300.0 * ((1.0025) ** i),
+            )
+        )
+
+    current_3m, current_gap, previous_3m, previous_gap = (
+        core_inflation_momentum_features(points)
+    )
+
+    assert 2.9 < current_3m < 3.2
+    assert abs(current_gap) < 0.2
+    assert previous_3m is not None
+    assert previous_gap is not None
+
+
+
+def test_sahm_labor_deterioration_tracks_level_and_three_month_change():
+    points = [
+        SeriesPoint(date(2026, month, 1), value)
+        for month, value in zip(
+            range(1, 7),
+            [0.10, 0.12, 0.14, 0.18, 0.24, 0.31],
+        )
+    ]
+
+    current, change_3m, previous, previous_change_3m = (
+        sahm_labor_deterioration_features(points)
+    )
+
+    assert current == 0.31
+    assert round(change_3m or 0, 2) == 0.17
+    assert previous == 0.24
+    assert round(previous_change_3m or 0, 2) == 0.12
+
+
+
+def test_level_change_features_tracks_spread_widening():
+    points = [
+        SeriesPoint(date(2026, 1, 1), 1.5 + i * 0.01)
+        for i in range(70)
+    ]
+
+    current, change, previous, previous_change = level_change_features(points, 63)
+
+    assert current > 2.0
+    assert change > 0.6
+    assert previous is not None
+    assert previous_change is not None
+
+
+
+def test_spread_series_aligns_matching_dates_only():
+    left = [
+        SeriesPoint(date(2026, 1, 1), 8.0),
+        SeriesPoint(date(2026, 1, 2), 8.4),
+        SeriesPoint(date(2026, 1, 3), 8.7),
+    ]
+    right = [
+        SeriesPoint(date(2026, 1, 2), 2.0),
+        SeriesPoint(date(2026, 1, 3), 2.1),
+    ]
+
+    spread = spread_series(left, right)
+
+    assert [point.date for point in spread] == [date(2026, 1, 2), date(2026, 1, 3)]
+    assert [round(point.value, 2) for point in spread] == [6.4, 6.6]
+
+
+def test_rolling_zscore_features_flags_latest_spread_jump():
+    start = date(2026, 1, 1)
+    points = [
+        SeriesPoint(start + timedelta(days=i), 0.01)
+        for i in range(60)
+    ]
+    points.append(SeriesPoint(start + timedelta(days=60), 0.10))
+
+    level, zscore, previous_level, previous_zscore = rolling_zscore_features(
+        points,
+        lookback=60,
+        min_observations=60,
+    )
+
+    assert level == 0.10
+    assert zscore > 5
+    assert previous_level == 0.01
+    assert previous_zscore == 0.0
+
+
+def test_net_liquidity_series_aligns_units_and_missing_days():
+    assets = [
+        SeriesPoint(date(2026, 1, 7), 6_600_000.0),
+        SeriesPoint(date(2026, 1, 14), 6_620_000.0),
+    ]
+    tga = [
+        SeriesPoint(date(2026, 1, 7), 900_000.0),
+        SeriesPoint(date(2026, 1, 14), 850_000.0),
+    ]
+    rrp = [
+        SeriesPoint(date(2026, 1, 6), 5.0),
+        SeriesPoint(date(2026, 1, 13), 4.0),
+    ]
+
+    combined = net_liquidity_series(assets, tga, rrp)
+
+    assert [point.date for point in combined] == [
+        date(2026, 1, 7),
+        date(2026, 1, 14),
+    ]
+    assert combined[0].value == 5_695.0
+    assert combined[1].value == 5_766.0

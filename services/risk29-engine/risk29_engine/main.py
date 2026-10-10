@@ -6,8 +6,9 @@ from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .engine import Risk29Engine
-from .models import Risk29History, Risk29Snapshot
+from .models import Risk29History, Risk29Registry, Risk29Snapshot
 from .published import PublishedSnapshotClient
+from .registry import build_registry
 from .sources import PublicSourceClient
 
 is_vercel = os.getenv("VERCEL") == "1"
@@ -58,6 +59,12 @@ def healthz() -> dict[str, str]:
         "thresholdVersion": engine.threshold_version,
         "dataMode": "published" if published_client is not None else "live",
     }
+
+
+@app.get("/risk29/registry.json", response_model=Risk29Registry)
+def registry(response: Response) -> Risk29Registry:
+    response.headers["Cache-Control"] = "public, max-age=300, s-maxage=3600"
+    return build_registry(engine.config)
 
 
 @app.get("/risk29/latest.json", response_model=Risk29Snapshot)

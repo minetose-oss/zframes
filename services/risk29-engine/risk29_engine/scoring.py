@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
-from statistics import fmean
+from statistics import fmean, pstdev
 from typing import Iterable, Sequence
 
 from .models import Risk29Direction, Risk29Freshness, Risk29State
@@ -36,6 +36,80 @@ def piecewise(value: float, points: Sequence[Sequence[float]]) -> float:
     return clamp(ordered[-1][1])
 
 
+def spread_series(
+    left: Sequence[SeriesPoint],
+    right: Sequence[SeriesPoint],
+) -> list[SeriesPoint]:
+    right_by_date = {point.date: point.value for point in right}
+    points = [
+        SeriesPoint(point.date, point.value - right_by_date[point.date])
+        for point in left
+        if point.date in right_by_date
+    ]
+    if not points:
+        raise ValueError("spread series has no overlapping observations")
+    points.sort(key=lambda point: point.date)
+    return points
+
+
+def net_liquidity_series(
+    assets: Sequence[SeriesPoint],
+    treasury_general_account: Sequence[SeriesPoint],
+    reverse_repo: Sequence[SeriesPoint],
+    *,
+    max_lag_days: int = 10,
+) -> list[SeriesPoint]:
+    """
+    Build the common market proxy: Fed assets - Treasury General Account - ON RRP.
+
+    WALCL and WTREGEN are reported in millions of dollars while RRPONTSYD is
+    reported in billions. The derived series is normalized to billions of
+    dollars and anchored to the weekly Fed-balance-sheet observation dates.
+    Missing components are never replaced with zero; the latest observation on
+    or before the anchor date is used only when it is recent enough.
+    """
+    if not assets or not treasury_general_account or not reverse_repo:
+        raise ValueError("net liquidity requires all three component series")
+
+    asset_points = sorted(assets, key=lambda point: point.date)
+    tga_points = sorted(treasury_general_account, key=lambda point: point.date)
+    rrp_points = sorted(reverse_repo, key=lambda point: point.date)
+
+    tga_index = -1
+    rrp_index = -1
+    combined: list[SeriesPoint] = []
+
+    for asset in asset_points:
+        while (
+            tga_index + 1 < len(tga_points)
+            and tga_points[tga_index + 1].date <= asset.date
+        ):
+            tga_index += 1
+        while (
+            rrp_index + 1 < len(rrp_points)
+            and rrp_points[rrp_index + 1].date <= asset.date
+        ):
+            rrp_index += 1
+
+        if tga_index < 0 or rrp_index < 0:
+            continue
+
+        tga = tga_points[tga_index]
+        rrp = rrp_points[rrp_index]
+        if (asset.date - tga.date).days > max_lag_days:
+            continue
+        if (asset.date - rrp.date).days > max_lag_days:
+            continue
+
+        # WALCL/WTREGEN: millions USD. RRPONTSYD: billions USD.
+        value_billions = (asset.value - tga.value) / 1000.0 - rrp.value
+        combined.append(SeriesPoint(asset.date, value_billions))
+
+    if not combined:
+        raise ValueError("net liquidity series has no aligned recent observations")
+    return combined
+
+
 def pct_change(points: Sequence[SeriesPoint], periods: int) -> float | None:
     if len(points) <= periods:
         return None
@@ -44,6 +118,123 @@ def pct_change(points: Sequence[SeriesPoint], periods: int) -> float | None:
     if previous == 0:
         return None
     return ((latest - previous) / previous) * 100.0
+
+
+def annualized_pct_change(
+    points: Sequence[SeriesPoint],
+    periods: int,
+    *,
+    periods_per_year: int = 12,
+) -> float | None:
+    if len(points) <= periods:
+        return None
+    latest = points[-1].value
+    previous = points[-1 - periods].value
+    if previous <= 0 or latest <= 0:
+        return None
+    exponent = periods_per_year / periods
+    return ((latest / previous) ** exponent - 1.0) * 100.0
+
+
+def core_inflation_momentum_features(
+    points: Sequence[SeriesPoint],
+) -> tuple[float, float, float | None, float | None]:
+    """
+    Return current 3m annualized core-CPI inflation, its gap versus 12m YoY,
+    and the prior-observation versions of both features.
+
+    CPILFESL is a monthly index. Using observation-count periods instead of
+    calendar-day offsets keeps the transform robust to release timing.
+    """
+    current_3m = annualized_pct_change(points, 3)
+    current_12m = pct_change(points, 12)
+    if current_3m is None or current_12m is None:
+        raise ValueError("core inflation momentum requires at least 13 observations")
+
+    previous_3m = annualized_pct_change(points[:-1], 3)
+    previous_12m = pct_change(points[:-1], 12)
+    current_gap = current_3m - current_12m
+    previous_gap = (
+        previous_3m - previous_12m
+        if previous_3m is not None and previous_12m is not None
+        else None
+    )
+    return current_3m, current_gap, previous_3m, previous_gap
+
+
+def sahm_labor_deterioration_features(
+    points: Sequence[SeriesPoint],
+) -> tuple[float, float | None, float | None, float | None]:
+    """
+    Return the current Sahm-rule indicator, its three-observation change,
+    and the prior-observation versions used for direction scoring.
+
+    SAHMREALTIME is already expressed in percentage points, so the transform
+    intentionally scores the published indicator directly rather than
+    reconstructing it from unemployment-rate inputs.
+    """
+    if len(points) < 4:
+        raise ValueError("Sahm labor deterioration requires at least 4 observations")
+
+    current = points[-1].value
+    change_3m = current - points[-4].value
+    previous = points[-2].value
+    previous_change_3m = (
+        previous - points[-5].value if len(points) >= 5 else None
+    )
+    return current, change_3m, previous, previous_change_3m
+
+
+def level_change_features(
+    points: Sequence[SeriesPoint],
+    periods: int,
+) -> tuple[float, float, float | None, float | None]:
+    if periods < 1 or len(points) <= periods:
+        raise ValueError(f"level-and-change transform requires at least {periods + 1} observations")
+
+    current_level = points[-1].value
+    current_change = current_level - points[-1 - periods].value
+    previous_level = points[-2].value if len(points) >= 2 else None
+    previous_change = (
+        previous_level - points[-2 - periods].value
+        if previous_level is not None and len(points) > periods + 1
+        else None
+    )
+    return current_level, current_change, previous_level, previous_change
+
+
+def rolling_zscore_features(
+    points: Sequence[SeriesPoint],
+    *,
+    lookback: int = 252,
+    min_observations: int = 60,
+) -> tuple[float, float, float | None, float | None]:
+    if lookback < 2:
+        raise ValueError("rolling z-score lookback must be at least 2")
+    if min_observations < 2:
+        raise ValueError("rolling z-score minimum observations must be at least 2")
+
+    def _zscore(sequence: Sequence[SeriesPoint]) -> float | None:
+        window = sequence[-lookback:]
+        if len(window) < min_observations:
+            return None
+        values = [point.value for point in window]
+        mean = fmean(values)
+        sigma = pstdev(values)
+        if sigma <= 1e-12:
+            return 0.0
+        return (values[-1] - mean) / sigma
+
+    current_zscore = _zscore(points)
+    if current_zscore is None:
+        raise ValueError(
+            f"rolling z-score requires at least {min_observations} observations"
+        )
+
+    current_level = points[-1].value
+    previous_level = points[-2].value if len(points) >= 2 else None
+    previous_zscore = _zscore(points[:-1]) if len(points) >= 2 else None
+    return current_level, current_zscore, previous_level, previous_zscore
 
 
 def one_day_change(points: Sequence[SeriesPoint], percent: bool) -> float | None:

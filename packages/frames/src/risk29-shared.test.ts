@@ -14,6 +14,7 @@ describe("Risk29 presentation helpers", () => {
     expect(risk29DirectionLabel("improving")).toBe("↓ improving");
     expect(risk29DirectionLabel("worsening")).toBe("↑ worsening");
     expect(risk29DirectionLabel("flat")).toBe("→ flat");
+    expect(risk29DirectionLabel(null)).toBe("—");
   });
 
   it("does not turn a missing numeric value into zero", () => {
