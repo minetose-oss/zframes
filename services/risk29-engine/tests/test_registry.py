@@ -27,14 +27,14 @@ def _config() -> dict:
     return yaml.safe_load(path.read_text())
 
 
-def test_registry_reports_proposed_29_with_17_live_and_12_planned():
+def test_registry_reports_proposed_29_with_19_live_and_10_planned():
     registry = build_registry(_config())
 
     assert registry.registryVersion == "risk29-proposed-v1"
     assert registry.targetSignals == 29
     assert registry.configuredSignals == 29
-    assert registry.liveSignals == 17
-    assert registry.plannedSignals == 12
+    assert registry.liveSignals == 19
+    assert registry.plannedSignals == 10
     assert registry.remainingSignals == 0
     assert len(registry.categories) == 8
     assert len(registry.signals) == 29
@@ -47,8 +47,8 @@ def test_registry_reports_proposed_29_with_17_live_and_12_planned():
 def test_registry_keeps_planned_signals_out_of_executable_engine_config():
     config = _config()
 
-    assert len(config["signals"]) == 17
-    assert len(config["planned_signals"]) == 12
+    assert len(config["signals"]) == 19
+    assert len(config["planned_signals"]) == 10
 
 
 def test_registry_signal_ids_are_unique():
@@ -75,6 +75,6 @@ def test_registry_endpoint_exposes_live_and_planned_counts():
     assert payload["registryVersion"] == "risk29-proposed-v1"
     assert payload["targetSignals"] == 29
     assert payload["configuredSignals"] == 29
-    assert payload["liveSignals"] == 17
-    assert payload["plannedSignals"] == 12
+    assert payload["liveSignals"] == 19
+    assert payload["plannedSignals"] == 10
     assert payload["remainingSignals"] == 0
