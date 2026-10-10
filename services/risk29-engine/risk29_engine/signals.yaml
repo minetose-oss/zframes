@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
-threshold_version: risk29-p2-provisional-v1
-model_version: risk29-p2-engine-0.2.6
+threshold_version: risk29-p2-provisional-v2
+model_version: risk29-p2-engine-0.3.0
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -411,6 +411,51 @@ signals:
       fresh_hours: 240
       delayed_hours: 336
 
+  - id: cape_long_term_valuation
+    label: CAPE / Long-Term Valuation
+    category: valuation
+    source: Robert Shiller
+    source_series: CAPE
+    source_metric: cape
+    unit: x
+    fetch: shiller
+    transform: piecewise_latest
+    change_window: 1m
+    points:
+      - [10.0, 10]
+      - [15.0, 20]
+      - [20.0, 30]
+      - [25.0, 45]
+      - [30.0, 60]
+      - [35.0, 75]
+      - [40.0, 90]
+      - [45.0, 100]
+    freshness:
+      fresh_hours: 1488
+      delayed_hours: 2208
+
+  - id: equity_risk_premium
+    label: Excess CAPE Yield (ERP Proxy)
+    category: valuation
+    source: Robert Shiller
+    source_series: Excess CAPE Yield
+    source_metric: excess_cape_yield
+    unit: percent
+    fetch: shiller
+    transform: piecewise_latest
+    change_window: 1m
+    points:
+      - [-2.0, 100]
+      - [0.0, 90]
+      - [1.0, 75]
+      - [2.0, 55]
+      - [3.0, 35]
+      - [4.0, 20]
+      - [6.0, 10]
+    freshness:
+      fresh_hours: 1488
+      delayed_hours: 2208
+
 planned_signals:
   - id: sp500_forward_pe_percentile
     label: S&P 500 Forward P/E Percentile
@@ -418,20 +463,6 @@ planned_signals:
     source: FactSet/Bigdata
     unit: percentile
     transform: rolling_10y_percentile
-
-  - id: equity_risk_premium
-    label: Equity Risk Premium
-    category: valuation
-    source: Earnings + FRED
-    unit: percent
-    transform: forward_earnings_yield_minus_real_yield
-
-  - id: cape_long_term_valuation
-    label: CAPE / Long-Term Valuation
-    category: valuation
-    source: Shiller
-    unit: percentile
-    transform: historical_percentile
 
   - id: put_call_ratio
     label: Put/Call Ratio
