@@ -159,6 +159,15 @@ class PublicSourceClient:
             "excess_cape_yield": find(("excess cape yield",)),
         }
 
+    @staticmethod
+    def _normalize_shiller_value(metric: str, value: float) -> float:
+        # Shiller stores Excess CAPE Yield as a decimal fraction in ie_data.xls
+        # (for example 0.0056 means 0.56%). Risk29's percent unit is expressed
+        # in percentage points, matching the rest of the engine.
+        if metric == "excess_cape_yield":
+            return value * 100.0
+        return value
+
     async def _load_shiller_metrics(self) -> dict[str, list[SeriesPoint]]:
         # The workbook is monthly. Cache it for six hours so CAPE and ECY share
         # one download, while a long-lived process still picks up new releases.
@@ -214,7 +223,10 @@ class PublicSourceClient:
                     raw_value = sheet.cell_value(row, columns[metric])
                     if not isinstance(raw_value, (int, float)):
                         continue
-                    value = float(raw_value)
+                    value = self._normalize_shiller_value(
+                        metric,
+                        float(raw_value),
+                    )
                     if metric == "cape" and not 3.0 <= value <= 80.0:
                         continue
                     if metric == "excess_cape_yield" and not -20.0 <= value <= 40.0:
