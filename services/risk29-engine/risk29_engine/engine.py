@@ -305,7 +305,11 @@ class Risk29Engine:
                 signal_value = latest.value
                 change_percent = transform in {"equity_trend", "momentum_20d"}
                 change = one_day_change(points, percent=change_percent)
-                change_window = "1d" if change is not None else None
+                change_window = (
+                    str(cfg.get("change_window", "1d"))
+                    if change is not None
+                    else None
+                )
             state = state_from_score(score)
             return Risk29Signal(
                 id=signal_id,
