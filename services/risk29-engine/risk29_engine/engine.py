@@ -37,7 +37,13 @@ from .scoring import (
     spread_series,
     state_from_score,
 )
-from .sources import LBMA_GOLD_URL, OFR_URL, FRED_URL, SourceClient
+from .sources import (
+    FRED_URL,
+    LBMA_GOLD_URL,
+    OFR_URL,
+    SHILLER_PAGE_URL,
+    SourceClient,
+)
 
 CATEGORY_ORDER = [
     "macro",
@@ -56,6 +62,7 @@ SOURCE_URLS = {
     "fred_net_liquidity": FRED_URL,
     "ofr": OFR_URL,
     "lbma_gold": LBMA_GOLD_URL,
+    "shiller": SHILLER_PAGE_URL,
     "treasury_curve": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates",
 }
 
@@ -281,7 +288,11 @@ class Risk29Engine:
             elif transform == "spread_and_zscore":
                 signal_value = latest.value
                 change = one_day_change(points, percent=False)
-                change_window = "1d" if change is not None else None
+                change_window = (
+                    str(cfg.get("change_window", "1d"))
+                    if change is not None
+                    else None
+                )
             elif transform == "piecewise_and_change":
                 periods = int(cfg.get("change_periods", 63))
                 current, level_change, _previous, _previous_change = (
@@ -364,6 +375,8 @@ class Risk29Engine:
             return await self.sources.ofr()
         if fetch_kind == "lbma_gold":
             return await self.sources.lbma_gold()
+        if fetch_kind == "shiller":
+            return await self.sources.shiller(str(cfg["source_metric"]))
         raise ValueError(f"unknown fetch source {fetch_kind}")
 
     def _score_points(self, cfg: dict[str, Any], points: list[SeriesPoint]) -> tuple[float, float | None]:
