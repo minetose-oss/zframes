@@ -36,6 +36,14 @@ MARKET_AD_CSV_URL = (
 MARKET_BREADTH_SOURCE_URL = (
     "https://github.com/AlphaLabX1/forward-pe-viewer/tree/main/data"
 )
+FORWARD_PE_CSV_URL = (
+    "https://raw.githubusercontent.com/AlphaLabX1/forward-pe-viewer/"
+    "main/data/20052_sandp_500.csv"
+)
+FORWARD_PE_SOURCE_URL = (
+    "https://github.com/AlphaLabX1/forward-pe-viewer/blob/main/"
+    "data/20052_sandp_500.csv"
+)
 FED_POLICY_RSS_URL = "https://www.federalreserve.gov/feeds/press_monetary.xml"
 ECB_POLICY_RSS_URL = "https://www.ecb.europa.eu/rss/press.html"
 BOJ_POLICY_RSS_URL = "https://www.boj.or.jp/en/rss/whatsnew.xml"
@@ -55,6 +63,7 @@ class SourceClient(Protocol):
     async def gpr_geopolitical_shock(self) -> list[SeriesPoint]: ...
     async def policy_regime_shock(self) -> list[SeriesPoint]: ...
     async def market_breadth(self) -> list[SeriesPoint]: ...
+    async def sp500_forward_pe_percentile(self) -> list[SeriesPoint]: ...
 
 
 @dataclass
@@ -649,6 +658,67 @@ class PublicSourceClient:
         ]
         points.sort(key=lambda point: point.date)
         return points
+
+    @staticmethod
+    def _parse_forward_pe_csv(text: str) -> list[SeriesPoint]:
+        rows = csv.DictReader(io.StringIO(text))
+        points: list[SeriesPoint] = []
+        for row in rows:
+            try:
+                observed = date.fromisoformat(str(row.get("date", "")).strip())
+                value = float(str(row.get("forward_pe", "")).strip())
+            except (ValueError, TypeError):
+                continue
+            # Forward P/E should be positive. A very wide upper guard catches
+            # malformed rows without imposing a market-view judgement.
+            if not 0.0 < value < 100.0:
+                continue
+            points.append(SeriesPoint(observed, value))
+        points.sort(key=lambda point: point.date)
+        return points
+
+    @staticmethod
+    def _forward_pe_percentile_points(
+        points: list[SeriesPoint],
+        *,
+        lookback: int = 2520,
+        min_observations: int = 1260,
+        output_points: int = 60,
+    ) -> list[SeriesPoint]:
+        if lookback < 2 or min_observations < 2:
+            raise ValueError("forward P/E percentile: invalid lookback")
+        if len(points) < min_observations:
+            raise ValueError("forward P/E percentile: insufficient history")
+
+        start = max(min_observations - 1, len(points) - max(2, output_points))
+        output: list[SeriesPoint] = []
+        for index in range(start, len(points)):
+            window = points[max(0, index - lookback + 1) : index + 1]
+            if len(window) < min_observations:
+                continue
+            current = points[index].value
+            values = [point.value for point in window]
+            below = sum(value < current for value in values)
+            equal = sum(value == current for value in values)
+            percentile = 100.0 * (below + 0.5 * equal) / len(values)
+            output.append(SeriesPoint(points[index].date, percentile))
+
+        if len(output) < 2:
+            raise ValueError("forward P/E percentile: too few scored observations")
+        return output
+
+    async def sp500_forward_pe_percentile(self) -> list[SeriesPoint]:
+        """
+        Return the S&P 500 forward P/E as a trailing 10-year percentile.
+
+        The upstream archive contains a daily forward-P/E series back to 2003.
+        Risk29 converts that level into a rolling percentile so the valuation
+        signal remains comparable across different market regimes. The source
+        is fail-closed if it does not contain at least five years of history.
+        """
+        text = await self._get_text(FORWARD_PE_CSV_URL)
+        raw = self._parse_forward_pe_csv(text)
+        return self._forward_pe_percentile_points(raw)
 
     async def treasury_curve(self) -> list[SeriesPoint]:
         now = datetime.now(timezone.utc)
