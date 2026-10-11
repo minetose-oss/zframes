@@ -118,6 +118,9 @@ class FakeSources:
     async def sp500_forward_pe_percentile(self):
         return self._series(55.0, 0.05, 60)
 
+    async def cftc_equity_positioning(self):
+        return self._series(-0.2, -0.01, 60)
+
 
 @pytest.mark.asyncio
 async def test_engine_builds_contract_and_history(tmp_path):
@@ -134,10 +137,10 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert snapshot.schemaVersion == "1"
     assert snapshot.modelVersion == "risk29-p2-engine-0.7.0"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v2"
-    assert len(snapshot.signals) == 26
-    assert snapshot.health.total == 26
+    assert len(snapshot.signals) == 27
+    assert snapshot.health.total == 27
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 26
+    assert snapshot.health.available == 27
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -274,6 +277,17 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert forward_pe.sourceSeries == "10Y rolling percentile of S&P 500 forward P/E"
     assert forward_pe.changeWindow == "1d"
 
+    cftc = next(
+        signal for signal in snapshot.signals
+        if signal.id == "cftc_equity_positioning"
+    )
+    assert cftc.value is not None
+    assert cftc.unit == "z-score"
+    assert cftc.sourceSeries == (
+        "S&P 500 leveraged-money net / open interest, 3Y z-score"
+    )
+    assert cftc.changeWindow == "1w"
+
     history = engine.history(30)
     assert len(history.points) == 1
     assert history.points[0].score == snapshot.score
@@ -325,7 +339,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
 
     snapshot = await engine.latest(force=True)
 
-    assert snapshot.health.available == 8
+    assert snapshot.health.available == 9
     assert snapshot.health.errored == 18
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
