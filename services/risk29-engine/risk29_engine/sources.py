@@ -51,6 +51,8 @@ CFTC_SP500_TFF_CSV_URL = (
 CFTC_SP500_TFF_SOURCE_URL = (
     "https://github.com/MFlab-inc/CFTC-COT/blob/main/data/csv/sp500_tff.csv"
 )
+CBOE_DAILY_STATS_URL = "https://www.cboe.com/markets/us/options/market-statistics/daily"
+AAII_SENTIMENT_URL = "https://www.aaii.com/sentimentsurvey/sent_results"
 FED_POLICY_RSS_URL = "https://www.federalreserve.gov/feeds/press_monetary.xml"
 ECB_POLICY_RSS_URL = "https://www.ecb.europa.eu/rss/press.html"
 BOJ_POLICY_RSS_URL = "https://www.boj.or.jp/en/rss/whatsnew.xml"
@@ -72,6 +74,8 @@ class SourceClient(Protocol):
     async def market_breadth(self) -> list[SeriesPoint]: ...
     async def sp500_forward_pe_percentile(self) -> list[SeriesPoint]: ...
     async def cftc_equity_positioning(self) -> list[SeriesPoint]: ...
+    async def cboe_put_call_ratio(self) -> list[SeriesPoint]: ...
+    async def aaii_bull_bear_spread(self) -> list[SeriesPoint]: ...
 
 
 @dataclass
@@ -115,6 +119,50 @@ class PublicSourceClient:
                     response.raise_for_status()
                     return response.text
             except httpx.TransportError as exc:
+                last_error = exc
+                if attempt + 1 >= max(1, self.retry_attempts):
+                    raise
+                await asyncio.sleep(0.35 * (attempt + 1))
+        assert last_error is not None
+        raise last_error
+
+    async def _get_browser_text(
+        self,
+        url: str,
+        *,
+        params: dict[str, str] | None = None,
+    ) -> str:
+        timeout = httpx.Timeout(
+            self.timeout_seconds,
+            connect=min(10.0, self.timeout_seconds),
+        )
+        last_error: Exception | None = None
+        for attempt in range(max(1, self.retry_attempts)):
+            try:
+                async with httpx.AsyncClient(
+                    timeout=timeout,
+                    follow_redirects=True,
+                ) as client:
+                    response = await client.get(
+                        url,
+                        params=params,
+                        headers={
+                            "User-Agent": (
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                "Chrome/140.0.0.0 Safari/537.36"
+                            ),
+                            "Accept": (
+                                "text/html,application/xhtml+xml,"
+                                "application/xml;q=0.9,*/*;q=0.8"
+                            ),
+                            "Accept-Language": "en-US,en;q=0.9",
+                            "Cache-Control": "no-cache",
+                        },
+                    )
+                    response.raise_for_status()
+                    return response.text
+            except httpx.HTTPError as exc:
                 last_error = exc
                 if attempt + 1 >= max(1, self.retry_attempts):
                     raise
@@ -792,6 +840,122 @@ class PublicSourceClient:
         text = await self._get_text(CFTC_SP500_TFF_CSV_URL)
         raw = self._parse_cftc_sp500_tff_csv(text)
         return self._rolling_zscore_points(raw)
+
+    @staticmethod
+    def _parse_cboe_put_call_html(text: str) -> list[SeriesPoint]:
+        ratio_match = re.search(
+            r"TOTAL\s+PUT/CALL\s+RATIO(?:<[^>]+>|\s)*([0-9]+(?:\.[0-9]+)?)",
+            text,
+            flags=re.IGNORECASE,
+        )
+        if ratio_match is None:
+            # Keep a text-only fallback for minor markup changes.
+            plain = re.sub(r"<[^>]+>", " ", html.unescape(text))
+            plain = re.sub(r"\s+", " ", plain)
+            ratio_match = re.search(
+                r"TOTAL\s+PUT/CALL\s+RATIO\s+([0-9]+(?:\.[0-9]+)?)",
+                plain,
+                flags=re.IGNORECASE,
+            )
+        if ratio_match is None:
+            raise ValueError("CBOE put/call: total ratio not found")
+
+        ratio = float(ratio_match.group(1))
+        if not 0.05 <= ratio <= 5.0:
+            raise ValueError("CBOE put/call: ratio outside validation bounds")
+
+        dates: list[date] = []
+        for value in re.findall(r"\b20\d{2}-\d{2}-\d{2}\b", text):
+            try:
+                dates.append(date.fromisoformat(value))
+            except ValueError:
+                continue
+        if not dates:
+            raise ValueError("CBOE put/call: session date not found")
+        return [SeriesPoint(max(dates), ratio)]
+
+    async def cboe_put_call_ratio(self) -> list[SeriesPoint]:
+        """
+        Return Cboe's official Total Put/Call Ratio from the daily statistics page.
+
+        Cboe renders the current session date and ratio in the page HTML. The
+        parser validates both fields and fails closed when the table changes.
+        """
+        text = await self._get_browser_text(CBOE_DAILY_STATS_URL)
+        return self._parse_cboe_put_call_html(text)
+
+    @staticmethod
+    def _parse_aaii_sentiment_html(
+        text: str,
+        *,
+        today: date | None = None,
+    ) -> list[SeriesPoint]:
+        # AAII's public historical page presents rows newest-first as:
+        # Reported Date | Bullish | Neutral | Bearish.
+        plain = re.sub(r"<[^>]+>", " ", html.unescape(text))
+        plain = re.sub(r"\s+", " ", plain)
+        pattern = re.compile(
+            r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+"
+            r"(\d{1,2})\s+"
+            r"(\d+(?:\.\d+)?)%\s+"
+            r"(\d+(?:\.\d+)?)%\s+"
+            r"(\d+(?:\.\d+)?)%",
+            flags=re.IGNORECASE,
+        )
+        matches = list(pattern.finditer(plain))
+        if not matches:
+            raise ValueError("AAII sentiment: no survey rows found")
+
+        anchor = today or datetime.now(timezone.utc).date()
+        month_map = {
+            "jan": 1,
+            "feb": 2,
+            "mar": 3,
+            "apr": 4,
+            "may": 5,
+            "jun": 6,
+            "jul": 7,
+            "aug": 8,
+            "sep": 9,
+            "oct": 10,
+            "nov": 11,
+            "dec": 12,
+        }
+        year = anchor.year
+        previous_month: int | None = None
+        points: list[SeriesPoint] = []
+        for match in matches:
+            month = month_map[match.group(1).lower()]
+            day = int(match.group(2))
+            bullish = float(match.group(3))
+            bearish = float(match.group(5))
+            if previous_month is None and month > anchor.month + 1:
+                year -= 1
+            elif previous_month is not None and month > previous_month:
+                year -= 1
+            previous_month = month
+
+            if not (0.0 <= bullish <= 100.0 and 0.0 <= bearish <= 100.0):
+                continue
+            try:
+                observed = date(year, month, day)
+            except ValueError:
+                continue
+            points.append(SeriesPoint(observed, bullish - bearish))
+
+        # De-duplicate any repeated markup fragments and return chronological data.
+        deduped = {point.date: point for point in points}
+        result = sorted(deduped.values(), key=lambda point: point.date)
+        if len(result) < 2:
+            raise ValueError("AAII sentiment: too few validated survey rows")
+        return result
+
+    async def aaii_bull_bear_spread(self) -> list[SeriesPoint]:
+        """
+        Return AAII bullish minus bearish percentage points from its public page.
+        """
+        text = await self._get_browser_text(AAII_SENTIMENT_URL)
+        return self._parse_aaii_sentiment_html(text)
 
     async def treasury_curve(self) -> list[SeriesPoint]:
         now = datetime.now(timezone.utc)
