@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
+from math import sqrt
 from statistics import fmean, pstdev
 from typing import Iterable, Sequence
 
@@ -118,6 +119,111 @@ def pct_change(points: Sequence[SeriesPoint], periods: int) -> float | None:
     if previous == 0:
         return None
     return ((latest - previous) / previous) * 100.0
+
+
+def realized_volatility(
+    points: Sequence[SeriesPoint],
+    periods: int,
+    *,
+    annualization: int = 252,
+) -> float | None:
+    """Annualized realized volatility from simple daily returns, in percent."""
+    if periods < 2 or len(points) <= periods:
+        return None
+    window = points[-(periods + 1):]
+    returns: list[float] = []
+    for previous, current in zip(window, window[1:]):
+        if previous.value <= 0:
+            return None
+        returns.append((current.value / previous.value) - 1.0)
+    if len(returns) < periods:
+        return None
+    return pstdev(returns) * sqrt(float(annualization)) * 100.0
+
+
+def rolling_percentile(
+    values: Sequence[float],
+    current: float,
+) -> float | None:
+    """Percentile rank of current versus a historical sample, from 0 to 100."""
+    if not values:
+        return None
+    less = sum(value < current for value in values)
+    equal = sum(value == current for value in values)
+    return 100.0 * (less + 0.5 * equal) / len(values)
+
+
+def realized_volatility_regime_features(
+    points: Sequence[SeriesPoint],
+    *,
+    short_periods: int = 20,
+    long_periods: int = 60,
+    percentile_lookback: int = 252,
+    min_percentile_observations: int = 60,
+) -> tuple[float, float, float, float | None, float | None, float | None]:
+    """
+    Return RV20, RV60, RV20/RV60 and prior-observation equivalents.
+
+    The percentile used by the engine is computed from trailing RV20 history,
+    avoiding look-ahead while keeping the transform auditable.
+    """
+    if len(points) <= long_periods:
+        raise ValueError("realized-volatility regime requires more price history")
+
+    current_rv20 = realized_volatility(points, short_periods)
+    current_rv60 = realized_volatility(points, long_periods)
+    previous_rv20 = realized_volatility(points[:-1], short_periods)
+    previous_rv60 = realized_volatility(points[:-1], long_periods)
+    if current_rv20 is None or current_rv60 is None or current_rv60 <= 1e-12:
+        raise ValueError("realized-volatility regime could not compute current volatility")
+
+    current_ratio = current_rv20 / current_rv60
+    previous_ratio = (
+        previous_rv20 / previous_rv60
+        if previous_rv20 is not None and previous_rv60 is not None and previous_rv60 > 1e-12
+        else None
+    )
+
+    history: list[float] = []
+    start = max(short_periods + 1, len(points) - percentile_lookback)
+    for end in range(start, len(points) + 1):
+        rv = realized_volatility(points[:end], short_periods)
+        if rv is not None:
+            history.append(rv)
+    if len(history) < min_percentile_observations:
+        raise ValueError(
+            f"realized-volatility percentile requires at least {min_percentile_observations} observations"
+        )
+    current_percentile = rolling_percentile(history[:-1] or history, current_rv20)
+
+    previous_percentile = None
+    if previous_rv20 is not None and len(history) >= 2:
+        previous_percentile = rolling_percentile(history[:-2] or history[:-1], previous_rv20)
+
+    return (
+        current_rv20,
+        current_rv60,
+        current_ratio,
+        previous_rv20,
+        previous_rv60,
+        previous_ratio,
+    ), current_percentile, previous_percentile
+
+
+def oil_shock_features(
+    points: Sequence[SeriesPoint],
+    *,
+    momentum_periods: int = 20,
+    volatility_periods: int = 20,
+) -> tuple[float, float, float | None, float | None]:
+    """Return oil momentum and realized volatility, plus prior-observation versions."""
+    current_momentum = pct_change(points, momentum_periods)
+    current_volatility = realized_volatility(points, volatility_periods)
+    previous_momentum = pct_change(points[:-1], momentum_periods)
+    previous_volatility = realized_volatility(points[:-1], volatility_periods)
+    if current_momentum is None or current_volatility is None:
+        raise ValueError("oil shock requires at least 21 usable observations")
+    return current_momentum, current_volatility, previous_momentum, previous_volatility
 
 
 def annualized_pct_change(
