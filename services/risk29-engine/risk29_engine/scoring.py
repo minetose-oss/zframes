@@ -111,6 +111,72 @@ def net_liquidity_series(
     return combined
 
 
+def average_pairwise_correlation_series(
+    series: Sequence[Sequence[SeriesPoint]],
+    *,
+    window: int = 20,
+) -> list[SeriesPoint]:
+    """
+    Build a daily average absolute pairwise-correlation series from price indexes.
+
+    All assets are aligned on common observation dates first. Correlations are
+    calculated on simple returns over the trailing window. A missing or flat
+    pair is skipped rather than treated as zero correlation.
+    """
+    if len(series) < 3:
+        raise ValueError("cross-asset correlation requires at least three assets")
+    if window < 5:
+        raise ValueError("cross-asset correlation window must be at least 5")
+
+    maps = [{point.date: point.value for point in points} for points in series]
+    common_dates = sorted(set.intersection(*(set(mapping) for mapping in maps)))
+    if len(common_dates) <= window:
+        raise ValueError("cross-asset correlation has insufficient overlapping history")
+
+    aligned = [[mapping[day] for day in common_dates] for mapping in maps]
+    returns: list[list[float]] = []
+    for values in aligned:
+        asset_returns: list[float] = []
+        for previous, current in zip(values, values[1:]):
+            if previous <= 0:
+                raise ValueError("cross-asset correlation requires positive price levels")
+            asset_returns.append((current / previous) - 1.0)
+        returns.append(asset_returns)
+
+    def _corr(left: Sequence[float], right: Sequence[float]) -> float | None:
+        if len(left) != len(right) or len(left) < 2:
+            return None
+        left_mean = fmean(left)
+        right_mean = fmean(right)
+        left_sigma = pstdev(left)
+        right_sigma = pstdev(right)
+        if left_sigma <= 1e-12 or right_sigma <= 1e-12:
+            return None
+        covariance = fmean(
+            (x - left_mean) * (y - right_mean)
+            for x, y in zip(left, right)
+        )
+        return covariance / (left_sigma * right_sigma)
+
+    points: list[SeriesPoint] = []
+    for end in range(window, len(common_dates)):
+        pairwise: list[float] = []
+        for left_index in range(len(returns)):
+            left = returns[left_index][end - window:end]
+            for right_index in range(left_index + 1, len(returns)):
+                right = returns[right_index][end - window:end]
+                correlation = _corr(left, right)
+                if correlation is not None:
+                    pairwise.append(abs(correlation))
+        if not pairwise:
+            continue
+        points.append(SeriesPoint(common_dates[end], fmean(pairwise)))
+
+    if not points:
+        raise ValueError("cross-asset correlation produced no usable observations")
+    return points
+
+
 def pct_change(points: Sequence[SeriesPoint], periods: int) -> float | None:
     if len(points) <= periods:
         return None
