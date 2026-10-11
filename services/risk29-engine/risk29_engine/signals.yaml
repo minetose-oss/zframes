@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v2
-model_version: risk29-p2-engine-0.7.0
+model_version: risk29-p2-engine-0.8.0
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -637,6 +637,28 @@ signals:
       fresh_hours: 72
       delayed_hours: 168
 
+  - id: cftc_equity_positioning
+    label: CFTC Equity Positioning
+    category: sentiment
+    source: CFTC TFF mirror via GitHub
+    source_series: S&P 500 leveraged-money net / open interest, 3Y z-score
+    unit: z-score
+    fetch: cftc_equity_positioning
+    transform: piecewise_latest
+    change_window: 1w
+    points:
+      - [-3.0, 100]
+      - [-2.0, 85]
+      - [-1.0, 60]
+      - [0.0, 25]
+      - [1.0, 45]
+      - [2.0, 75]
+      - [3.0, 100]
+    freshness:
+      # COT positions are dated Tuesday and normally released Friday.
+      fresh_hours: 168
+      delayed_hours: 336
+
 planned_signals:
   - id: put_call_ratio
     label: Put/Call Ratio
@@ -652,9 +674,3 @@ planned_signals:
     unit: pct-points
     transform: contrarian_percentile
 
-  - id: cftc_equity_positioning
-    label: CFTC Equity Positioning
-    category: sentiment
-    source: CFTC COT
-    unit: z-score
-    transform: net_positioning_zscore
