@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v2
-model_version: risk29-p2-engine-0.5.0
+model_version: risk29-p2-engine-0.6.0
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -566,6 +566,33 @@ signals:
       fresh_hours: 72
       delayed_hours: 120
 
+  - id: cross_asset_correlation_spike
+    label: Cross-Asset Correlation Spike
+    category: global
+    source: FRED cross-asset prices
+    source_series: SP500 + NASDAQQGLDI + DCOILWTICO + DTWEXBGS
+    source_series_list:
+      - SP500
+      - NASDAQQGLDI
+      - DCOILWTICO
+      - DTWEXBGS
+    unit: z-score
+    fetch: fred_cross_asset_corr
+    transform: average_20d_correlation_zscore
+    correlation_window: 20
+    zscore_lookback: 252
+    zscore_min_observations: 60
+    change_window: 1d
+    points:
+      - [-1.0, 10]
+      - [0.0, 25]
+      - [1.0, 50]
+      - [2.0, 75]
+      - [3.0, 100]
+    freshness:
+      fresh_hours: 120
+      delayed_hours: 168
+
 planned_signals:
   - id: sp500_forward_pe_percentile
     label: S&P 500 Forward P/E Percentile
@@ -593,15 +620,7 @@ planned_signals:
     category: sentiment
     source: CFTC COT
     unit: z-score
-    transform: net_positioning_zscore
-  - id: cross_asset_correlation_spike
-    label: Cross-Asset Correlation Spike
-    category: global
-    source: Market prices
-    unit: z-score
-    transform: average_20d_correlation_zscore
-
-  - id: market_breadth
+    transform: net_positioning_zscore  - id: market_breadth
     label: Market Breadth
     category: technical
     source: Constituent market data
