@@ -617,14 +617,27 @@ signals:
       fresh_hours: 120
       delayed_hours: 264
 
-planned_signals:
   - id: sp500_forward_pe_percentile
     label: S&P 500 Forward P/E Percentile
     category: valuation
-    source: FactSet/Bigdata
+    source: Koyfin archive via GitHub
+    source_series: 10Y rolling percentile of S&P 500 forward P/E
     unit: percentile
-    transform: rolling_10y_percentile
+    fetch: forward_pe_percentile
+    transform: piecewise_latest
+    change_window: 1d
+    points:
+      - [0.0, 5]
+      - [20.0, 15]
+      - [50.0, 40]
+      - [75.0, 65]
+      - [90.0, 85]
+      - [100.0, 100]
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 168
 
+planned_signals:
   - id: put_call_ratio
     label: Put/Call Ratio
     category: sentiment
