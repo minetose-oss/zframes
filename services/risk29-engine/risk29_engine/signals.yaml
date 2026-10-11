@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v2
-model_version: risk29-p2-engine-0.6.0
+model_version: risk29-p2-engine-0.7.0
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -594,6 +594,29 @@ signals:
       fresh_hours: 240
       delayed_hours: 336
 
+  - id: market_breadth
+    label: Market Breadth
+    category: technical
+    source: MacroMicro archive via GitHub
+    source_series: 70% S&P 500 % > 200DMA + 30% advancers share
+    unit: percent
+    fetch: market_breadth
+    transform: pct_above_200dma_plus_advance_decline
+    change_window: 1d
+    points:
+      - [15.0, 100]
+      - [25.0, 90]
+      - [35.0, 75]
+      - [50.0, 50]
+      - [65.0, 30]
+      - [80.0, 15]
+      - [95.0, 5]
+    freshness:
+      # The advance/decline archive can lag several sessions. Keep that lag
+      # visible as delayed, and fail to stale if it exceeds eleven days.
+      fresh_hours: 120
+      delayed_hours: 264
+
 planned_signals:
   - id: sp500_forward_pe_percentile
     label: S&P 500 Forward P/E Percentile
@@ -623,9 +646,3 @@ planned_signals:
     unit: z-score
     transform: net_positioning_zscore
 
-  - id: market_breadth
-    label: Market Breadth
-    category: technical
-    source: Constituent market data
-    unit: percent
-    transform: pct_above_200dma_plus_advance_decline
