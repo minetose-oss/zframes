@@ -8,7 +8,9 @@ from risk29_engine.scoring import (
     freshness_from_date,
     level_change_features,
     net_liquidity_series,
+    oil_shock_features,
     piecewise,
+    realized_volatility_regime_features,
     rolling_zscore_features,
     spread_series,
     state_from_score,
@@ -164,3 +166,49 @@ def test_net_liquidity_series_aligns_units_and_missing_days():
     ]
     assert combined[0].value == 5_695.0
     assert combined[1].value == 5_766.0
+
+
+def test_oil_shock_features_capture_momentum_and_volatility():
+    start = date(2026, 1, 1)
+    points = [
+        SeriesPoint(start + timedelta(days=i), 70.0 + i * 0.25 + (i % 3) * 0.4)
+        for i in range(90)
+    ]
+
+    momentum, volatility, previous_momentum, previous_volatility = oil_shock_features(
+        points
+    )
+
+    assert momentum > 0
+    assert volatility > 0
+    assert previous_momentum is not None
+    assert previous_volatility is not None
+
+
+def test_realized_volatility_regime_features_detect_volatility_acceleration():
+    start = date(2025, 1, 1)
+    points = []
+    value = 5000.0
+    for i in range(340):
+        amplitude = 0.001 if i < 300 else 0.02
+        signed = amplitude if i % 2 == 0 else -amplitude
+        value *= 1.0 + signed
+        points.append(SeriesPoint(start + timedelta(days=i), value))
+
+    (
+        rv20,
+        rv60,
+        ratio,
+        percentile,
+        previous_rv20,
+        _previous_rv60,
+        previous_ratio,
+        previous_percentile,
+    ) = realized_volatility_regime_features(points)
+
+    assert rv20 > rv60
+    assert ratio > 1.0
+    assert percentile > 50
+    assert previous_rv20 is not None
+    assert previous_ratio is not None
+    assert previous_percentile is not None
