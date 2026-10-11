@@ -45,6 +45,7 @@ from .sources import (
     FRED_URL,
     GPR_DAILY_URL,
     LBMA_GOLD_URL,
+    MARKET_BREADTH_SOURCE_URL,
     OFR_URL,
     SHILLER_PAGE_URL,
     SourceClient,
@@ -71,6 +72,7 @@ SOURCE_URLS = {
     "shiller": SHILLER_PAGE_URL,
     "gpr_geopolitical": GPR_DAILY_URL,
     "policy_rss": BOJ_POLICY_RSS_URL,
+    "market_breadth": MARKET_BREADTH_SOURCE_URL,
     "treasury_curve": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates",
 }
 
@@ -463,12 +465,17 @@ class Risk29Engine:
             return await self.sources.gpr_geopolitical_shock()
         if fetch_kind == "policy_rss":
             return await self.sources.policy_regime_shock()
+        if fetch_kind == "market_breadth":
+            return await self.sources.market_breadth()
         raise ValueError(f"unknown fetch source {fetch_kind}")
 
     def _score_points(self, cfg: dict[str, Any], points: list[SeriesPoint]) -> tuple[float, float | None]:
         transform = str(cfg["transform"])
         knots = cfg.get("points") or []
-        if transform == "piecewise_latest":
+        if transform in {
+            "piecewise_latest",
+            "pct_above_200dma_plus_advance_decline",
+        }:
             current = piecewise(points[-1].value, knots)
             previous = piecewise(points[-2].value, knots) if len(points) >= 2 else None
             return current, previous
