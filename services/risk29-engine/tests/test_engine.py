@@ -104,6 +104,12 @@ class FakeSources:
             return self._monthly_level_series(3.0, -0.08)
         raise AssertionError(metric)
 
+    async def gdelt_geopolitical_shock(self):
+        return self._series(0.35, 0.002, 60)
+
+    async def policy_regime_shock(self):
+        return self._series(10.0, 0.10, 60)
+
 
 @pytest.mark.asyncio
 async def test_engine_builds_contract_and_history(tmp_path):
@@ -118,12 +124,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.3.0"
+    assert snapshot.modelVersion == "risk29-p2-engine-0.4.0"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v2"
-    assert len(snapshot.signals) == 19
-    assert snapshot.health.total == 19
+    assert len(snapshot.signals) == 21
+    assert snapshot.health.total == 21
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 19
+    assert snapshot.health.available == 21
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -200,7 +206,20 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert valuation.score is not None and valuation.state != "unavailable"
     assert valuation.availableSignals == 2
     assert valuation.totalSignals == 2
-    assert qualitative.score is None and qualitative.state == "unavailable"
+    assert qualitative.score is not None and qualitative.state != "unavailable"
+    assert qualitative.availableSignals == 2
+    assert qualitative.totalSignals == 2
+
+    geopolitical = next(
+        signal for signal in snapshot.signals if signal.id == "geopolitical_event_shock"
+    )
+    assert geopolitical.value is not None
+    assert geopolitical.changeWindow == "3d"
+    assert geopolitical.source == "GDELT DOC 2.0"
+
+    policy = next(signal for signal in snapshot.signals if signal.id == "policy_regime_shock")
+    assert policy.value is not None
+    assert policy.source == "Fed/ECB/BoJ official RSS"
 
     history = engine.history(30)
     assert len(history.points) == 1
@@ -253,7 +272,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
 
     snapshot = await engine.latest(force=True)
 
-    assert snapshot.health.available == 4
+    assert snapshot.health.available == 6
     assert snapshot.health.errored == 15
     assert snapshot.score is None
     assert snapshot.state == "unavailable"

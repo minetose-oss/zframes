@@ -6,6 +6,8 @@ import html
 import io
 import re
 import time
+import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
 from urllib.parse import urljoin
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
@@ -20,6 +22,11 @@ FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 OFR_URL = "https://www.financialresearch.gov/financial-stress-index/data/fsi.csv"
 LBMA_GOLD_URL = "https://prices.lbma.org.uk/json/gold_pm.json"
 SHILLER_PAGE_URL = "https://shillerdata.com/"
+GDELT_DOC_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
+FED_POLICY_RSS_URL = "https://www.federalreserve.gov/feeds/press_monetary.xml"
+ECB_POLICY_RSS_URL = "https://www.ecb.europa.eu/rss/press.html"
+BOJ_POLICY_RSS_URL = "https://www.boj.or.jp/en/rss/whatsnew.xml"
+POLICY_RSS_URLS = (FED_POLICY_RSS_URL, ECB_POLICY_RSS_URL, BOJ_POLICY_RSS_URL)
 TREASURY_URL = (
     "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml"
     "?data=daily_treasury_yield_curve&field_tdr_date_value_month={yyyymm}"
@@ -32,6 +39,8 @@ class SourceClient(Protocol):
     async def ofr(self) -> list[SeriesPoint]: ...
     async def lbma_gold(self) -> list[SeriesPoint]: ...
     async def shiller(self, metric: str) -> list[SeriesPoint]: ...
+    async def gdelt_geopolitical_shock(self) -> list[SeriesPoint]: ...
+    async def policy_regime_shock(self) -> list[SeriesPoint]: ...
 
 
 @dataclass
@@ -77,7 +86,7 @@ class PublicSourceClient:
         assert last_error is not None
         raise last_error
 
-    async def _get_json(self, url: str):
+    async def _get_json(self, url: str, *, params: dict[str, str] | None = None):
         timeout = httpx.Timeout(self.timeout_seconds, connect=min(10.0, self.timeout_seconds))
         last_error: Exception | None = None
         for attempt in range(max(1, self.retry_attempts)):
@@ -85,6 +94,7 @@ class PublicSourceClient:
                 async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
                     response = await client.get(
                         url,
+                        params=params,
                         headers={
                             "User-Agent": "risk29-engine/0.1",
                             "Accept": "application/json,*/*",
@@ -247,6 +257,219 @@ class PublicSourceClient:
         if metric not in metrics:
             raise ValueError(f"unknown Shiller metric {metric}")
         return metrics[metric]
+
+
+    @staticmethod
+    def _parse_gdelt_day(raw: object) -> date | None:
+        text = str(raw or "").strip()
+        if len(text) < 8:
+            return None
+        try:
+            return datetime.strptime(text[:8], "%Y%m%d").date()
+        except ValueError:
+            return None
+
+    async def gdelt_geopolitical_shock(self) -> list[SeriesPoint]:
+        """
+        Return GDELT geopolitical-stress news coverage as a daily percentage
+        of all monitored online news. The engine scores the *change* and
+        rolling z-score, so a persistently high-news environment does not
+        automatically become a permanent alert.
+        """
+        query = (
+            '("military strike" OR invasion OR missile OR airstrike OR '
+            '"nuclear threat" OR blockade OR coup OR "state of emergency")'
+        )
+        body = await self._get_json(
+            GDELT_DOC_URL,
+            params={
+                "query": query,
+                "mode": "timelinevol",
+                "format": "json",
+                "timespan": "45d",
+            },
+        )
+        if not isinstance(body, dict):
+            raise ValueError("GDELT geopolitical shock: unexpected response shape")
+        timelines = body.get("timeline")
+        if not isinstance(timelines, list) or not timelines:
+            raise ValueError("GDELT geopolitical shock: no timeline returned")
+
+        daily: dict[date, list[float]] = {}
+        for series in timelines:
+            if not isinstance(series, dict):
+                continue
+            data = series.get("data")
+            if not isinstance(data, list):
+                continue
+            for row in data:
+                if not isinstance(row, dict):
+                    continue
+                observed = self._parse_gdelt_day(row.get("date"))
+                try:
+                    value = float(str(row.get("value", "")).rstrip("%"))
+                except (TypeError, ValueError):
+                    continue
+                if observed is None or value < 0:
+                    continue
+                daily.setdefault(observed, []).append(value)
+
+        points = [
+            SeriesPoint(observed, sum(values) / len(values))
+            for observed, values in daily.items()
+            if values
+        ]
+        points.sort(key=lambda point: point.date)
+        if len(points) < 14:
+            raise ValueError("GDELT geopolitical shock: too few daily observations")
+        return points
+
+    @staticmethod
+    def _parse_feed_date(raw: str) -> date | None:
+        text = raw.strip()
+        if not text:
+            return None
+        try:
+            parsed = parsedate_to_datetime(text)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc).date()
+        except (TypeError, ValueError, OverflowError):
+            pass
+        try:
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc).date()
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _policy_event_severity(text: str) -> float:
+        normalized = re.sub(r"\s+", " ", html.unescape(text)).lower()
+        high = (
+            "emergency",
+            "unscheduled",
+            "intervention",
+            "swap line",
+            "quantitative easing",
+            "quantitative tightening",
+            "yield curve control",
+            "rate cut",
+            "rate hike",
+            "cuts interest rate",
+            "raises interest rate",
+            "lowers interest rate",
+            "raised the target range",
+            "lowered the target range",
+            "asset purchase programme",
+            "asset purchase program",
+        )
+        medium = (
+            "balance sheet",
+            "taper",
+            "standing repo",
+            "liquidity facility",
+            "negative interest rate",
+            "forward guidance",
+            "policy rate",
+            "interest rate decision",
+        )
+        routine = (
+            "fomc statement",
+            "monetary policy decision",
+            "monetary policy decisions",
+            "monetary policy meeting",
+            "policy board meeting",
+            "press conference",
+        )
+        if any(term in normalized for term in high):
+            return 90.0
+        if any(term in normalized for term in medium):
+            return 70.0
+        if any(term in normalized for term in routine):
+            return 35.0
+        return 10.0
+
+    @classmethod
+    def _parse_policy_feed_events(cls, body: str) -> list[tuple[date, float]]:
+        try:
+            root = ET.fromstring(body)
+        except ET.ParseError as exc:
+            raise ValueError(f"official policy RSS parse error: {exc}") from exc
+
+        events: list[tuple[date, float]] = []
+        for item in root.iter():
+            local = item.tag.rsplit("}", 1)[-1].lower()
+            if local not in {"item", "entry"}:
+                continue
+            text_parts: list[str] = []
+            observed: date | None = None
+            for child in item.iter():
+                child_local = child.tag.rsplit("}", 1)[-1].lower()
+                raw = "".join(child.itertext()).strip()
+                if not raw:
+                    continue
+                if child_local in {
+                    "title",
+                    "description",
+                    "summary",
+                    "content",
+                    "category",
+                }:
+                    text_parts.append(raw)
+                if observed is None and child_local in {
+                    "pubdate",
+                    "published",
+                    "updated",
+                    "date",
+                }:
+                    observed = cls._parse_feed_date(raw)
+            if observed is None:
+                continue
+            joined = re.sub(r"<[^>]+>", " ", " ".join(text_parts))
+            events.append((observed, cls._policy_event_severity(joined)))
+        return events
+
+    async def policy_regime_shock(self) -> list[SeriesPoint]:
+        """
+        Build a conservative event-risk score from official Fed/ECB/BoJ feeds.
+
+        The classifier is intentionally deterministic and headline/summary based.
+        A severe policy event starts high and decays for seven days; routine
+        meetings create only a mild bump. If one central-bank feed is down, the
+        remaining official feeds still keep the signal live.
+        """
+        results = await asyncio.gather(
+            *(self._get_text(url) for url in POLICY_RSS_URLS),
+            return_exceptions=True,
+        )
+        successful = [result for result in results if isinstance(result, str)]
+        if not successful:
+            raise ValueError("official policy RSS: all feeds unavailable")
+
+        events: list[tuple[date, float]] = []
+        for body in successful:
+            try:
+                events.extend(self._parse_policy_feed_events(body))
+            except ValueError:
+                continue
+        if not events:
+            raise ValueError("official policy RSS: no dated events parsed")
+
+        today = datetime.now(timezone.utc).date()
+        decay = (1.0, 0.85, 0.70, 0.55, 0.40, 0.30, 0.20, 0.15)
+        points: list[SeriesPoint] = []
+        for offset in range(44, -1, -1):
+            observed = today - timedelta(days=offset)
+            score = 10.0
+            for event_date, severity in events:
+                age = (observed - event_date).days
+                if 0 <= age < len(decay):
+                    candidate = 10.0 + (severity - 10.0) * decay[age]
+                    score = max(score, candidate)
+            points.append(SeriesPoint(observed, round(score, 2)))
+        return points
 
     async def fred(self, series_id: str) -> list[SeriesPoint]:
         # Risk29 only needs enough daily history for MA200 / 20-session momentum.

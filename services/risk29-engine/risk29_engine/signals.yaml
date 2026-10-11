@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v2
-model_version: risk29-p2-engine-0.3.0
+model_version: risk29-p2-engine-0.4.0
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -456,6 +456,55 @@ signals:
       fresh_hours: 1488
       delayed_hours: 2208
 
+  - id: geopolitical_event_shock
+    label: Geopolitical / Event Shock
+    category: qualitative
+    source: GDELT DOC 2.0
+    source_series: geopolitical stress coverage
+    unit: percent-of-news
+    fetch: gdelt_geopolitical
+    transform: level_momentum_and_zscore
+    momentum_periods: 3
+    change_window: 3d
+    momentum_weight: 0.40
+    zscore_weight: 0.60
+    zscore_lookback: 30
+    zscore_min_observations: 14
+    momentum_points:
+      - [-50.0, 10]
+      - [0.0, 25]
+      - [25.0, 50]
+      - [75.0, 75]
+      - [150.0, 100]
+    zscore_points:
+      - [-1.0, 10]
+      - [0.0, 25]
+      - [1.0, 50]
+      - [2.0, 75]
+      - [3.0, 100]
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 120
+
+  - id: policy_regime_shock
+    label: Policy / Regime Shock
+    category: qualitative
+    source: Fed/ECB/BoJ official RSS
+    source_series: official policy event rubric
+    unit: score
+    fetch: policy_rss
+    transform: piecewise_latest
+    change_window: 1d
+    points:
+      - [0.0, 0]
+      - [25.0, 25]
+      - [50.0, 50]
+      - [75.0, 75]
+      - [100.0, 100]
+    freshness:
+      fresh_hours: 48
+      delayed_hours: 96
+
 planned_signals:
   - id: sp500_forward_pe_percentile
     label: S&P 500 Forward P/E Percentile
@@ -484,20 +533,6 @@ planned_signals:
     source: CFTC COT
     unit: z-score
     transform: net_positioning_zscore
-
-  - id: geopolitical_event_shock
-    label: Geopolitical / Event Shock
-    category: qualitative
-    source: GDELT + trusted news
-    unit: score
-    transform: event_severity_rubric
-
-  - id: policy_regime_shock
-    label: Policy / Regime Shock
-    category: qualitative
-    source: Fed/ECB/BoJ + official releases
-    unit: score
-    transform: policy_event_classifier
 
   - id: oil_shock
     label: Oil Shock
