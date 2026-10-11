@@ -586,6 +586,24 @@ class Risk29Engine:
                 else None
             )
             return current, previous
+        if transform == "average_20d_correlation_zscore":
+            (
+                _current_level,
+                current_zscore,
+                _previous_level,
+                previous_zscore,
+            ) = rolling_zscore_features(
+                points,
+                lookback=int(cfg.get("zscore_lookback", 252)),
+                min_observations=int(cfg.get("zscore_min_observations", 60)),
+            )
+            current = piecewise(current_zscore, knots)
+            previous = (
+                piecewise(previous_zscore, knots)
+                if previous_zscore is not None
+                else None
+            )
+            return current, previous
         if transform == "momentum_20d_plus_realized_vol":
             (
                 current_momentum,
