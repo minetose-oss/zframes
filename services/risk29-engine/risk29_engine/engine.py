@@ -28,9 +28,11 @@ from .scoring import (
     level_change_features,
     mean_score,
     net_liquidity_series,
+    oil_shock_features,
     one_day_change,
     pct_change,
     piecewise,
+    realized_volatility_regime_features,
     regime_from_score,
     rolling_zscore_features,
     sahm_labor_deterioration_features,
@@ -305,6 +307,47 @@ class Risk29Engine:
                 signal_value = current
                 change = level_change
                 change_window = str(cfg.get("change_window", "3m"))
+            elif transform == "momentum_20d_plus_realized_vol":
+                momentum, _volatility, previous_momentum, _previous_volatility = (
+                    oil_shock_features(
+                        points,
+                        momentum_periods=int(cfg.get("momentum_periods", 20)),
+                        volatility_periods=int(cfg.get("volatility_periods", 20)),
+                    )
+                )
+                signal_value = momentum
+                change = (
+                    momentum - previous_momentum
+                    if previous_momentum is not None
+                    else None
+                )
+                change_window = str(cfg.get("change_window", "1d"))
+            elif transform == "rv20_vs_rv60_plus_percentile":
+                (
+                    current_rv20,
+                    _current_rv60,
+                    _current_ratio,
+                    _current_percentile,
+                    previous_rv20,
+                    _previous_rv60,
+                    _previous_ratio,
+                    _previous_percentile,
+                ) = realized_volatility_regime_features(
+                    points,
+                    short_periods=int(cfg.get("short_periods", 20)),
+                    long_periods=int(cfg.get("long_periods", 60)),
+                    percentile_lookback=int(cfg.get("percentile_lookback", 252)),
+                    min_percentile_observations=int(
+                        cfg.get("min_percentile_observations", 60)
+                    ),
+                )
+                signal_value = current_rv20
+                change = (
+                    current_rv20 - previous_rv20
+                    if previous_rv20 is not None
+                    else None
+                )
+                change_window = str(cfg.get("change_window", "1d"))
             else:
                 signal_value = latest.value
                 change_percent = transform in {"equity_trend", "momentum_20d"}
