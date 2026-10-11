@@ -160,7 +160,16 @@ def realized_volatility_regime_features(
     long_periods: int = 60,
     percentile_lookback: int = 252,
     min_percentile_observations: int = 60,
-) -> tuple[float, float, float, float | None, float | None, float | None]:
+) -> tuple[
+    float,
+    float,
+    float,
+    float,
+    float | None,
+    float | None,
+    float | None,
+    float | None,
+]:
     """
     Return RV20, RV60, RV20/RV60 and prior-observation equivalents.
 
@@ -200,14 +209,19 @@ def realized_volatility_regime_features(
     if previous_rv20 is not None and len(history) >= 2:
         previous_percentile = rolling_percentile(history[:-2] or history[:-1], previous_rv20)
 
+    if current_percentile is None:
+        raise ValueError("realized-volatility percentile is unavailable")
+
     return (
         current_rv20,
         current_rv60,
         current_ratio,
+        current_percentile,
         previous_rv20,
         previous_rv60,
         previous_ratio,
-    ), current_percentile, previous_percentile
+        previous_percentile,
+    )
 
 
 def oil_shock_features(
