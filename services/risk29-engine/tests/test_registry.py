@@ -61,7 +61,7 @@ def test_registry_signal_ids_are_unique():
 
 def test_registry_rejects_unknown_category():
     config = _config()
-    config["planned_signals"][0]["category"] = "not-a-category"
+    config["signals"][0]["category"] = "not-a-category"
 
     with pytest.raises(ValueError, match="references unknown category"):
         build_registry(config)
