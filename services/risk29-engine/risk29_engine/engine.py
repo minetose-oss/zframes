@@ -42,6 +42,7 @@ from .scoring import (
 )
 from .sources import (
     BOJ_POLICY_RSS_URL,
+    CFTC_SP500_TFF_SOURCE_URL,
     FRED_URL,
     GPR_DAILY_URL,
     LBMA_GOLD_URL,
@@ -75,6 +76,7 @@ SOURCE_URLS = {
     "policy_rss": BOJ_POLICY_RSS_URL,
     "market_breadth": MARKET_BREADTH_SOURCE_URL,
     "forward_pe_percentile": FORWARD_PE_SOURCE_URL,
+    "cftc_equity_positioning": CFTC_SP500_TFF_SOURCE_URL,
     "treasury_curve": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates",
 }
 
@@ -471,6 +473,8 @@ class Risk29Engine:
             return await self.sources.market_breadth()
         if fetch_kind == "forward_pe_percentile":
             return await self.sources.sp500_forward_pe_percentile()
+        if fetch_kind == "cftc_equity_positioning":
+            return await self.sources.cftc_equity_positioning()
         raise ValueError(f"unknown fetch source {fetch_kind}")
 
     def _score_points(self, cfg: dict[str, Any], points: list[SeriesPoint]) -> tuple[float, float | None]:
