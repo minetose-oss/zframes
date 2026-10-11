@@ -44,6 +44,13 @@ FORWARD_PE_SOURCE_URL = (
     "https://github.com/AlphaLabX1/forward-pe-viewer/blob/main/"
     "data/20052_sandp_500.csv"
 )
+CFTC_SP500_TFF_CSV_URL = (
+    "https://raw.githubusercontent.com/MFlab-inc/CFTC-COT/"
+    "main/data/csv/sp500_tff.csv"
+)
+CFTC_SP500_TFF_SOURCE_URL = (
+    "https://github.com/MFlab-inc/CFTC-COT/blob/main/data/csv/sp500_tff.csv"
+)
 FED_POLICY_RSS_URL = "https://www.federalreserve.gov/feeds/press_monetary.xml"
 ECB_POLICY_RSS_URL = "https://www.ecb.europa.eu/rss/press.html"
 BOJ_POLICY_RSS_URL = "https://www.boj.or.jp/en/rss/whatsnew.xml"
@@ -64,6 +71,7 @@ class SourceClient(Protocol):
     async def policy_regime_shock(self) -> list[SeriesPoint]: ...
     async def market_breadth(self) -> list[SeriesPoint]: ...
     async def sp500_forward_pe_percentile(self) -> list[SeriesPoint]: ...
+    async def cftc_equity_positioning(self) -> list[SeriesPoint]: ...
 
 
 @dataclass
@@ -719,6 +727,71 @@ class PublicSourceClient:
         text = await self._get_text(FORWARD_PE_CSV_URL)
         raw = self._parse_forward_pe_csv(text)
         return self._forward_pe_percentile_points(raw)
+
+    @staticmethod
+    def _parse_cftc_sp500_tff_csv(text: str) -> list[SeriesPoint]:
+        rows = csv.DictReader(io.StringIO(text))
+        points: list[SeriesPoint] = []
+        for row in rows:
+            try:
+                observed = date.fromisoformat(str(row.get("date", "")).strip())
+                open_interest = float(str(row.get("all", "")).strip())
+                leveraged_net = float(str(row.get("lev_net", "")).strip())
+            except (ValueError, TypeError):
+                continue
+            if open_interest <= 0:
+                continue
+            # Normalize contracts by open interest so secular changes in futures
+            # usage do not masquerade as a positioning regime shift.
+            points.append(
+                SeriesPoint(observed, 100.0 * leveraged_net / open_interest)
+            )
+        points.sort(key=lambda point: point.date)
+        return points
+
+    @staticmethod
+    def _rolling_zscore_points(
+        points: list[SeriesPoint],
+        *,
+        lookback: int = 156,
+        min_observations: int = 52,
+        output_points: int = 60,
+    ) -> list[SeriesPoint]:
+        if lookback < 2 or min_observations < 2:
+            raise ValueError("rolling z-score: invalid lookback")
+        if len(points) < min_observations:
+            raise ValueError("rolling z-score: insufficient history")
+
+        start = max(min_observations - 1, len(points) - max(2, output_points))
+        output: list[SeriesPoint] = []
+        for index in range(start, len(points)):
+            window = points[max(0, index - lookback + 1) : index + 1]
+            if len(window) < min_observations:
+                continue
+            values = [point.value for point in window]
+            mean = sum(values) / len(values)
+            variance = sum((value - mean) ** 2 for value in values) / len(values)
+            stdev = variance ** 0.5
+            if stdev <= 1e-12:
+                continue
+            zscore = (points[index].value - mean) / stdev
+            output.append(SeriesPoint(points[index].date, zscore))
+
+        if len(output) < 2:
+            raise ValueError("rolling z-score: too few scored observations")
+        return output
+
+    async def cftc_equity_positioning(self) -> list[SeriesPoint]:
+        """
+        Return S&P 500 leveraged-money positioning as a rolling 3-year z-score.
+
+        The GitHub transport mirror is built from the official CFTC Traders in
+        Financial Futures futures-only report. We normalize leveraged-money net
+        contracts by total open interest before z-scoring over 156 weeks.
+        """
+        text = await self._get_text(CFTC_SP500_TFF_CSV_URL)
+        raw = self._parse_cftc_sp500_tff_csv(text)
+        return self._rolling_zscore_points(raw)
 
     async def treasury_curve(self) -> list[SeriesPoint]:
         now = datetime.now(timezone.utc)
