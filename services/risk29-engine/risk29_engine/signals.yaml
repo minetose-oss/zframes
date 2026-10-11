@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v2
-model_version: risk29-p2-engine-0.4.1
+model_version: risk29-p2-engine-0.5.0
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -504,6 +504,68 @@ signals:
       fresh_hours: 48
       delayed_hours: 96
 
+  - id: oil_shock
+    label: Oil Shock
+    category: global
+    source: EIA/FRED
+    source_series: DCOILWTICO
+    unit: percent
+    fetch: fred
+    transform: momentum_20d_plus_realized_vol
+    momentum_periods: 20
+    volatility_periods: 20
+    change_window: 1d
+    momentum_weight: 0.65
+    volatility_weight: 0.35
+    momentum_points:
+      - [0.0, 10]
+      - [5.0, 25]
+      - [10.0, 50]
+      - [20.0, 80]
+      - [30.0, 100]
+    volatility_points:
+      - [15.0, 10]
+      - [30.0, 25]
+      - [45.0, 50]
+      - [60.0, 75]
+      - [90.0, 100]
+    freshness:
+      fresh_hours: 120
+      delayed_hours: 168
+
+  - id: realized_volatility_regime
+    label: Realized Volatility Regime
+    category: technical
+    source: S&P 500/FRED
+    source_series: SP500
+    unit: percent
+    fetch: fred
+    transform: rv20_vs_rv60_plus_percentile
+    short_periods: 20
+    long_periods: 60
+    percentile_lookback: 252
+    min_percentile_observations: 60
+    change_window: 1d
+    ratio_weight: 0.55
+    percentile_weight: 0.45
+    ratio_points:
+      - [0.50, 10]
+      - [0.80, 20]
+      - [1.00, 35]
+      - [1.25, 60]
+      - [1.50, 80]
+      - [2.00, 100]
+    percentile_points:
+      - [10.0, 10]
+      - [25.0, 20]
+      - [50.0, 40]
+      - [75.0, 65]
+      - [90.0, 85]
+      - [99.0, 100]
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 120
+
 planned_signals:
   - id: sp500_forward_pe_percentile
     label: S&P 500 Forward P/E Percentile
@@ -532,15 +594,6 @@ planned_signals:
     source: CFTC COT
     unit: z-score
     transform: net_positioning_zscore
-
-  - id: oil_shock
-    label: Oil Shock
-    category: global
-    source: EIA/FRED
-    source_series: DCOILWTICO
-    unit: percent
-    transform: momentum_20d_plus_realized_vol
-
   - id: cross_asset_correlation_spike
     label: Cross-Asset Correlation Spike
     category: global
@@ -554,11 +607,3 @@ planned_signals:
     source: Constituent market data
     unit: percent
     transform: pct_above_200dma_plus_advance_decline
-
-  - id: realized_volatility_regime
-    label: Realized Volatility Regime
-    category: technical
-    source: S&P 500 prices
-    source_series: SP500
-    unit: percent
-    transform: rv20_vs_rv60_plus_percentile
