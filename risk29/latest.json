@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1",
-  "modelVersion": "risk29-p2-engine-0.6.0",
+  "modelVersion": "risk29-p2-engine-0.7.0",
   "thresholdVersion": "risk29-p2-provisional-v2",
-  "generatedAt": "2026-10-11T14:44:46.380335+00:00",
+  "generatedAt": "2026-10-11T14:45:09.000344+00:00",
   "score": 36.79,
   "state": "watch",
   "regime": "neutral",
@@ -77,7 +77,7 @@
       "score": 14.71,
       "state": "normal",
       "availableSignals": 3,
-      "totalSignals": 3
+      "totalSignals": 4
     }
   ],
   "signals": [
@@ -96,8 +96,8 @@
       "change": 0.33,
       "changeWindow": "1d",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 312286.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 312309.000344,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -117,8 +117,8 @@
       "change": 0.594692,
       "changeWindow": "1d",
       "asOf": "2026-10-09",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 225886.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 225909.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -138,8 +138,8 @@
       "change": 0.63556,
       "changeWindow": "1d",
       "asOf": "2026-10-09",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 225886.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 225909.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -159,8 +159,8 @@
       "change": -0.03,
       "changeWindow": "1d",
       "asOf": "2026-10-09",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 225886.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 225909.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -180,8 +180,8 @@
       "change": 0.06,
       "changeWindow": "1d",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 312286.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 312309.000344,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -201,8 +201,8 @@
       "change": 0.0,
       "changeWindow": "1d",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 312286.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 312309.000344,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -222,8 +222,8 @@
       "change": -0.05,
       "changeWindow": "1d",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 312286.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 312309.000344,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -243,8 +243,8 @@
       "change": -0.331231,
       "changeWindow": "1d",
       "asOf": "2026-10-02",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 830686.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 830709.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -264,8 +264,8 @@
       "change": 0.223,
       "changeWindow": "1d",
       "asOf": "2026-10-07",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 398686.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 398709.000344,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -285,8 +285,8 @@
       "change": 1.180734,
       "changeWindow": "1d",
       "asOf": "2026-10-09",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 225886.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 225909.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -306,8 +306,8 @@
       "change": 0.331873,
       "changeWindow": "1m",
       "asOf": "2026-08-01",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 6187486.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 6187509.000344,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -327,8 +327,8 @@
       "change": -0.07,
       "changeWindow": "3m",
       "asOf": "2026-09-01",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 3509086.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 3509109.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -348,8 +348,8 @@
       "change": -0.1,
       "changeWindow": "3m",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 312286.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 312309.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -369,8 +369,8 @@
       "change": 2.44,
       "changeWindow": "3m",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 312286.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 312309.000344,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -390,8 +390,8 @@
       "change": 0.022,
       "changeWindow": "3m",
       "asOf": "2026-10-02",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 830686.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 830709.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -411,8 +411,8 @@
       "change": -0.01,
       "changeWindow": "1d",
       "asOf": "2026-10-08",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 312286.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 312309.000344,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -432,8 +432,8 @@
       "change": 0.13859,
       "changeWindow": "4w",
       "asOf": "2026-10-07",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 398686.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 398709.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -453,8 +453,8 @@
       "change": 0.129734,
       "changeWindow": "1m",
       "asOf": "2026-10-01",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 917086.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 917109.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -474,8 +474,8 @@
       "change": -0.262554,
       "changeWindow": "1m",
       "asOf": "2026-10-01",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 917086.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 917109.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -495,8 +495,8 @@
       "change": -14.700226,
       "changeWindow": "5d",
       "asOf": "2026-10-05",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 571486.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 571509.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -516,8 +516,8 @@
       "change": 0.0,
       "changeWindow": "1d",
       "asOf": "2026-10-11",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 53086.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 53109.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -537,8 +537,8 @@
       "change": -1.556535,
       "changeWindow": "1d",
       "asOf": "2026-10-06",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 485086.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 485109.000344,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -558,8 +558,8 @@
       "change": -0.210887,
       "changeWindow": "1d",
       "asOf": "2026-10-09",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 225886.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 225909.000344,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -579,10 +579,31 @@
       "change": -0.171917,
       "changeWindow": "1d",
       "asOf": "2026-10-02",
-      "fetchedAt": "2026-10-11T14:44:46.380335+00:00",
-      "ageSeconds": 830686.380335,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": 830709.000344,
       "freshness": "fresh",
       "reason": null,
+      "thresholdVersion": "risk29-p2-provisional-v2"
+    },
+    {
+      "id": "market_breadth",
+      "label": "Market Breadth",
+      "category": "technical",
+      "source": "MacroMicro archive via GitHub",
+      "sourceSeries": "70% S&P 500 % > 200DMA + 30% advancers share",
+      "sourceUrl": "https://github.com/AlphaLabX1/forward-pe-viewer/tree/main/data",
+      "value": null,
+      "unit": "percent",
+      "riskScore": null,
+      "state": "unavailable",
+      "direction": null,
+      "change": null,
+      "changeWindow": null,
+      "asOf": null,
+      "fetchedAt": "2026-10-11T14:45:09.000344+00:00",
+      "ageSeconds": null,
+      "freshness": "error",
+      "reason": "AttributeError: 'PublicSourceClient' object has no attribute 'market_breadth'",
       "thresholdVersion": "risk29-p2-provisional-v2"
     }
   ],
@@ -590,7 +611,7 @@
   "health": {
     "available": 24,
     "stale": 0,
-    "errored": 0,
-    "total": 24
+    "errored": 1,
+    "total": 25
   }
 }
