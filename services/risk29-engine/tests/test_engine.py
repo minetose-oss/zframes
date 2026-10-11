@@ -126,12 +126,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.5.0"
+    assert snapshot.modelVersion == "risk29-p2-engine-0.6.0"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v2"
-    assert len(snapshot.signals) == 23
-    assert snapshot.health.total == 23
+    assert len(snapshot.signals) == 24
+    assert snapshot.health.total == 24
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 23
+    assert snapshot.health.available == 24
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -238,6 +238,17 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert realized_vol.sourceSeries == "SP500"
     assert realized_vol.changeWindow == "1d"
 
+    cross_asset = next(
+        signal for signal in snapshot.signals
+        if signal.id == "cross_asset_correlation_spike"
+    )
+    assert cross_asset.value is not None
+    assert cross_asset.unit == "z-score"
+    assert cross_asset.sourceSeries == (
+        "SP500 + NASDAQQGLDI + DCOILWTICO + DTWEXBGS"
+    )
+    assert cross_asset.changeWindow == "1d"
+
     history = engine.history(30)
     assert len(history.points) == 1
     assert history.points[0].score == snapshot.score
@@ -290,7 +301,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.health.available == 6
-    assert snapshot.health.errored == 17
+    assert snapshot.health.errored == 18
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
     assert snapshot.regime == "unavailable"
