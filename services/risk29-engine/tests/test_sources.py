@@ -58,3 +58,31 @@ def test_market_breadth_parsers_validate_percent_and_directional_coverage():
 
     assert breadth[next(iter(breadth))] == pytest.approx(41.15)
     assert advancing[next(iter(advancing))] == pytest.approx(59.2)
+
+
+def test_forward_pe_parser_and_percentile_points():
+    raw = "date,forward_pe\n" + "\n".join(
+        f"2020-01-{day:02d},{10 + day}" for day in range(1, 11)
+    ) + "\n"
+    points = PublicSourceClient._parse_forward_pe_csv(raw)
+    assert len(points) == 10
+    scored = PublicSourceClient._forward_pe_percentile_points(
+        points,
+        lookback=5,
+        min_observations=5,
+        output_points=3,
+    )
+    assert len(scored) == 3
+    assert scored[-1].value == pytest.approx(90.0)
+
+
+def test_forward_pe_percentile_fails_closed_on_short_history():
+    points = PublicSourceClient._parse_forward_pe_csv(
+        "date,forward_pe\n2026-10-08,20.1\n2026-10-09,20.2\n"
+    )
+    with pytest.raises(ValueError, match="insufficient history"):
+        PublicSourceClient._forward_pe_percentile_points(
+            points,
+            lookback=5,
+            min_observations=5,
+        )
