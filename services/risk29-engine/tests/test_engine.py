@@ -86,6 +86,8 @@ class FakeSources:
             return self._weekly_series(850_000.0, -250.0)
         if series_id == "RRPONTSYD":
             return self._series(8.0, -0.01)
+        if series_id == "DCOILWTICO":
+            return self._series(72.0, 0.04)
         raise AssertionError(series_id)
 
     async def treasury_curve(self):
@@ -124,12 +126,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.4.1"
+    assert snapshot.modelVersion == "risk29-p2-engine-0.5.0"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v2"
-    assert len(snapshot.signals) == 21
-    assert snapshot.health.total == 21
+    assert len(snapshot.signals) == 23
+    assert snapshot.health.total == 23
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 21
+    assert snapshot.health.available == 23
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -221,6 +223,21 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert policy.value is not None
     assert policy.source == "Fed/ECB/BoJ official RSS"
 
+    oil = next(signal for signal in snapshot.signals if signal.id == "oil_shock")
+    assert oil.value is not None
+    assert oil.unit == "percent"
+    assert oil.sourceSeries == "DCOILWTICO"
+    assert oil.changeWindow == "1d"
+
+    realized_vol = next(
+        signal for signal in snapshot.signals
+        if signal.id == "realized_volatility_regime"
+    )
+    assert realized_vol.value is not None
+    assert realized_vol.unit == "percent"
+    assert realized_vol.sourceSeries == "SP500"
+    assert realized_vol.changeWindow == "1d"
+
     history = engine.history(30)
     assert len(history.points) == 1
     assert history.points[0].score == snapshot.score
@@ -273,7 +290,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.health.available == 6
-    assert snapshot.health.errored == 15
+    assert snapshot.health.errored == 17
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
     assert snapshot.regime == "unavailable"
