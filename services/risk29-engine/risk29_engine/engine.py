@@ -555,6 +555,76 @@ class Risk29Engine:
                 else None
             )
             return current, previous
+        if transform == "momentum_20d_plus_realized_vol":
+            (
+                current_momentum,
+                current_volatility,
+                previous_momentum,
+                previous_volatility,
+            ) = oil_shock_features(
+                points,
+                momentum_periods=int(cfg.get("momentum_periods", 20)),
+                volatility_periods=int(cfg.get("volatility_periods", 20)),
+            )
+            momentum_knots = cfg.get("momentum_points") or []
+            volatility_knots = cfg.get("volatility_points") or []
+            momentum_weight = float(cfg.get("momentum_weight", 0.65))
+            volatility_weight = float(cfg.get("volatility_weight", 0.35))
+            if abs(momentum_weight + volatility_weight - 1.0) > 1e-9:
+                raise ValueError("oil-shock weights must sum to 1")
+            current = (
+                piecewise(abs(current_momentum), momentum_knots) * momentum_weight
+                + piecewise(current_volatility, volatility_knots)
+                * volatility_weight
+            )
+            previous = (
+                piecewise(abs(previous_momentum), momentum_knots) * momentum_weight
+                + piecewise(previous_volatility, volatility_knots)
+                * volatility_weight
+                if previous_momentum is not None
+                and previous_volatility is not None
+                else None
+            )
+            return current, previous
+        if transform == "rv20_vs_rv60_plus_percentile":
+            (
+                _current_rv20,
+                _current_rv60,
+                current_ratio,
+                current_percentile,
+                _previous_rv20,
+                _previous_rv60,
+                previous_ratio,
+                previous_percentile,
+            ) = realized_volatility_regime_features(
+                points,
+                short_periods=int(cfg.get("short_periods", 20)),
+                long_periods=int(cfg.get("long_periods", 60)),
+                percentile_lookback=int(cfg.get("percentile_lookback", 252)),
+                min_percentile_observations=int(
+                    cfg.get("min_percentile_observations", 60)
+                ),
+            )
+            ratio_knots = cfg.get("ratio_points") or []
+            percentile_knots = cfg.get("percentile_points") or []
+            ratio_weight = float(cfg.get("ratio_weight", 0.55))
+            percentile_weight = float(cfg.get("percentile_weight", 0.45))
+            if abs(ratio_weight + percentile_weight - 1.0) > 1e-9:
+                raise ValueError("realized-volatility weights must sum to 1")
+            current = (
+                piecewise(current_ratio, ratio_knots) * ratio_weight
+                + piecewise(current_percentile, percentile_knots)
+                * percentile_weight
+            )
+            previous = (
+                piecewise(previous_ratio, ratio_knots) * ratio_weight
+                + piecewise(previous_percentile, percentile_knots)
+                * percentile_weight
+                if previous_ratio is not None
+                and previous_percentile is not None
+                else None
+            )
+            return current, previous
         if transform == "piecewise_and_change":
             periods = int(cfg.get("change_periods", 63))
             current_level, current_change, previous_level, previous_change = (
