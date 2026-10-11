@@ -121,6 +121,12 @@ class FakeSources:
     async def cftc_equity_positioning(self):
         return self._series(-0.2, -0.01, 60)
 
+    async def cboe_put_call_ratio(self):
+        return [SeriesPoint(self.end, 0.82)]
+
+    async def aaii_bull_bear_spread(self):
+        return self._weekly_series(-8.0, 0.25, 24)
+
 
 @pytest.mark.asyncio
 async def test_engine_builds_contract_and_history(tmp_path):
@@ -135,12 +141,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.7.0"
+    assert snapshot.modelVersion == "risk29-p2-engine-1.0.0"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v2"
-    assert len(snapshot.signals) == 27
-    assert snapshot.health.total == 27
+    assert len(snapshot.signals) == 29
+    assert snapshot.health.total == 29
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 27
+    assert snapshot.health.available == 29
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -288,6 +294,27 @@ async def test_engine_builds_contract_and_history(tmp_path):
     )
     assert cftc.changeWindow == "1w"
 
+    put_call = next(
+        signal for signal in snapshot.signals if signal.id == "put_call_ratio"
+    )
+    assert put_call.value == pytest.approx(0.82)
+    assert put_call.unit == "ratio"
+    assert put_call.source == "Cboe official daily statistics"
+
+    aaii = next(
+        signal for signal in snapshot.signals if signal.id == "aaii_bull_bear_spread"
+    )
+    assert aaii.value is not None
+    assert aaii.unit == "pct-points"
+    assert aaii.source == "AAII official sentiment survey"
+    assert aaii.changeWindow == "1w"
+
+    sentiment = next(
+        category for category in snapshot.categories if category.id == "sentiment"
+    )
+    assert sentiment.availableSignals == 4
+    assert sentiment.totalSignals == 4
+
     history = engine.history(30)
     assert len(history.points) == 1
     assert history.points[0].score == snapshot.score
@@ -339,7 +366,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
 
     snapshot = await engine.latest(force=True)
 
-    assert snapshot.health.available == 9
+    assert snapshot.health.available == 11
     assert snapshot.health.errored == 18
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
