@@ -48,75 +48,6 @@ TREASURY_URL = (
 
 class SourceClient(Protocol):
     async def fred(self, series_id: str) -> list[SeriesPoint]: ...
-    @staticmethod
-    def _parse_market_breadth_csv(text: str) -> dict[date, float]:
-        rows = csv.DictReader(io.StringIO(text))
-        values: dict[date, float] = {}
-        for row in rows:
-            try:
-                observed = date.fromisoformat(str(row.get("date", "")).strip())
-                above_200d = float(str(row.get("above_200d", "")).strip())
-            except (ValueError, TypeError):
-                continue
-            if not 0.0 <= above_200d <= 100.0:
-                continue
-            values[observed] = above_200d
-        return values
-
-    @staticmethod
-    def _parse_market_ad_csv(text: str) -> dict[date, float]:
-        rows = csv.DictReader(io.StringIO(text))
-        values: dict[date, float] = {}
-        for row in rows:
-            try:
-                observed = date.fromisoformat(str(row.get("date", "")).strip())
-                advancers = float(str(row.get("advancers", "")).strip())
-                decliners = float(str(row.get("decliners", "")).strip())
-            except (ValueError, TypeError):
-                continue
-            directional = advancers + decliners
-            # S&P 500 currently contains just over 500 listed securities because
-            # a few constituents have multiple share classes. Reject obviously
-            # incomplete rows rather than manufacturing a breadth reading.
-            if not (400.0 <= directional <= 550.0):
-                continue
-            values[observed] = 100.0 * advancers / directional
-        return values
-
-    async def market_breadth(self) -> list[SeriesPoint]:
-        """
-        Build a conservative S&P 500 breadth-strength composite.
-
-        The transport archive republishes MacroMicro's S&P 500 breadth series.
-        We only combine dates present in BOTH files, so a lagging advance/decline
-        feed cannot be silently forward-filled and presented as current data.
-        The composite is 70% of constituents above their 200-day moving average
-        plus 30% of directional issues that advanced that session.
-
-        Freshness is handled by the engine from the latest common observation.
-        """
-        breadth_text, ad_text = await asyncio.gather(
-            self._get_text(MARKET_BREADTH_CSV_URL),
-            self._get_text(MARKET_AD_CSV_URL),
-        )
-        above_200d = self._parse_market_breadth_csv(breadth_text)
-        advancing_share = self._parse_market_ad_csv(ad_text)
-        common_dates = sorted(set(above_200d) & set(advancing_share))
-        if len(common_dates) < 120:
-            raise ValueError(
-                "S&P 500 market breadth: too few validated common observations"
-            )
-
-        points = [
-            SeriesPoint(
-                observed,
-                0.70 * above_200d[observed] + 0.30 * advancing_share[observed],
-            )
-            for observed in common_dates
-        ]
-        points.sort(key=lambda point: point.date)
-        return points
-
     async def treasury_curve(self) -> list[SeriesPoint]: ...
     async def ofr(self) -> list[SeriesPoint]: ...
     async def lbma_gold(self) -> list[SeriesPoint]: ...
@@ -647,6 +578,75 @@ class PublicSourceClient:
             points.append(SeriesPoint(observed, value))
         if not points:
             raise ValueError(f"FRED {series_id}: no usable observations")
+        points.sort(key=lambda point: point.date)
+        return points
+
+    @staticmethod
+    def _parse_market_breadth_csv(text: str) -> dict[date, float]:
+        rows = csv.DictReader(io.StringIO(text))
+        values: dict[date, float] = {}
+        for row in rows:
+            try:
+                observed = date.fromisoformat(str(row.get("date", "")).strip())
+                above_200d = float(str(row.get("above_200d", "")).strip())
+            except (ValueError, TypeError):
+                continue
+            if not 0.0 <= above_200d <= 100.0:
+                continue
+            values[observed] = above_200d
+        return values
+
+    @staticmethod
+    def _parse_market_ad_csv(text: str) -> dict[date, float]:
+        rows = csv.DictReader(io.StringIO(text))
+        values: dict[date, float] = {}
+        for row in rows:
+            try:
+                observed = date.fromisoformat(str(row.get("date", "")).strip())
+                advancers = float(str(row.get("advancers", "")).strip())
+                decliners = float(str(row.get("decliners", "")).strip())
+            except (ValueError, TypeError):
+                continue
+            directional = advancers + decliners
+            # S&P 500 currently contains just over 500 listed securities because
+            # a few constituents have multiple share classes. Reject obviously
+            # incomplete rows rather than manufacturing a breadth reading.
+            if not (400.0 <= directional <= 550.0):
+                continue
+            values[observed] = 100.0 * advancers / directional
+        return values
+
+    async def market_breadth(self) -> list[SeriesPoint]:
+        """
+        Build a conservative S&P 500 breadth-strength composite.
+
+        The transport archive republishes MacroMicro's S&P 500 breadth series.
+        We only combine dates present in BOTH files, so a lagging advance/decline
+        feed cannot be silently forward-filled and presented as current data.
+        The composite is 70% of constituents above their 200-day moving average
+        plus 30% of directional issues that advanced that session.
+
+        Freshness is handled by the engine from the latest common observation.
+        """
+        breadth_text, ad_text = await asyncio.gather(
+            self._get_text(MARKET_BREADTH_CSV_URL),
+            self._get_text(MARKET_AD_CSV_URL),
+        )
+        above_200d = self._parse_market_breadth_csv(breadth_text)
+        advancing_share = self._parse_market_ad_csv(ad_text)
+        common_dates = sorted(set(above_200d) & set(advancing_share))
+        if len(common_dates) < 120:
+            raise ValueError(
+                "S&P 500 market breadth: too few validated common observations"
+            )
+
+        points = [
+            SeriesPoint(
+                observed,
+                0.70 * above_200d[observed] + 0.30 * advancing_share[observed],
+            )
+            for observed in common_dates
+        ]
         points.sort(key=lambda point: point.date)
         return points
 
