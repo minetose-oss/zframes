@@ -116,3 +116,63 @@ def test_rolling_zscore_points_returns_signed_zscore():
     )
     assert len(scored) == 3
     assert scored[-1].value < 0
+
+
+def test_cboe_put_call_parser_reads_official_table_and_session_date():
+    page = """
+    <div data-date="2026-10-09"></div>
+    <table>
+      <tr><td>TOTAL PUT/CALL RATIO</td><td class="value">0.82</td></tr>
+      <tr><td>INDEX PUT/CALL RATIO</td><td>1.13</td></tr>
+    </table>
+    """
+    points = PublicSourceClient._parse_cboe_put_call_html(page)
+    assert len(points) == 1
+    assert points[0].date.isoformat() == "2026-10-09"
+    assert points[0].value == pytest.approx(0.82)
+
+
+def test_cboe_put_call_parser_fails_closed_without_total_ratio():
+    with pytest.raises(ValueError, match="total ratio not found"):
+        PublicSourceClient._parse_cboe_put_call_html(
+            '<div data-date="2026-10-09">INDEX PUT/CALL RATIO 1.13</div>'
+        )
+
+
+def test_aaii_parser_returns_bull_minus_bear_spread():
+    page = """
+    <table>
+      <tr><td>Oct 7</td><td>40.3%</td><td>20.8%</td><td>39.0%</td></tr>
+      <tr><td>Sep 30</td><td>34.6%</td><td>18.9%</td><td>46.5%</td></tr>
+      <tr><td>Sep 23</td><td>32.7%</td><td>19.2%</td><td>48.1%</td></tr>
+    </table>
+    """
+    from datetime import date
+
+    points = PublicSourceClient._parse_aaii_sentiment_html(
+        page,
+        today=date(2026, 10, 11),
+    )
+    assert [point.date.isoformat() for point in points] == [
+        "2026-09-23",
+        "2026-09-30",
+        "2026-10-07",
+    ]
+    assert points[-1].value == pytest.approx(1.3)
+
+
+def test_aaii_parser_handles_year_boundary():
+    page = """
+    <table>
+      <tr><td>Jan 7</td><td>40.0%</td><td>20.0%</td><td>40.0%</td></tr>
+      <tr><td>Dec 31</td><td>30.0%</td><td>20.0%</td><td>50.0%</td></tr>
+    </table>
+    """
+    from datetime import date
+
+    points = PublicSourceClient._parse_aaii_sentiment_html(
+        page,
+        today=date(2027, 1, 8),
+    )
+    assert points[0].date.isoformat() == "2026-12-31"
+    assert points[1].date.isoformat() == "2027-01-07"
