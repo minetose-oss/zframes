@@ -86,3 +86,33 @@ def test_forward_pe_percentile_fails_closed_on_short_history():
             lookback=5,
             min_observations=5,
         )
+
+
+def test_cftc_parser_normalizes_leveraged_net_by_open_interest():
+    raw = """date,all,am_long,am_short,am_net,lev_long,lev_short,lev_net
+2026-09-29,2000000,1100000,-200000,900000,120000,-500000,-380000
+2026-10-06,1900000,1090000,-190000,900000,110000,-530000,-420000
+"""
+    points = PublicSourceClient._parse_cftc_sp500_tff_csv(raw)
+    assert len(points) == 2
+    assert points[0].value == pytest.approx(-19.0)
+    assert points[1].value == pytest.approx(-22.1052631579)
+
+
+def test_rolling_zscore_points_returns_signed_zscore():
+    raw = "date,all,am_long,am_short,am_net,lev_long,lev_short,lev_net\n"
+    rows = []
+    for i in range(1, 61):
+        # Keep open interest fixed and move leveraged net lower each week.
+        rows.append(
+            f"2025-{1 + (i - 1)//5:02d}-{1 + (i - 1)%5:02d},1000000,0,0,0,0,0,{-100000 - i*1000}"
+        )
+    points = PublicSourceClient._parse_cftc_sp500_tff_csv(raw + "\n".join(rows) + "\n")
+    scored = PublicSourceClient._rolling_zscore_points(
+        points,
+        lookback=52,
+        min_observations=20,
+        output_points=3,
+    )
+    assert len(scored) == 3
+    assert scored[-1].value < 0
