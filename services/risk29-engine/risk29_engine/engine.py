@@ -46,6 +46,7 @@ from .sources import (
     GPR_DAILY_URL,
     LBMA_GOLD_URL,
     MARKET_BREADTH_SOURCE_URL,
+    FORWARD_PE_SOURCE_URL,
     OFR_URL,
     SHILLER_PAGE_URL,
     SourceClient,
@@ -73,6 +74,7 @@ SOURCE_URLS = {
     "gpr_geopolitical": GPR_DAILY_URL,
     "policy_rss": BOJ_POLICY_RSS_URL,
     "market_breadth": MARKET_BREADTH_SOURCE_URL,
+    "forward_pe_percentile": FORWARD_PE_SOURCE_URL,
     "treasury_curve": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates",
 }
 
@@ -467,6 +469,8 @@ class Risk29Engine:
             return await self.sources.policy_regime_shock()
         if fetch_kind == "market_breadth":
             return await self.sources.market_breadth()
+        if fetch_kind == "forward_pe_percentile":
+            return await self.sources.sp500_forward_pe_percentile()
         raise ValueError(f"unknown fetch source {fetch_kind}")
 
     def _score_points(self, cfg: dict[str, Any], points: list[SeriesPoint]) -> tuple[float, float | None]:
