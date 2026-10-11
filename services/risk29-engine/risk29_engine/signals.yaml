@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v2
-model_version: risk29-p2-engine-0.8.0
+model_version: risk29-p2-engine-1.0.0
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -659,18 +659,48 @@ signals:
       fresh_hours: 168
       delayed_hours: 336
 
-planned_signals:
   - id: put_call_ratio
     label: Put/Call Ratio
     category: sentiment
-    source: CBOE
+    source: Cboe official daily statistics
+    source_series: Total Put/Call Ratio
     unit: ratio
-    transform: rolling_percentile
+    fetch: cboe_put_call
+    transform: piecewise_latest
+    change_window: 1d
+    points:
+      - [0.3, 100]
+      - [0.5, 80]
+      - [0.7, 45]
+      - [0.85, 20]
+      - [1.0, 35]
+      - [1.2, 60]
+      - [1.5, 85]
+      - [2.0, 100]
+    freshness:
+      fresh_hours: 72
+      delayed_hours: 168
 
   - id: aaii_bull_bear_spread
     label: AAII Bull-Bear Spread
     category: sentiment
-    source: AAII
+    source: AAII official sentiment survey
+    source_series: Bullish minus Bearish
     unit: pct-points
-    transform: contrarian_percentile
+    fetch: aaii_sentiment
+    transform: piecewise_latest
+    change_window: 1w
+    points:
+      - [-50.0, 100]
+      - [-35.0, 85]
+      - [-20.0, 65]
+      - [-5.0, 40]
+      - [6.5, 20]
+      - [20.0, 45]
+      - [35.0, 75]
+      - [50.0, 100]
+    freshness:
+      fresh_hours: 192
+      delayed_hours: 336
 
+planned_signals: []
