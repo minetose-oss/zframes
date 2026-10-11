@@ -112,6 +112,9 @@ class FakeSources:
     async def policy_regime_shock(self):
         return self._series(10.0, 0.10, 60)
 
+    async def market_breadth(self):
+        return self._series(62.0, -0.03, 180)
+
 
 @pytest.mark.asyncio
 async def test_engine_builds_contract_and_history(tmp_path):
@@ -126,12 +129,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.6.0"
+    assert snapshot.modelVersion == "risk29-p2-engine-0.7.0"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v2"
-    assert len(snapshot.signals) == 24
-    assert snapshot.health.total == 24
+    assert len(snapshot.signals) == 25
+    assert snapshot.health.total == 25
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 24
+    assert snapshot.health.available == 25
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -249,6 +252,16 @@ async def test_engine_builds_contract_and_history(tmp_path):
     )
     assert cross_asset.changeWindow == "1d"
 
+    market_breadth = next(
+        signal for signal in snapshot.signals if signal.id == "market_breadth"
+    )
+    assert market_breadth.value is not None
+    assert market_breadth.unit == "percent"
+    assert market_breadth.sourceSeries == (
+        "70% S&P 500 % > 200DMA + 30% advancers share"
+    )
+    assert market_breadth.changeWindow == "1d"
+
     history = engine.history(30)
     assert len(history.points) == 1
     assert history.points[0].score == snapshot.score
@@ -300,7 +313,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
 
     snapshot = await engine.latest(force=True)
 
-    assert snapshot.health.available == 6
+    assert snapshot.health.available == 7
     assert snapshot.health.errored == 18
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
