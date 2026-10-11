@@ -21,6 +21,7 @@ from .models import (
 )
 from .scoring import (
     SeriesPoint,
+    average_pairwise_correlation_series,
     core_inflation_momentum_features,
     direction_from_scores,
     equity_trend_score,
@@ -64,6 +65,7 @@ SOURCE_URLS = {
     "fred": FRED_URL,
     "fred_spread": FRED_URL,
     "fred_net_liquidity": FRED_URL,
+    "fred_cross_asset_corr": FRED_URL,
     "ofr": OFR_URL,
     "lbma_gold": LBMA_GOLD_URL,
     "shiller": SHILLER_PAGE_URL,
@@ -322,6 +324,24 @@ class Risk29Engine:
                     else None
                 )
                 change_window = str(cfg.get("change_window", "1d"))
+            elif transform == "average_20d_correlation_zscore":
+                (
+                    _current_level,
+                    current_zscore,
+                    _previous_level,
+                    previous_zscore,
+                ) = rolling_zscore_features(
+                    points,
+                    lookback=int(cfg.get("zscore_lookback", 252)),
+                    min_observations=int(cfg.get("zscore_min_observations", 60)),
+                )
+                signal_value = current_zscore
+                change = (
+                    current_zscore - previous_zscore
+                    if previous_zscore is not None
+                    else None
+                )
+                change_window = str(cfg.get("change_window", "1d"))
             elif transform == "rv20_vs_rv60_plus_percentile":
                 (
                     current_rv20,
@@ -420,6 +440,17 @@ class Risk29Engine:
                 self.sources.fred(rrp_id),
             )
             return net_liquidity_series(assets, tga, rrp)
+        if fetch_kind == "fred_cross_asset_corr":
+            series_ids = [str(value) for value in cfg.get("source_series_list", [])]
+            if len(series_ids) < 3:
+                raise ValueError("cross-asset correlation requires source_series_list")
+            series = await asyncio.gather(
+                *(self.sources.fred(series_id) for series_id in series_ids)
+            )
+            return average_pairwise_correlation_series(
+                series,
+                window=int(cfg.get("correlation_window", 20)),
+            )
         if fetch_kind == "treasury_curve":
             return await self.sources.treasury_curve()
         if fetch_kind == "ofr":
