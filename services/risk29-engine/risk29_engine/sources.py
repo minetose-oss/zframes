@@ -22,7 +22,9 @@ FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 OFR_URL = "https://www.financialresearch.gov/financial-stress-index/data/fsi.csv"
 LBMA_GOLD_URL = "https://prices.lbma.org.uk/json/gold_pm.json"
 SHILLER_PAGE_URL = "https://shillerdata.com/"
-GDELT_DOC_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
+GPR_DAILY_URL = "https://www.matteoiacoviello.com/gpr_files/data_gpr_daily_recent.xls"
+GPR_DAILY_MIRROR_URL = "https://raw.githubusercontent.com/iacoviel/iacoviel.github.io/master/gpr_files/data_gpr_daily_recent.xls"
+GPR_DAILY_URLS = (GPR_DAILY_URL, GPR_DAILY_MIRROR_URL)
 FED_POLICY_RSS_URL = "https://www.federalreserve.gov/feeds/press_monetary.xml"
 ECB_POLICY_RSS_URL = "https://www.ecb.europa.eu/rss/press.html"
 BOJ_POLICY_RSS_URL = "https://www.boj.or.jp/en/rss/whatsnew.xml"
@@ -39,7 +41,7 @@ class SourceClient(Protocol):
     async def ofr(self) -> list[SeriesPoint]: ...
     async def lbma_gold(self) -> list[SeriesPoint]: ...
     async def shiller(self, metric: str) -> list[SeriesPoint]: ...
-    async def gdelt_geopolitical_shock(self) -> list[SeriesPoint]: ...
+    async def gpr_geopolitical_shock(self) -> list[SeriesPoint]: ...
     async def policy_regime_shock(self) -> list[SeriesPoint]: ...
 
 
@@ -61,6 +63,11 @@ class PublicSourceClient:
         default=None, init=False, repr=False
     )
     _shiller_cache_loaded_at: float = field(default=0.0, init=False, repr=False)
+    _gpr_lock: asyncio.Lock = field(
+        default_factory=asyncio.Lock, init=False, repr=False
+    )
+    _gpr_cache: list[SeriesPoint] | None = field(default=None, init=False, repr=False)
+    _gpr_cache_loaded_at: float = field(default=0.0, init=False, repr=False)
 
     async def _get_text(self, url: str, *, params: dict[str, str] | None = None) -> str:
         timeout = httpx.Timeout(self.timeout_seconds, connect=min(10.0, self.timeout_seconds))
@@ -260,69 +267,126 @@ class PublicSourceClient:
 
 
     @staticmethod
-    def _parse_gdelt_day(raw: object) -> date | None:
-        text = str(raw or "").strip()
-        if len(text) < 8:
-            return None
-        try:
-            return datetime.strptime(text[:8], "%Y%m%d").date()
-        except ValueError:
-            return None
+    def _gpr_column_map(sheet) -> tuple[int, int, int]:
+        for row in range(min(20, sheet.nrows)):
+            labels = {
+                column: re.sub(
+                    r"\s+",
+                    " ",
+                    str(sheet.cell_value(row, column)).strip(),
+                ).upper()
+                for column in range(sheet.ncols)
+            }
+            gpr_columns = [
+                column for column, label in labels.items() if label == "GPRD"
+            ]
+            date_columns = [
+                column
+                for column, label in labels.items()
+                if label in {"DATE", "DAY", "OBSERVATION DATE", "OBSERVATION_DATE"}
+                or (label.endswith("DATE") and "UPDATE" not in label)
+            ]
+            if gpr_columns and date_columns:
+                return row, date_columns[0], gpr_columns[0]
+        raise ValueError("GPR workbook layout changed; DATE/GPRD columns not found")
 
-    async def gdelt_geopolitical_shock(self) -> list[SeriesPoint]:
-        """
-        Return GDELT geopolitical-stress news coverage as a daily percentage
-        of all monitored online news. The engine scores the *change* and
-        rolling z-score, so a persistently high-news environment does not
-        automatically become a permanent alert.
-        """
-        query = (
-            '("military strike" OR invasion OR missile OR airstrike OR '
-            '"nuclear threat" OR blockade OR coup OR "state of emergency")'
-        )
-        body = await self._get_json(
-            GDELT_DOC_URL,
-            params={
-                "query": query,
-                "mode": "timelinevol",
-                "format": "json",
-                "timespan": "45d",
-            },
-        )
-        if not isinstance(body, dict):
-            raise ValueError("GDELT geopolitical shock: unexpected response shape")
-        timelines = body.get("timeline")
-        if not isinstance(timelines, list) or not timelines:
-            raise ValueError("GDELT geopolitical shock: no timeline returned")
-
-        daily: dict[date, list[float]] = {}
-        for series in timelines:
-            if not isinstance(series, dict):
-                continue
-            data = series.get("data")
-            if not isinstance(data, list):
-                continue
-            for row in data:
-                if not isinstance(row, dict):
-                    continue
-                observed = self._parse_gdelt_day(row.get("date"))
+    @staticmethod
+    def _parse_gpr_date(raw: object, datemode: int) -> date | None:
+        if isinstance(raw, (int, float)):
+            numeric = float(raw)
+            if numeric >= 10_000_000:
+                text = str(int(round(numeric)))
                 try:
-                    value = float(str(row.get("value", "")).rstrip("%"))
+                    return datetime.strptime(text, "%Y%m%d").date()
+                except ValueError:
+                    return None
+            try:
+                return xlrd.xldate_as_datetime(numeric, datemode).date()
+            except (ValueError, OverflowError, TypeError):
+                return None
+
+        text = str(raw or "").strip()
+        for fmt in ("%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y"):
+            try:
+                return datetime.strptime(text[:10] if fmt == "%Y-%m-%d" else text, fmt).date()
+            except ValueError:
+                continue
+        return None
+
+    async def gpr_geopolitical_shock(self) -> list[SeriesPoint]:
+        """
+        Load the Caldara-Iacoviello daily Geopolitical Risk index (GPRD).
+
+        This is preferable to an ad-hoc news keyword count for production:
+        the published index is academically documented, newspaper-normalized,
+        and updated weekly. A GitHub mirror is used only as a transport fallback
+        for the same source workbook.
+        """
+        now_mono = time.monotonic()
+        if (
+            self._gpr_cache is not None
+            and now_mono - self._gpr_cache_loaded_at < 6 * 60 * 60
+        ):
+            return self._gpr_cache
+
+        async with self._gpr_lock:
+            now_mono = time.monotonic()
+            if (
+                self._gpr_cache is not None
+                and now_mono - self._gpr_cache_loaded_at < 6 * 60 * 60
+            ):
+                return self._gpr_cache
+
+            workbook = None
+            last_error: Exception | None = None
+            for url in GPR_DAILY_URLS:
+                try:
+                    workbook_bytes = await self._get_bytes(url)
+                    workbook = xlrd.open_workbook(file_contents=workbook_bytes)
+                    break
+                except Exception as exc:
+                    last_error = exc
+            if workbook is None:
+                if last_error is not None:
+                    raise ValueError(
+                        f"GPR daily workbook unavailable: {type(last_error).__name__}: {last_error}"
+                    ) from last_error
+                raise ValueError("GPR daily workbook unavailable")
+
+            chosen = None
+            for sheet in workbook.sheets():
+                try:
+                    header_row, date_column, gpr_column = self._gpr_column_map(sheet)
+                    chosen = (sheet, header_row, date_column, gpr_column)
+                    break
+                except ValueError:
+                    continue
+            if chosen is None:
+                raise ValueError("GPR workbook layout changed; usable sheet not found")
+
+            sheet, header_row, date_column, gpr_column = chosen
+            points: list[SeriesPoint] = []
+            for row in range(header_row + 1, sheet.nrows):
+                observed = self._parse_gpr_date(
+                    sheet.cell_value(row, date_column),
+                    workbook.datemode,
+                )
+                raw_value = sheet.cell_value(row, gpr_column)
+                try:
+                    value = float(raw_value)
                 except (TypeError, ValueError):
                     continue
                 if observed is None or value < 0:
                     continue
-                daily.setdefault(observed, []).append(value)
+                points.append(SeriesPoint(observed, value))
 
-        points = [
-            SeriesPoint(observed, sum(values) / len(values))
-            for observed, values in daily.items()
-            if values
-        ]
-        points.sort(key=lambda point: point.date)
-        if len(points) < 14:
-            raise ValueError("GDELT geopolitical shock: too few daily observations")
-        return points
+            points.sort(key=lambda point: point.date)
+            if len(points) < 60:
+                raise ValueError("GPR daily workbook: too few usable observations")
+
+            self._gpr_cache = points
+            self._gpr_cache_loaded_at = time.monotonic()
+            return points
 
     @staticmethod
     def _parse_feed_date(raw: str) -> date | None:

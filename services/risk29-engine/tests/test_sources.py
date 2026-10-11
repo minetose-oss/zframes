@@ -36,3 +36,9 @@ def test_policy_feed_parser_reads_rss_and_atom_dates():
     assert len(events) == 1
     assert events[0][0].isoformat() == "2026-10-09"
     assert events[0][1] == 90
+
+
+
+def test_gpr_date_parser_supports_yyyymmdd_and_iso_text():
+    assert PublicSourceClient._parse_gpr_date(20261009, 0).isoformat() == "2026-10-09"
+    assert PublicSourceClient._parse_gpr_date("2026-10-09", 0).isoformat() == "2026-10-09"

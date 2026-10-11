@@ -1,7 +1,7 @@
 registry_version: risk29-proposed-v1
 target_signal_count: 29
 threshold_version: risk29-p2-provisional-v2
-model_version: risk29-p2-engine-0.4.0
+model_version: risk29-p2-engine-0.4.1
 minimum_signal_coverage: 0.70
 minimum_weight_coverage: 0.75
 
@@ -459,32 +459,31 @@ signals:
   - id: geopolitical_event_shock
     label: Geopolitical / Event Shock
     category: qualitative
-    source: GDELT DOC 2.0
-    source_series: geopolitical stress coverage
-    unit: percent-of-news
-    fetch: gdelt_geopolitical
-    transform: level_momentum_and_zscore
-    momentum_periods: 3
-    change_window: 3d
-    momentum_weight: 0.40
-    zscore_weight: 0.60
-    zscore_lookback: 30
-    zscore_min_observations: 14
-    momentum_points:
-      - [-50.0, 10]
-      - [0.0, 25]
-      - [25.0, 50]
-      - [75.0, 75]
-      - [150.0, 100]
-    zscore_points:
-      - [-1.0, 10]
-      - [0.0, 25]
-      - [1.0, 50]
-      - [2.0, 75]
-      - [3.0, 100]
+    source: Caldara-Iacoviello GPR
+    source_series: GPRD
+    unit: index
+    fetch: gpr_geopolitical
+    transform: piecewise_and_change
+    level_weight: 0.70
+    change_weight: 0.30
+    change_periods: 5
+    change_window: 5d
+    points:
+      - [50.0, 10]
+      - [100.0, 30]
+      - [150.0, 50]
+      - [250.0, 75]
+      - [400.0, 90]
+      - [600.0, 100]
+    change_points:
+      - [-100.0, 10]
+      - [0.0, 30]
+      - [50.0, 55]
+      - [150.0, 80]
+      - [300.0, 100]
     freshness:
-      fresh_hours: 72
-      delayed_hours: 120
+      fresh_hours: 240
+      delayed_hours: 336
 
   - id: policy_regime_shock
     label: Policy / Regime Shock

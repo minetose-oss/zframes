@@ -40,7 +40,7 @@ from .scoring import (
 from .sources import (
     BOJ_POLICY_RSS_URL,
     FRED_URL,
-    GDELT_DOC_URL,
+    GPR_DAILY_URL,
     LBMA_GOLD_URL,
     OFR_URL,
     SHILLER_PAGE_URL,
@@ -65,7 +65,7 @@ SOURCE_URLS = {
     "ofr": OFR_URL,
     "lbma_gold": LBMA_GOLD_URL,
     "shiller": SHILLER_PAGE_URL,
-    "gdelt_geopolitical": GDELT_DOC_URL,
+    "gpr_geopolitical": GPR_DAILY_URL,
     "policy_rss": BOJ_POLICY_RSS_URL,
     "treasury_curve": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates",
 }
@@ -385,8 +385,8 @@ class Risk29Engine:
             return await self.sources.lbma_gold()
         if fetch_kind == "shiller":
             return await self.sources.shiller(str(cfg["source_metric"]))
-        if fetch_kind == "gdelt_geopolitical":
-            return await self.sources.gdelt_geopolitical_shock()
+        if fetch_kind == "gpr_geopolitical":
+            return await self.sources.gpr_geopolitical_shock()
         if fetch_kind == "policy_rss":
             return await self.sources.policy_regime_shock()
         raise ValueError(f"unknown fetch source {fetch_kind}")

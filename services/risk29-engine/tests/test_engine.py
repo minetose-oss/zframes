@@ -104,8 +104,8 @@ class FakeSources:
             return self._monthly_level_series(3.0, -0.08)
         raise AssertionError(metric)
 
-    async def gdelt_geopolitical_shock(self):
-        return self._series(0.35, 0.002, 60)
+    async def gpr_geopolitical_shock(self):
+        return self._series(90.0, 0.50, 60)
 
     async def policy_regime_shock(self):
         return self._series(10.0, 0.10, 60)
@@ -124,7 +124,7 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p2-engine-0.4.0"
+    assert snapshot.modelVersion == "risk29-p2-engine-0.4.1"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v2"
     assert len(snapshot.signals) == 21
     assert snapshot.health.total == 21
@@ -214,8 +214,8 @@ async def test_engine_builds_contract_and_history(tmp_path):
         signal for signal in snapshot.signals if signal.id == "geopolitical_event_shock"
     )
     assert geopolitical.value is not None
-    assert geopolitical.changeWindow == "3d"
-    assert geopolitical.source == "GDELT DOC 2.0"
+    assert geopolitical.changeWindow == "5d"
+    assert geopolitical.source == "Caldara-Iacoviello GPR"
 
     policy = next(signal for signal in snapshot.signals if signal.id == "policy_regime_shock")
     assert policy.value is not None
