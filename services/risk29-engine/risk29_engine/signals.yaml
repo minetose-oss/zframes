@@ -645,4 +645,3 @@ planned_signals:
     source: CFTC COT
     unit: z-score
     transform: net_positioning_zscore
-
