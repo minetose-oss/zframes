@@ -115,6 +115,9 @@ class FakeSources:
     async def market_breadth(self):
         return self._series(62.0, -0.03, 180)
 
+    async def sp500_forward_pe_percentile(self):
+        return self._series(55.0, 0.05, 60)
+
 
 @pytest.mark.asyncio
 async def test_engine_builds_contract_and_history(tmp_path):
@@ -131,10 +134,10 @@ async def test_engine_builds_contract_and_history(tmp_path):
     assert snapshot.schemaVersion == "1"
     assert snapshot.modelVersion == "risk29-p2-engine-0.7.0"
     assert snapshot.thresholdVersion == "risk29-p2-provisional-v2"
-    assert len(snapshot.signals) == 25
-    assert snapshot.health.total == 25
+    assert len(snapshot.signals) == 26
+    assert snapshot.health.total == 26
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 25
+    assert snapshot.health.available == 26
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -209,8 +212,8 @@ async def test_engine_builds_contract_and_history(tmp_path):
     valuation = next(category for category in snapshot.categories if category.id == "valuation")
     qualitative = next(category for category in snapshot.categories if category.id == "qualitative")
     assert valuation.score is not None and valuation.state != "unavailable"
-    assert valuation.availableSignals == 2
-    assert valuation.totalSignals == 2
+    assert valuation.availableSignals == 3
+    assert valuation.totalSignals == 3
     assert qualitative.score is not None and qualitative.state != "unavailable"
     assert qualitative.availableSignals == 2
     assert qualitative.totalSignals == 2
@@ -261,6 +264,15 @@ async def test_engine_builds_contract_and_history(tmp_path):
         "70% S&P 500 % > 200DMA + 30% advancers share"
     )
     assert market_breadth.changeWindow == "1d"
+
+    forward_pe = next(
+        signal for signal in snapshot.signals
+        if signal.id == "sp500_forward_pe_percentile"
+    )
+    assert forward_pe.value is not None
+    assert forward_pe.unit == "percentile"
+    assert forward_pe.sourceSeries == "10Y rolling percentile of S&P 500 forward P/E"
+    assert forward_pe.changeWindow == "1d"
 
     history = engine.history(30)
     assert len(history.points) == 1
@@ -313,7 +325,7 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
 
     snapshot = await engine.latest(force=True)
 
-    assert snapshot.health.available == 7
+    assert snapshot.health.available == 8
     assert snapshot.health.errored == 18
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
