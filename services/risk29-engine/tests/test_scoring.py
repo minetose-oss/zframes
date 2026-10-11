@@ -2,6 +2,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from risk29_engine.scoring import (
     SeriesPoint,
+    average_pairwise_correlation_series,
     core_inflation_momentum_features,
     equity_trend_score,
     sahm_labor_deterioration_features,
@@ -212,3 +213,21 @@ def test_realized_volatility_regime_features_detect_volatility_acceleration():
     assert previous_rv20 is not None
     assert previous_ratio is not None
     assert previous_percentile is not None
+
+
+def test_average_pairwise_correlation_series_builds_common_window():
+    start = date(2026, 1, 1)
+    series = []
+    for multiplier, phase in [(1.0, 0), (1.3, 1), (0.8, 2), (1.6, 3)]:
+        value = 100.0 * multiplier
+        points = []
+        for i in range(120):
+            move = 0.004 * (((i + phase) % 7) - 3)
+            value *= 1.0 + move
+            points.append(SeriesPoint(start + timedelta(days=i), value))
+        series.append(points)
+
+    correlation = average_pairwise_correlation_series(series, window=20)
+
+    assert len(correlation) > 60
+    assert 0.0 <= correlation[-1].value <= 1.0
