@@ -215,12 +215,16 @@ export function risk29MaterialStatus(
   // A failed-closed aggregate must never be displayed as "CLEAR".
   // Delayed sources are visible for operator review, but are not escalated
   // until the engine marks them stale/error or coverage becomes unavailable.
-  const dataIssues = snapshot.signals.filter(
+  const signalDataIssues = snapshot.signals.filter(
     (signal) =>
       signal.state === "unavailable" ||
       signal.freshness === "stale" ||
       signal.freshness === "error",
   ).length;
+  const dataIssues = Math.max(
+    snapshot.health.stale + snapshot.health.errored,
+    signalDataIssues,
+  );
   const isMaterial =
     snapshot.changes.length > 0 ||
     overallStateChanged ||
