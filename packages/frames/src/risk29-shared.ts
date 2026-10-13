@@ -219,7 +219,8 @@ export function risk29MaterialStatus(
     (signal) => signal.state === "unavailable",
   ).length;
   const dataIssues =
-    snapshot.health.stale + snapshot.health.errored +
+    snapshot.health.stale +
+    snapshot.health.errored +
     Math.max(0, unavailableSignals - snapshot.health.errored);
   const isMaterial =
     snapshot.changes.length > 0 ||
