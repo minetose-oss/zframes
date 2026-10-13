@@ -935,7 +935,7 @@ describe("the currency classification covers the whole registry", () => {
     // Risk29 presentation cards render engine scores, states, source-native
     // observations and freshness — never currency. Ratchet the bounded bucket
     // for this POC rather than misclassifying those cards as money frames.
-    expect(Object.keys(NO_MONEY).length).toBeLessThanOrEqual(171);
+    expect(Object.keys(NO_MONEY).length).toBeLessThanOrEqual(173);
     expect(Object.keys(CONVERTS).length).toBeGreaterThanOrEqual(70);
   });
 
