@@ -50,9 +50,11 @@ function Risk29Changes({ config }: { config: z.output<typeof schema> }) {
     !Number.isFinite(generatedAtMs) ||
     snapshotAgeMs < -5 * 60_000 ||
     snapshotAgeMs > 24 * 60 * 60_000;
-  const needsReview = material.isMaterial || snapshotOutdated || (historyLoading && !previous);
+  const needsReview =
+    material.isMaterial ||
+    snapshotOutdated ||
+    (historyLoading && !previous);
   const reviewColor = risk29StateColor(needsReview ? "warning" : "normal");
-
 
   const reasonParts: string[] = [];
   if (material.overallStateChanged && previous)
