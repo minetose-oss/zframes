@@ -102,7 +102,6 @@ export function formatRisk29Value(value: number | null, unit: string): string {
   }
 }
 
-
 export type Risk29Driver = {
   signal: Risk29Signal;
   contribution: number;
@@ -145,7 +144,9 @@ export function risk29TopDrivers(
   );
   if (activeWeight <= 0) return [];
 
-  const byId = new Map(activeCategories.map((category) => [category.id, category]));
+  const byId = new Map(
+    activeCategories.map((category) => [category.id, category]),
+  );
 
   return snapshot.signals
     .filter(
