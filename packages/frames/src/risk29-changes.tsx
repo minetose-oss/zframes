@@ -1,5 +1,8 @@
 import { defineFrame } from "@zframes/core";
-import { useRisk29History, useRisk29Snapshot } from "@zframes/core/risk29";
+import {
+  useRisk29History,
+  useRisk29Snapshot,
+} from "@zframes/core/risk29";
 import type { z } from "zod";
 import {
   risk29MaterialStatus,
@@ -45,7 +48,9 @@ function Risk29Changes({ config }: { config: z.output<typeof schema> }) {
     (a, b) => Math.abs(b.scoreDelta ?? 0) - Math.abs(a.scoreDelta ?? 0),
   )[0];
   const strongestCategoryMove = material.categoryMoves[0];
-  const statusColor = risk29StateColor(material.isMaterial ? "warning" : "normal");
+  const statusColor = risk29StateColor(
+    material.isMaterial ? "warning" : "normal",
+  );
 
   const reasonParts: string[] = [];
   if (material.overallStateChanged && previous)
@@ -132,12 +137,18 @@ function Risk29Changes({ config }: { config: z.output<typeof schema> }) {
                     {index + 1}. {signal.label}
                   </div>
                   <div className="caption text-soft mt-0.5 truncate capitalize">
-                    {signal.category} · risk {signal.riskScore?.toFixed(0) ?? "—"} ·{" "}
-                    <span style={{ color }}>{risk29StateLabel(signal.state)}</span>
+                    {signal.category} · risk{" "}
+                    {signal.riskScore?.toFixed(0) ?? "—"} ·{" "}
+                    <span style={{ color }}>
+                      {risk29StateLabel(signal.state)}
+                    </span>
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="body-sm font-bold tabular-nums" style={{ color }}>
+                  <div
+                    className="body-sm font-bold tabular-nums"
+                    style={{ color }}
+                  >
                     +{contribution.toFixed(1)}
                   </div>
                   <div className="caption text-soft">pts</div>
