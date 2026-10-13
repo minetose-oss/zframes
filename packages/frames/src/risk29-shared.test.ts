@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { Risk29HistoryPoint, Risk29Snapshot } from "@zframes/spec/risk29";
+import type {
+  Risk29HistoryPoint,
+  Risk29Snapshot,
+} from "@zframes/spec/risk29";
 import {
   formatRisk29Value,
   risk29DirectionLabel,
@@ -30,7 +33,6 @@ describe("Risk29 presentation helpers", () => {
     expect(formatRisk29Value(3680, "usd/oz")).toBe("$3,680/oz");
   });
 });
-
 
 const baseSnapshot = {
   schemaVersion: "1",
