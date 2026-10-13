@@ -4,15 +4,17 @@ import { frameLoaders } from "./lazy";
 import { frameMetas } from "./schemas";
 
 const RISK29_FRAMES = [
+  "risk29-action-map",
   "risk29-categories",
   "risk29-changes",
+  "risk29-decision",
   "risk29-heatmap",
   "risk29-history",
   "risk29-score",
 ] as const;
 
 describe("Risk29 frame registry", () => {
-  it("registers all five POC frames in metadata, eager and lazy surfaces", () => {
+  it("registers all seven POC frames in metadata, eager and lazy surfaces", () => {
     const metaNames = new Set(frameMetas.map((frame) => frame.name));
     const eagerNames = new Set(allFrames.map((frame) => frame.name));
     const lazyNames = new Set(Object.keys(frameLoaders));
