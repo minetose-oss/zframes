@@ -1,10 +1,7 @@
 import { defineFrame } from "@zframes/core";
 import { useRisk29Snapshot } from "@zframes/core/risk29";
 import type { z } from "zod";
-import {
-  risk29PortfolioActionMap,
-  risk29StateColor,
-} from "./risk29-shared";
+import { risk29PortfolioActionMap, risk29StateColor } from "./risk29-shared";
 import { risk29ActionMapMeta } from "./schemas/risk29";
 import { FrameStatus, scrollAreaClass } from "./ui";
 
@@ -16,7 +13,9 @@ function Risk29ActionMap({ config }: { config: z.output<typeof schema> }) {
   if (isLoading)
     return <FrameStatus loading>building Risk29 action map…</FrameStatus>;
   if (error)
-    return <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>;
+    return (
+      <FrameStatus>Risk29 unavailable — current snapshot failed</FrameStatus>
+    );
   if (!snapshot) return <FrameStatus>no current Risk29 snapshot</FrameStatus>;
 
   const items = risk29PortfolioActionMap(snapshot);

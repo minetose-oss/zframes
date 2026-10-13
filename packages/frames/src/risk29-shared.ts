@@ -240,13 +240,8 @@ export function risk29MaterialStatus(
   };
 }
 
-
 export type Risk29DecisionPosture =
-  | "RISK-ON"
-  | "SELECTIVE"
-  | "DE-RISK"
-  | "DEFENSIVE"
-  | "REVIEW DATA";
+  "RISK-ON" | "SELECTIVE" | "DE-RISK" | "DEFENSIVE" | "REVIEW DATA";
 
 export type Risk29DecisionBrief = {
   posture: Risk29DecisionPosture;
@@ -279,7 +274,9 @@ function topCategoryLabels(snapshot: Risk29Snapshot, limit = 2): string[] {
     .filter((category) => category.score !== null)
     .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
     .slice(0, limit)
-    .map((category) => `${category.label} ${category.score?.toFixed(0) ?? "—"}`);
+    .map(
+      (category) => `${category.label} ${category.score?.toFixed(0) ?? "—"}`,
+    );
 }
 
 /**
@@ -293,7 +290,9 @@ export function risk29DecisionBrief(
 ): Risk29DecisionBrief {
   const material = risk29MaterialStatus(snapshot, previous);
   const confidence =
-    material.dataIssues > 0 || snapshot.score === null || snapshot.state === "unavailable"
+    material.dataIssues > 0 ||
+    snapshot.score === null ||
+    snapshot.state === "unavailable"
       ? "degraded"
       : "normal";
 
@@ -306,7 +305,8 @@ export function risk29DecisionBrief(
           ? `${material.dataIssues} data issue${material.dataIssues === 1 ? "" : "s"} require review`
           : "Current aggregate score is unavailable",
       why: "Missing inputs are not treated as low risk.",
-      today: "Pause risk-budget changes that depend on Risk29 until data coverage is restored.",
+      today:
+        "Pause risk-budget changes that depend on Risk29 until data coverage is restored.",
       confidence: "degraded",
     };
   }
@@ -340,7 +340,10 @@ export function risk29DecisionBrief(
   let whatChanged = "No material move versus the prior validated run.";
   if (material.overallStateChanged && previous) {
     whatChanged = `Overall state changed ${risk29StateLabel(previous.state)} → ${risk29StateLabel(snapshot.state)}.`;
-  } else if (material.overallDelta !== null && Math.abs(material.overallDelta) >= 1) {
+  } else if (
+    material.overallDelta !== null &&
+    Math.abs(material.overallDelta) >= 1
+  ) {
     const direction = material.overallDelta > 0 ? "rose" : "fell";
     whatChanged = `Risk29 ${direction} ${Math.abs(material.overallDelta).toFixed(1)} points versus the prior run.`;
   } else if (snapshot.changes.length > 0) {
@@ -353,13 +356,18 @@ export function risk29DecisionBrief(
   if (driverLabels.length > 0)
     whyParts.push(`top drivers: ${driverLabels.join(", ")}`);
   if (material.dataIssues > 0)
-    whyParts.push(`${material.dataIssues} data issue${material.dataIssues === 1 ? "" : "s"}`);
+    whyParts.push(
+      `${material.dataIssues} data issue${material.dataIssues === 1 ? "" : "s"}`,
+    );
 
   return {
     posture: postureByState[snapshot.state],
     headline: `${risk29StateLabel(snapshot.state)} ${snapshot.score.toFixed(1)} · ${postureByState[snapshot.state]}`,
     whatChanged,
-    why: whyParts.length > 0 ? whyParts.join(" · ") : "No live driver detail available.",
+    why:
+      whyParts.length > 0
+        ? whyParts.join(" · ")
+        : "No live driver detail available.",
     today: actionByState[snapshot.state],
     confidence,
   };
@@ -382,7 +390,8 @@ export function risk29PortfolioActionMap(
       {
         bucket: "High beta / thematic",
         bias: "REVIEW",
-        rationale: "Wait for valid risk coverage before adding or cutting from Risk29.",
+        rationale:
+          "Wait for valid risk coverage before adding or cutting from Risk29.",
       },
       {
         bucket: "Quality / defensive",
@@ -392,32 +401,40 @@ export function risk29PortfolioActionMap(
       {
         bucket: "Cash / short duration",
         bias: "HOLD",
-        rationale: "Maintain liquidity; avoid interpreting missing data as safety.",
+        rationale:
+          "Maintain liquidity; avoid interpreting missing data as safety.",
       },
       {
         bucket: "Hedges",
         bias: "HOLD",
-        rationale: "Do not remove protection solely because the model is unavailable.",
+        rationale:
+          "Do not remove protection solely because the model is unavailable.",
       },
     ];
   }
 
-  const maps: Record<Exclude<Risk29State, "unavailable">, Risk29ActionItem[]> = {
+  const maps: Record<
+    Exclude<Risk29State, "unavailable">,
+    Risk29ActionItem[]
+  > = {
     normal: [
       {
         bucket: "Risk budget",
         bias: "ADD",
-        rationale: "Risk29 is normal; deploy selectively within existing mandate limits.",
+        rationale:
+          "Risk29 is normal; deploy selectively within existing mandate limits.",
       },
       {
         bucket: "High beta / thematic",
         bias: "SELECTIVE",
-        rationale: "Can participate, but require supportive trend and position sizing.",
+        rationale:
+          "Can participate, but require supportive trend and position sizing.",
       },
       {
         bucket: "Quality / defensive",
         bias: "HOLD",
-        rationale: "Keep core quality exposure rather than abandoning defense completely.",
+        rationale:
+          "Keep core quality exposure rather than abandoning defense completely.",
       },
       {
         bucket: "Cash / short duration",
@@ -427,14 +444,16 @@ export function risk29PortfolioActionMap(
       {
         bucket: "Hedges",
         bias: "HOLD",
-        rationale: "Keep light structural hedges; no need to add from Risk29 alone.",
+        rationale:
+          "Keep light structural hedges; no need to add from Risk29 alone.",
       },
     ],
     watch: [
       {
         bucket: "Risk budget",
         bias: "HOLD",
-        rationale: "Keep gross exposure stable until the watch regime resolves.",
+        rationale:
+          "Keep gross exposure stable until the watch regime resolves.",
       },
       {
         bucket: "High beta / thematic",
@@ -444,17 +463,20 @@ export function risk29PortfolioActionMap(
       {
         bucket: "Quality / defensive",
         bias: "FAVOR",
-        rationale: "Tilt incremental capital toward stronger balance sheets and liquidity.",
+        rationale:
+          "Tilt incremental capital toward stronger balance sheets and liquidity.",
       },
       {
         bucket: "Cash / short duration",
         bias: "RAISE",
-        rationale: "Build modest dry powder for volatility or better entry points.",
+        rationale:
+          "Build modest dry powder for volatility or better entry points.",
       },
       {
         bucket: "Hedges",
         bias: "HOLD",
-        rationale: "Keep protection in place while material changes are monitored.",
+        rationale:
+          "Keep protection in place while material changes are monitored.",
       },
     ],
     warning: [
@@ -503,7 +525,8 @@ export function risk29PortfolioActionMap(
       {
         bucket: "Cash / short duration",
         bias: "RAISE",
-        rationale: "Keep a high liquidity buffer for drawdowns and dislocations.",
+        rationale:
+          "Keep a high liquidity buffer for drawdowns and dislocations.",
       },
       {
         bucket: "Hedges",

@@ -194,7 +194,6 @@ describe("Risk29 fail-closed productivity", () => {
   });
 });
 
-
 describe("Risk29 Phase 3.2 productivity", () => {
   it("maps WATCH to a selective daily decision posture", () => {
     const brief = risk29DecisionBrief(baseSnapshot);
@@ -217,11 +216,11 @@ describe("Risk29 Phase 3.2 productivity", () => {
   it("maps WATCH to a five-bucket portfolio action overlay", () => {
     const items = risk29PortfolioActionMap(baseSnapshot);
     expect(items).toHaveLength(5);
-    expect(items.find((item) => item.bucket === "High beta / thematic")?.bias).toBe(
-      "SELECTIVE",
-    );
-    expect(items.find((item) => item.bucket === "Cash / short duration")?.bias).toBe(
-      "RAISE",
-    );
+    expect(
+      items.find((item) => item.bucket === "High beta / thematic")?.bias,
+    ).toBe("SELECTIVE");
+    expect(
+      items.find((item) => item.bucket === "Cash / short duration")?.bias,
+    ).toBe("RAISE");
   });
 });
