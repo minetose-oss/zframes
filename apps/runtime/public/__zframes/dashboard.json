@@ -52,7 +52,7 @@
       "id": "risk29-changes-main",
       "frame": "risk29-changes",
       "position": { "x": 8, "y": 8, "w": 4, "h": 4 },
-      "config": { "refreshMs": 60000, "maxItems": 6 }
+      "config": { "refreshMs": 60000, "maxItems": 5 }
     },
     {
       "id": "risk29-heatmap-main",
