@@ -1,8 +1,5 @@
 import { defineFrame } from "@zframes/core";
-import {
-  useRisk29History,
-  useRisk29Snapshot,
-} from "@zframes/core/risk29";
+import { useRisk29History, useRisk29Snapshot } from "@zframes/core/risk29";
 import type { z } from "zod";
 import {
   risk29MaterialStatus,
