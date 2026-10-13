@@ -86,7 +86,9 @@ Top Risk Drivers ranks live signals by their estimated contribution to the aggre
       .min(1)
       .max(12)
       .default(5)
-      .describe("Maximum number of top Risk29 drivers to show (capped at five in the decision radar)."),
+      .describe(
+        "Maximum number of top Risk29 drivers to show (capped at five in the decision radar).",
+      ),
   }),
 });
 
