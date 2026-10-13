@@ -3,7 +3,9 @@ import type { Risk29HistoryPoint, Risk29Snapshot } from "@zframes/spec/risk29";
 import {
   formatRisk29Value,
   risk29DirectionLabel,
+  risk29DecisionBrief,
   risk29MaterialStatus,
+  risk29PortfolioActionMap,
   risk29StateLabel,
   risk29TopDrivers,
 } from "./risk29-shared";
@@ -189,5 +191,37 @@ describe("Risk29 fail-closed productivity", () => {
     const status = risk29MaterialStatus(snapshot);
     expect(status.isMaterial).toBe(true);
     expect(status.dataIssues).toBeGreaterThan(0);
+  });
+});
+
+
+describe("Risk29 Phase 3.2 productivity", () => {
+  it("maps WATCH to a selective daily decision posture", () => {
+    const brief = risk29DecisionBrief(baseSnapshot);
+    expect(brief.posture).toBe("SELECTIVE");
+    expect(brief.headline).toContain("WATCH");
+    expect(brief.today).toContain("selective");
+  });
+
+  it("fails the daily brief closed when the aggregate is unavailable", () => {
+    const snapshot = {
+      ...baseSnapshot,
+      score: null,
+      state: "unavailable",
+    } as Risk29Snapshot;
+    const brief = risk29DecisionBrief(snapshot);
+    expect(brief.posture).toBe("REVIEW DATA");
+    expect(brief.confidence).toBe("degraded");
+  });
+
+  it("maps WATCH to a five-bucket portfolio action overlay", () => {
+    const items = risk29PortfolioActionMap(baseSnapshot);
+    expect(items).toHaveLength(5);
+    expect(items.find((item) => item.bucket === "High beta / thematic")?.bias).toBe(
+      "SELECTIVE",
+    );
+    expect(items.find((item) => item.bucket === "Cash / short duration")?.bias).toBe(
+      "RAISE",
+    );
   });
 });
