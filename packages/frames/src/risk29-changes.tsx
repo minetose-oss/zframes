@@ -45,9 +45,14 @@ function Risk29Changes({ config }: { config: z.output<typeof schema> }) {
     (a, b) => Math.abs(b.scoreDelta ?? 0) - Math.abs(a.scoreDelta ?? 0),
   )[0];
   const strongestCategoryMove = material.categoryMoves[0];
-  const statusColor = risk29StateColor(
-    material.isMaterial ? "warning" : "normal",
-  );
+  const snapshotAgeMs = Date.now() - generatedAtMs;
+  const snapshotOutdated =
+    !Number.isFinite(generatedAtMs) ||
+    snapshotAgeMs < -5 * 60_000 ||
+    snapshotAgeMs > 24 * 60 * 60_000;
+  const needsReview = material.isMaterial || snapshotOutdated || (historyLoading && !previous);
+  const reviewColor = risk29StateColor(needsReview ? "warning" : "normal");
+
 
   const reasonParts: string[] = [];
   if (material.overallStateChanged && previous)
@@ -68,6 +73,12 @@ function Risk29Changes({ config }: { config: z.output<typeof schema> }) {
     reasonParts.push(
       `${material.dataIssues} data issue${material.dataIssues === 1 ? "" : "s"}`,
     );
+  if (snapshot.score === null || snapshot.state === "unavailable")
+    reasonParts.push("overall score unavailable — review coverage");
+  if (snapshotOutdated)
+    reasonParts.push("snapshot is older than 24h or has invalid timestamp");
+  if (historyLoading && !previous)
+    reasonParts.push("waiting for previous snapshot comparison");
 
   return (
     <div className={`flex h-full min-h-0 flex-col gap-2 ${scrollAreaClass}`}>
@@ -78,17 +89,17 @@ function Risk29Changes({ config }: { config: z.output<typeof schema> }) {
               Material Change
             </div>
             <div className="body-sm text-strong mt-1 font-semibold">
-              {material.isMaterial ? "Review required" : "No material change"}
+              {needsReview ? "Review required" : "No material change"}
             </div>
           </div>
           <span
             className="caption shrink-0 rounded-full border px-2 py-0.5 font-bold tracking-[0.06em]"
             style={{
-              color: statusColor,
-              borderColor: `color-mix(in srgb, ${statusColor} 42%, transparent)`,
+              color: reviewColor,
+              borderColor: `color-mix(in srgb, ${reviewColor} 42%, transparent)`,
             }}
           >
-            {material.isMaterial ? "REVIEW" : "CLEAR"}
+            {needsReview ? "REVIEW" : "CLEAR"}
           </span>
         </div>
 
