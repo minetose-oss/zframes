@@ -160,3 +160,34 @@ describe("Risk29 productivity helpers", () => {
     });
   });
 });
+
+describe("Risk29 fail-closed productivity", () => {
+  it("marks an unavailable overall score as review required", () => {
+    const snapshot = {
+      ...baseSnapshot,
+      score: null,
+      state: "unavailable",
+    } as Risk29Snapshot;
+    expect(risk29MaterialStatus(snapshot).isMaterial).toBe(true);
+  });
+
+  it("counts an unavailable signal even without an error flag", () => {
+    const snapshot = {
+      ...baseSnapshot,
+      signals: [
+        ...baseSnapshot.signals.slice(0, 2),
+        {
+          ...baseSnapshot.signals[2],
+          state: "unavailable",
+          value: null,
+          riskScore: null,
+          freshness: "stale",
+        },
+      ],
+      health: { available: 2, stale: 1, errored: 0, total: 3 },
+    } as Risk29Snapshot;
+    const status = risk29MaterialStatus(snapshot);
+    expect(status.isMaterial).toBe(true);
+    expect(status.dataIssues).toBeGreaterThan(0);
+  });
+});
