@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type {
-  Risk29HistoryPoint,
-  Risk29Snapshot,
-} from "@zframes/spec/risk29";
+import type { Risk29HistoryPoint, Risk29Snapshot } from "@zframes/spec/risk29";
 import {
   formatRisk29Value,
   risk29DirectionLabel,
