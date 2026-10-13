@@ -119,8 +119,8 @@ describe("Risk29 productivity helpers", () => {
       "credit-a",
       "macro-b",
     ]);
-    expect(drivers[0].contribution).toBeCloseTo(0.24);
-    expect(drivers[1].contribution).toBeCloseTo(0.1);
+    expect(drivers[0].contribution).toBeCloseTo(24);
+    expect(drivers[1].contribution).toBeCloseTo(10);
   });
 
   it("flags aggregate or category movement of five points as material", () => {
