@@ -212,13 +212,23 @@ export function risk29MaterialStatus(
     })
     .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
 
-  const dataIssues = snapshot.health.stale + snapshot.health.errored;
+  // A failed-closed aggregate must never be displayed as "CLEAR".
+  // Delayed sources are visible for operator review, but are not escalated
+  // until the engine marks them stale/error or coverage becomes unavailable.
+  const unavailableSignals = snapshot.signals.filter(
+    (signal) => signal.state === "unavailable",
+  ).length;
+  const dataIssues =
+    snapshot.health.stale + snapshot.health.errored +
+    Math.max(0, unavailableSignals - snapshot.health.errored);
   const isMaterial =
     snapshot.changes.length > 0 ||
     overallStateChanged ||
     (overallDelta !== null && Math.abs(overallDelta) >= 5) ||
     categoryMoves.length > 0 ||
-    dataIssues > 0;
+    dataIssues > 0 ||
+    snapshot.score === null ||
+    snapshot.state === "unavailable";
 
   return {
     isMaterial,
