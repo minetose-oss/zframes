@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -99,7 +100,7 @@ async def thai_brief(response: Response) -> Risk29ThaiBrief:
     response.headers["Cache-Control"] = "no-store"
     snapshot = await engine.latest()
     history = engine.history(365)
-    generated_at_ms = int(__import__("datetime").datetime.fromisoformat(
+    generated_at_ms = int(datetime.fromisoformat(
         snapshot.generatedAt.replace("Z", "+00:00")
     ).timestamp() * 1000)
     previous = next(
@@ -122,16 +123,21 @@ async def material_alert(response: Response) -> Risk29MaterialAlert:
             ) from exc
 
     response.headers["Cache-Control"] = "no-store"
+    previous_snapshot = engine.store.load_latest()
     snapshot = await engine.latest()
     history = engine.history(365)
-    generated_at_ms = int(__import__("datetime").datetime.fromisoformat(
+    generated_at_ms = int(datetime.fromisoformat(
         snapshot.generatedAt.replace("Z", "+00:00")
     ).timestamp() * 1000)
     previous = next(
         (point for point in reversed(history.points) if point.time < generated_at_ms),
         None,
     )
-    return build_material_alert(snapshot, previous)
+    return build_material_alert(
+        snapshot,
+        previous,
+        previous_snapshot=previous_snapshot,
+    )
 
 
 @app.get("/risk29/history.json", response_model=Risk29History)
