@@ -127,3 +127,35 @@ def test_unavailable_snapshot_fails_closed() -> None:
     assert alert.shouldNotify is True
     assert brief.confidence == "degraded"
     assert "ตรวจสอบข้อมูล" in brief.posture
+
+def test_material_alert_does_not_repeat_unchanged_data_issue() -> None:
+    previous_snapshot = _snapshot()
+    previous_snapshot.signals[0].freshness = "stale"
+    previous_snapshot.health.stale = 1
+
+    current = _snapshot()
+    current.signals[0].freshness = "stale"
+    current.health.stale = 1
+
+    alert = build_material_alert(
+        current,
+        _previous(),
+        previous_snapshot=previous_snapshot,
+    )
+    assert alert.shouldNotify is False
+    assert alert.reasons == []
+
+
+def test_material_alert_fires_when_data_issue_is_new() -> None:
+    previous_snapshot = _snapshot()
+    current = _snapshot()
+    current.signals[0].freshness = "stale"
+    current.health.stale = 1
+
+    alert = build_material_alert(
+        current,
+        _previous(),
+        previous_snapshot=previous_snapshot,
+    )
+    assert alert.shouldNotify is True
+    assert any("data-health issue" in reason for reason in alert.reasons)
