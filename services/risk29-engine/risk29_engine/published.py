@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import httpx
 
+from .briefing import Risk29MaterialAlert, Risk29ThaiBrief
 from .models import Risk29History, Risk29Snapshot
 
 
@@ -37,6 +38,12 @@ class PublishedSnapshotClient:
 
     async def latest(self) -> Risk29Snapshot:
         return Risk29Snapshot.model_validate_json(await self._get_text("latest.json"))
+
+    async def thai_brief(self) -> Risk29ThaiBrief:
+        return Risk29ThaiBrief.model_validate_json(await self._get_text("brief-th.json"))
+
+    async def material_alert(self) -> Risk29MaterialAlert:
+        return Risk29MaterialAlert.model_validate_json(await self._get_text("alert.json"))
 
     async def history(self, days: int = 30) -> Risk29History:
         days = max(1, min(days, 365))
