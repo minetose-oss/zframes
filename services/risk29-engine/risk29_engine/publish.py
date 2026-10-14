@@ -88,6 +88,7 @@ async def publish(
         )
         previous_history = engine.store.load_history()
         previous = previous_history.points[-1] if previous_history.points else None
+        previous_snapshot = engine.store.load_latest()
         snapshot = await engine.latest(force=True)
 
         if snapshot.score is None or snapshot.health.available < minimum_available:
@@ -99,7 +100,11 @@ async def publish(
 
         history = _coalesce_history(engine.history(365))
         brief = build_thai_brief(snapshot, previous)
-        alert = build_material_alert(snapshot, previous)
+        alert = build_material_alert(
+            snapshot,
+            previous,
+            previous_snapshot=previous_snapshot,
+        )
         (output_dir / "latest.json").write_text(snapshot.model_dump_json(indent=2) + "\n")
         (output_dir / "history.json").write_text(history.model_dump_json(indent=2) + "\n")
         (output_dir / "brief-th.json").write_text(brief.model_dump_json(indent=2) + "\n")
