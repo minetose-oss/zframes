@@ -381,8 +381,10 @@ const NO_MONEY: Record<string, string> = {
   quote: "a user-authored quote",
   "real-wages": "real earnings vs CPI, in %",
   "reserve-risk": "the reserve-risk ratio",
+  "risk29-action-map": "risk-budget posture labels and explanatory text",
   "risk29-categories": "engine-supplied 0–100 category risk scores and weights",
   "risk29-changes": "engine-supplied state transitions and score deltas",
+  "risk29-decision": "risk posture, score context and explanatory text",
   "risk29-heatmap": "source-native observations plus 0–100 risk scores",
   "risk29-history": "historical 0–100 aggregate/category risk scores",
   "risk29-score": "engine-supplied 0–100 aggregate risk score and data health",
@@ -933,7 +935,7 @@ describe("the currency classification covers the whole registry", () => {
     // Risk29 presentation cards render engine scores, states, source-native
     // observations and freshness — never currency. Ratchet the bounded bucket
     // for this POC rather than misclassifying those cards as money frames.
-    expect(Object.keys(NO_MONEY).length).toBeLessThanOrEqual(171);
+    expect(Object.keys(NO_MONEY).length).toBeLessThanOrEqual(173);
     expect(Object.keys(CONVERTS).length).toBeGreaterThanOrEqual(70);
   });
 

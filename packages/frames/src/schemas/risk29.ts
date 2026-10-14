@@ -68,14 +68,14 @@ Weight is the category's configured contribution to the overall Risk29 model. Av
 
 export const risk29ChangesMeta = defineFrameMeta({
   name: "risk29-changes",
-  label: "What Changed",
+  label: "Decision Radar",
   category: "markets",
   layout: { w: 4, h: 4, minW: 3, minH: 3, maxH: 6 },
   description:
-    "Material Risk29 signal changes supplied by the engine, ranked by absolute score delta and state transition so the dashboard answers what changed since the previous run without inventing its own thresholds.",
-  interpretation: `This card is the shortest path from a Risk29 alert to its cause. Each row is a material signal change already identified by the Risk29 engine.
+    "Risk29 productivity card combining a material-change gate with the five largest current weighted risk contributors. Signal-level material changes remain engine-supplied; aggregate/category movement and data-health checks are surfaced for operator review.",
+  interpretation: `Material Change answers whether the latest run deserves review: it respects engine-supplied material signal changes and also highlights a >=5-point aggregate/category move, an overall state change, or stale/error data.
 
-A state transition is printed explicitly (for example WATCH → WARNING), while score delta shows the magnitude of the move. The summary is engine-supplied context; zframes does not decide whether a move is material.`,
+Top Risk Drivers ranks live signals by their estimated contribution to the aggregate score using the engine's category weights and each category's usable-signal count. It is a prioritization aid, not a new scoring model.`,
   capabilities: snapshotCapability,
   source: RISK29_SOURCE,
   schema: z.object({
@@ -85,9 +85,41 @@ A state transition is printed explicitly (for example WATCH → WARNING), while 
       .int()
       .min(1)
       .max(12)
-      .default(6)
-      .describe("Maximum number of material Risk29 changes to show."),
+      .default(5)
+      .describe(
+        "Maximum number of top Risk29 drivers to show (capped at five in the decision radar).",
+      ),
   }),
+});
+
+export const risk29DecisionMeta = defineFrameMeta({
+  name: "risk29-decision",
+  label: "Risk29 Daily Decision",
+  category: "markets",
+  layout: { w: 8, h: 4, minW: 4, minH: 3, maxH: 6 },
+  description:
+    "Daily Risk29 operator brief translating the current engine state into What changed, Why and Action today. It uses the engine score/state plus prior history and weighted drivers; it does not create a new market model.",
+  interpretation: `The posture comes directly from the engine's current state: NORMAL maps to risk-on, WATCH to selective, WARNING to de-risk and ALERT to defensive. The card then summarizes the prior-run change, highest-risk categories and largest weighted signal contributors.
+
+Action today is a risk-budget control suggestion rather than a forecast for any single asset. If the aggregate or source coverage is unavailable, the card fails closed to REVIEW DATA instead of recommending more risk.`,
+  capabilities: snapshotAndHistoryCapabilities,
+  source: RISK29_SOURCE,
+  schema: z.object({ refreshMs: refreshMsField }),
+});
+
+export const risk29ActionMapMeta = defineFrameMeta({
+  name: "risk29-action-map",
+  label: "Risk29 Portfolio Action Map",
+  category: "markets",
+  layout: { w: 12, h: 4, minW: 5, minH: 3, maxH: 6 },
+  description:
+    "Five-bucket portfolio-control playbook for risk budget, high beta/thematic exposure, quality/defensive exposure, liquidity and hedges. The map is keyed only to the engine's current Risk29 state and fails closed when the aggregate is unavailable.",
+  interpretation: `This frame turns Risk29's engine state into a consistent execution checklist. It does not predict asset returns and it does not replace security-level trend, valuation or mandate controls.
+
+Use it to decide how aggressively to deploy or remove risk, then use the signal heatmap and portfolio-specific research to choose instruments. REVIEW means Risk29 data is not sufficiently validated for an allocation decision.`,
+  capabilities: snapshotCapability,
+  source: RISK29_SOURCE,
+  schema: z.object({ refreshMs: refreshMsField }),
 });
 
 export const risk29HeatmapMeta = defineFrameMeta({

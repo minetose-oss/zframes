@@ -21,17 +21,39 @@ from .models import (
 )
 from .scoring import (
     SeriesPoint,
+    average_pairwise_correlation_series,
+    core_inflation_momentum_features,
     direction_from_scores,
     equity_trend_score,
     freshness_from_date,
+    level_change_features,
     mean_score,
+    net_liquidity_series,
+    oil_shock_features,
     one_day_change,
     pct_change,
     piecewise,
+    realized_volatility_regime_features,
     regime_from_score,
+    rolling_zscore_features,
+    sahm_labor_deterioration_features,
+    spread_series,
     state_from_score,
 )
-from .sources import LBMA_GOLD_URL, OFR_URL, FRED_URL, SourceClient
+from .sources import (
+    AAII_SENTIMENT_URL,
+    BOJ_POLICY_RSS_URL,
+    CBOE_DAILY_STATS_URL,
+    CFTC_SP500_TFF_SOURCE_URL,
+    FRED_URL,
+    GPR_DAILY_URL,
+    LBMA_GOLD_URL,
+    MARKET_BREADTH_SOURCE_URL,
+    FORWARD_PE_SOURCE_URL,
+    OFR_URL,
+    SHILLER_PAGE_URL,
+    SourceClient,
+)
 
 CATEGORY_ORDER = [
     "macro",
@@ -46,8 +68,19 @@ CATEGORY_ORDER = [
 
 SOURCE_URLS = {
     "fred": FRED_URL,
+    "fred_spread": FRED_URL,
+    "fred_net_liquidity": FRED_URL,
+    "fred_cross_asset_corr": FRED_URL,
     "ofr": OFR_URL,
     "lbma_gold": LBMA_GOLD_URL,
+    "shiller": SHILLER_PAGE_URL,
+    "gpr_geopolitical": GPR_DAILY_URL,
+    "policy_rss": BOJ_POLICY_RSS_URL,
+    "market_breadth": MARKET_BREADTH_SOURCE_URL,
+    "forward_pe_percentile": FORWARD_PE_SOURCE_URL,
+    "cftc_equity_positioning": CFTC_SP500_TFF_SOURCE_URL,
+    "cboe_put_call": CBOE_DAILY_STATS_URL,
+    "aaii_sentiment": AAII_SENTIMENT_URL,
     "treasury_curve": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates",
 }
 
@@ -248,8 +281,112 @@ class Risk29Engine:
                 float(freshness_cfg.get("fresh_hours", 72)),
                 float(freshness_cfg.get("delayed_hours", 120)),
             )
-            change_percent = str(cfg.get("transform")) in {"equity_trend", "momentum_20d"}
-            change = one_day_change(points, percent=change_percent)
+            transform = str(cfg.get("transform"))
+            if transform == "core_inflation_3m_annualized_vs_12m":
+                current_3m, _gap, previous_3m, _previous_gap = (
+                    core_inflation_momentum_features(points)
+                )
+                signal_value = current_3m
+                change = (
+                    current_3m - previous_3m if previous_3m is not None else None
+                )
+                change_window = "1m" if change is not None else None
+            elif transform == "sahm_level_and_change":
+                current, change_3m, _previous, _previous_change_3m = (
+                    sahm_labor_deterioration_features(points)
+                )
+                signal_value = current
+                change = change_3m
+                change_window = "3m"
+            elif transform == "level_momentum_and_zscore":
+                signal_value = latest.value
+                momentum_periods = int(cfg.get("momentum_periods", 4))
+                change = pct_change(points, momentum_periods)
+                change_window = str(cfg.get("change_window", "4w"))
+            elif transform == "spread_and_zscore":
+                signal_value = latest.value
+                change = one_day_change(points, percent=False)
+                change_window = (
+                    str(cfg.get("change_window", "1d"))
+                    if change is not None
+                    else None
+                )
+            elif transform == "piecewise_and_change":
+                periods = int(cfg.get("change_periods", 63))
+                current, level_change, _previous, _previous_change = (
+                    level_change_features(points, periods)
+                )
+                signal_value = current
+                change = level_change
+                change_window = str(cfg.get("change_window", "3m"))
+            elif transform == "momentum_20d_plus_realized_vol":
+                momentum, _volatility, previous_momentum, _previous_volatility = (
+                    oil_shock_features(
+                        points,
+                        momentum_periods=int(cfg.get("momentum_periods", 20)),
+                        volatility_periods=int(cfg.get("volatility_periods", 20)),
+                    )
+                )
+                signal_value = momentum
+                change = (
+                    momentum - previous_momentum
+                    if previous_momentum is not None
+                    else None
+                )
+                change_window = str(cfg.get("change_window", "1d"))
+            elif transform == "average_20d_correlation_zscore":
+                (
+                    _current_level,
+                    current_zscore,
+                    _previous_level,
+                    previous_zscore,
+                ) = rolling_zscore_features(
+                    points,
+                    lookback=int(cfg.get("zscore_lookback", 252)),
+                    min_observations=int(cfg.get("zscore_min_observations", 60)),
+                )
+                signal_value = current_zscore
+                change = (
+                    current_zscore - previous_zscore
+                    if previous_zscore is not None
+                    else None
+                )
+                change_window = str(cfg.get("change_window", "1d"))
+            elif transform == "rv20_vs_rv60_plus_percentile":
+                (
+                    current_rv20,
+                    _current_rv60,
+                    _current_ratio,
+                    _current_percentile,
+                    previous_rv20,
+                    _previous_rv60,
+                    _previous_ratio,
+                    _previous_percentile,
+                ) = realized_volatility_regime_features(
+                    points,
+                    short_periods=int(cfg.get("short_periods", 20)),
+                    long_periods=int(cfg.get("long_periods", 60)),
+                    percentile_lookback=int(cfg.get("percentile_lookback", 252)),
+                    min_percentile_observations=int(
+                        cfg.get("min_percentile_observations", 60)
+                    ),
+                )
+                signal_value = current_rv20
+                change = (
+                    current_rv20 - previous_rv20
+                    if previous_rv20 is not None
+                    else None
+                )
+                change_window = str(cfg.get("change_window", "1d"))
+            else:
+                signal_value = latest.value
+                change_percent = transform in {"equity_trend", "momentum_20d"}
+                change = one_day_change(points, percent=change_percent)
+                change_window = (
+                    str(cfg.get("change_window", "1d"))
+                    if change is not None
+                    else None
+                )
             state = state_from_score(score)
             return Risk29Signal(
                 id=signal_id,
@@ -258,13 +395,13 @@ class Risk29Engine:
                 source=str(cfg["source"]),
                 sourceSeries=str(cfg.get("source_series")) if cfg.get("source_series") else None,
                 sourceUrl=SOURCE_URLS.get(fetch_kind),
-                value=round(latest.value, 6),
+                value=round(signal_value, 6),
                 unit=str(cfg["unit"]),
                 riskScore=round(score, 2),
                 state=state,
                 direction=direction_from_scores(score, previous_score),
                 change=round(change, 6) if change is not None else None,
-                changeWindow="1d" if change is not None else None,
+                changeWindow=change_window,
                 asOf=latest.date.isoformat(),
                 fetchedAt=fetched_at,
                 ageSeconds=age_seconds,
@@ -295,18 +432,66 @@ class Risk29Engine:
         fetch_kind = str(cfg["fetch"])
         if fetch_kind == "fred":
             return await self.sources.fred(str(cfg["source_series"]))
+        if fetch_kind == "fred_spread":
+            left_id = str(cfg["source_series_left"])
+            right_id = str(cfg["source_series_right"])
+            left, right = await asyncio.gather(
+                self.sources.fred(left_id),
+                self.sources.fred(right_id),
+            )
+            return spread_series(left, right)
+        if fetch_kind == "fred_net_liquidity":
+            assets_id = str(cfg["source_series_assets"])
+            tga_id = str(cfg["source_series_tga"])
+            rrp_id = str(cfg["source_series_rrp"])
+            assets, tga, rrp = await asyncio.gather(
+                self.sources.fred(assets_id),
+                self.sources.fred(tga_id),
+                self.sources.fred(rrp_id),
+            )
+            return net_liquidity_series(assets, tga, rrp)
+        if fetch_kind == "fred_cross_asset_corr":
+            series_ids = [str(value) for value in cfg.get("source_series_list", [])]
+            if len(series_ids) < 3:
+                raise ValueError("cross-asset correlation requires source_series_list")
+            series = await asyncio.gather(
+                *(self.sources.fred(series_id) for series_id in series_ids)
+            )
+            return average_pairwise_correlation_series(
+                series,
+                window=int(cfg.get("correlation_window", 20)),
+            )
         if fetch_kind == "treasury_curve":
             return await self.sources.treasury_curve()
         if fetch_kind == "ofr":
             return await self.sources.ofr()
         if fetch_kind == "lbma_gold":
             return await self.sources.lbma_gold()
+        if fetch_kind == "shiller":
+            return await self.sources.shiller(str(cfg["source_metric"]))
+        if fetch_kind == "gpr_geopolitical":
+            return await self.sources.gpr_geopolitical_shock()
+        if fetch_kind == "policy_rss":
+            return await self.sources.policy_regime_shock()
+        if fetch_kind == "market_breadth":
+            return await self.sources.market_breadth()
+        if fetch_kind == "forward_pe_percentile":
+            return await self.sources.sp500_forward_pe_percentile()
+        if fetch_kind == "cftc_equity_positioning":
+            return await self.sources.cftc_equity_positioning()
+        if fetch_kind == "cboe_put_call":
+            return await self.sources.cboe_put_call_ratio()
+        if fetch_kind == "aaii_sentiment":
+            return await self.sources.aaii_bull_bear_spread()
         raise ValueError(f"unknown fetch source {fetch_kind}")
 
     def _score_points(self, cfg: dict[str, Any], points: list[SeriesPoint]) -> tuple[float, float | None]:
         transform = str(cfg["transform"])
         knots = cfg.get("points") or []
-        if transform == "piecewise_latest":
+        if transform in {
+            "piecewise_latest",
+            "pct_above_200dma_plus_advance_decline",
+        }:
             current = piecewise(points[-1].value, knots)
             previous = piecewise(points[-2].value, knots) if len(points) >= 2 else None
             return current, previous
@@ -321,6 +506,217 @@ class Risk29Engine:
             current = piecewise(feature, knots)
             previous_feature = pct_change(points[:-1], 20) if len(points) >= 22 else None
             previous = piecewise(previous_feature, knots) if previous_feature is not None else None
+            return current, previous
+        if transform == "core_inflation_3m_annualized_vs_12m":
+            current_3m, current_gap, previous_3m, previous_gap = (
+                core_inflation_momentum_features(points)
+            )
+            acceleration_knots = cfg.get("acceleration_points") or []
+            level_weight = float(cfg.get("level_weight", 0.7))
+            acceleration_weight = float(cfg.get("acceleration_weight", 0.3))
+            if abs(level_weight + acceleration_weight - 1.0) > 1e-9:
+                raise ValueError("core inflation weights must sum to 1")
+            current = (
+                piecewise(current_3m, knots) * level_weight
+                + piecewise(current_gap, acceleration_knots) * acceleration_weight
+            )
+            previous = (
+                piecewise(previous_3m, knots) * level_weight
+                + piecewise(previous_gap, acceleration_knots) * acceleration_weight
+                if previous_3m is not None and previous_gap is not None
+                else None
+            )
+            return current, previous
+        if transform == "sahm_level_and_change":
+            current_level, current_change, previous_level, previous_change = (
+                sahm_labor_deterioration_features(points)
+            )
+            change_knots = cfg.get("change_points") or []
+            level_weight = float(cfg.get("level_weight", 0.8))
+            change_weight = float(cfg.get("change_weight", 0.2))
+            if abs(level_weight + change_weight - 1.0) > 1e-9:
+                raise ValueError("Sahm labor weights must sum to 1")
+            current = (
+                piecewise(current_level, knots) * level_weight
+                + piecewise(current_change or 0.0, change_knots) * change_weight
+            )
+            previous = (
+                piecewise(previous_level, knots) * level_weight
+                + piecewise(previous_change, change_knots) * change_weight
+                if previous_level is not None and previous_change is not None
+                else None
+            )
+            return current, previous
+        if transform == "level_momentum_and_zscore":
+            momentum_periods = int(cfg.get("momentum_periods", 4))
+            zscore_lookback = int(cfg.get("zscore_lookback", 52))
+            zscore_min_observations = int(cfg.get("zscore_min_observations", 26))
+            current_level, current_zscore, previous_level, previous_zscore = (
+                rolling_zscore_features(
+                    points,
+                    lookback=zscore_lookback,
+                    min_observations=zscore_min_observations,
+                )
+            )
+            current_momentum = pct_change(points, momentum_periods)
+            previous_momentum = pct_change(points[:-1], momentum_periods)
+            if current_momentum is None:
+                raise ValueError("net liquidity momentum requires more observations")
+
+            momentum_knots = cfg.get("momentum_points") or []
+            zscore_knots = cfg.get("zscore_points") or []
+            momentum_weight = float(cfg.get("momentum_weight", 0.6))
+            zscore_weight = float(cfg.get("zscore_weight", 0.4))
+            if abs(momentum_weight + zscore_weight - 1.0) > 1e-9:
+                raise ValueError("net-liquidity weights must sum to 1")
+
+            current = (
+                piecewise(current_momentum, momentum_knots) * momentum_weight
+                + piecewise(current_zscore, zscore_knots) * zscore_weight
+            )
+            previous = (
+                piecewise(previous_momentum, momentum_knots) * momentum_weight
+                + piecewise(previous_zscore, zscore_knots) * zscore_weight
+                if previous_level is not None
+                and previous_momentum is not None
+                and previous_zscore is not None
+                else None
+            )
+            return current, previous
+        if transform == "spread_and_zscore":
+            lookback = int(cfg.get("zscore_lookback", 252))
+            min_observations = int(cfg.get("zscore_min_observations", 60))
+            current_level, current_zscore, previous_level, previous_zscore = (
+                rolling_zscore_features(
+                    points,
+                    lookback=lookback,
+                    min_observations=min_observations,
+                )
+            )
+            zscore_knots = cfg.get("zscore_points") or []
+            level_weight = float(cfg.get("level_weight", 0.6))
+            zscore_weight = float(cfg.get("zscore_weight", 0.4))
+            if abs(level_weight + zscore_weight - 1.0) > 1e-9:
+                raise ValueError("spread-and-zscore weights must sum to 1")
+            current = (
+                piecewise(current_level, knots) * level_weight
+                + piecewise(current_zscore, zscore_knots) * zscore_weight
+            )
+            previous = (
+                piecewise(previous_level, knots) * level_weight
+                + piecewise(previous_zscore, zscore_knots) * zscore_weight
+                if previous_level is not None and previous_zscore is not None
+                else None
+            )
+            return current, previous
+        if transform == "average_20d_correlation_zscore":
+            (
+                _current_level,
+                current_zscore,
+                _previous_level,
+                previous_zscore,
+            ) = rolling_zscore_features(
+                points,
+                lookback=int(cfg.get("zscore_lookback", 252)),
+                min_observations=int(cfg.get("zscore_min_observations", 60)),
+            )
+            current = piecewise(current_zscore, knots)
+            previous = (
+                piecewise(previous_zscore, knots)
+                if previous_zscore is not None
+                else None
+            )
+            return current, previous
+        if transform == "momentum_20d_plus_realized_vol":
+            (
+                current_momentum,
+                current_volatility,
+                previous_momentum,
+                previous_volatility,
+            ) = oil_shock_features(
+                points,
+                momentum_periods=int(cfg.get("momentum_periods", 20)),
+                volatility_periods=int(cfg.get("volatility_periods", 20)),
+            )
+            momentum_knots = cfg.get("momentum_points") or []
+            volatility_knots = cfg.get("volatility_points") or []
+            momentum_weight = float(cfg.get("momentum_weight", 0.65))
+            volatility_weight = float(cfg.get("volatility_weight", 0.35))
+            if abs(momentum_weight + volatility_weight - 1.0) > 1e-9:
+                raise ValueError("oil-shock weights must sum to 1")
+            current = (
+                piecewise(abs(current_momentum), momentum_knots) * momentum_weight
+                + piecewise(current_volatility, volatility_knots)
+                * volatility_weight
+            )
+            previous = (
+                piecewise(abs(previous_momentum), momentum_knots) * momentum_weight
+                + piecewise(previous_volatility, volatility_knots)
+                * volatility_weight
+                if previous_momentum is not None
+                and previous_volatility is not None
+                else None
+            )
+            return current, previous
+        if transform == "rv20_vs_rv60_plus_percentile":
+            (
+                _current_rv20,
+                _current_rv60,
+                current_ratio,
+                current_percentile,
+                _previous_rv20,
+                _previous_rv60,
+                previous_ratio,
+                previous_percentile,
+            ) = realized_volatility_regime_features(
+                points,
+                short_periods=int(cfg.get("short_periods", 20)),
+                long_periods=int(cfg.get("long_periods", 60)),
+                percentile_lookback=int(cfg.get("percentile_lookback", 252)),
+                min_percentile_observations=int(
+                    cfg.get("min_percentile_observations", 60)
+                ),
+            )
+            ratio_knots = cfg.get("ratio_points") or []
+            percentile_knots = cfg.get("percentile_points") or []
+            ratio_weight = float(cfg.get("ratio_weight", 0.55))
+            percentile_weight = float(cfg.get("percentile_weight", 0.45))
+            if abs(ratio_weight + percentile_weight - 1.0) > 1e-9:
+                raise ValueError("realized-volatility weights must sum to 1")
+            current = (
+                piecewise(current_ratio, ratio_knots) * ratio_weight
+                + piecewise(current_percentile, percentile_knots)
+                * percentile_weight
+            )
+            previous = (
+                piecewise(previous_ratio, ratio_knots) * ratio_weight
+                + piecewise(previous_percentile, percentile_knots)
+                * percentile_weight
+                if previous_ratio is not None
+                and previous_percentile is not None
+                else None
+            )
+            return current, previous
+        if transform == "piecewise_and_change":
+            periods = int(cfg.get("change_periods", 63))
+            current_level, current_change, previous_level, previous_change = (
+                level_change_features(points, periods)
+            )
+            change_knots = cfg.get("change_points") or []
+            level_weight = float(cfg.get("level_weight", 0.8))
+            change_weight = float(cfg.get("change_weight", 0.2))
+            if abs(level_weight + change_weight - 1.0) > 1e-9:
+                raise ValueError("level-and-change weights must sum to 1")
+            current = (
+                piecewise(current_level, knots) * level_weight
+                + piecewise(current_change, change_knots) * change_weight
+            )
+            previous = (
+                piecewise(previous_level, knots) * level_weight
+                + piecewise(previous_change, change_knots) * change_weight
+                if previous_level is not None and previous_change is not None
+                else None
+            )
             return current, previous
         raise ValueError(f"unknown transform {transform}")
 

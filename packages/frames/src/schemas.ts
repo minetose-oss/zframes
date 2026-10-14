@@ -34,8 +34,10 @@ import {
   closeHistoryMeta,
 } from "./schemas/markets";
 import {
+  risk29ActionMapMeta,
   risk29CategoriesMeta,
   risk29ChangesMeta,
+  risk29DecisionMeta,
   risk29HeatmapMeta,
   risk29HistoryMeta,
   risk29ScoreMeta,
@@ -380,8 +382,10 @@ export const frameMetas: FrameMeta[] = [
   priceTickerMeta,
   returnCalendarMeta,
   returnDistributionMeta,
+  risk29ActionMapMeta,
   risk29CategoriesMeta,
   risk29ChangesMeta,
+  risk29DecisionMeta,
   risk29HeatmapMeta,
   risk29HistoryMeta,
   risk29ScoreMeta,

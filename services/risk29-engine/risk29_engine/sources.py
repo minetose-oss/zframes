@@ -2,19 +2,61 @@ from __future__ import annotations
 
 import asyncio
 import csv
+import html
 import io
 import re
+import time
+import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
+from urllib.parse import urljoin
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from typing import Protocol
 
 import httpx
+import xlrd
 
 from .scoring import SeriesPoint
 
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 OFR_URL = "https://www.financialresearch.gov/financial-stress-index/data/fsi.csv"
 LBMA_GOLD_URL = "https://prices.lbma.org.uk/json/gold_pm.json"
+SHILLER_PAGE_URL = "https://shillerdata.com/"
+GPR_DAILY_URL = "https://www.matteoiacoviello.com/gpr_files/data_gpr_daily_recent.xls"
+GPR_DAILY_MIRROR_URL = "https://raw.githubusercontent.com/iacoviel/iacoviel.github.io/master/gpr_files/data_gpr_daily_recent.xls"
+GPR_DAILY_URLS = (GPR_DAILY_URL, GPR_DAILY_MIRROR_URL)
+MARKET_BREADTH_CSV_URL = (
+    "https://raw.githubusercontent.com/AlphaLabX1/forward-pe-viewer/"
+    "main/data/sp500_breadth.csv"
+)
+MARKET_AD_CSV_URL = (
+    "https://raw.githubusercontent.com/AlphaLabX1/forward-pe-viewer/"
+    "main/data/sp500_ad.csv"
+)
+MARKET_BREADTH_SOURCE_URL = (
+    "https://github.com/AlphaLabX1/forward-pe-viewer/tree/main/data"
+)
+FORWARD_PE_CSV_URL = (
+    "https://raw.githubusercontent.com/AlphaLabX1/forward-pe-viewer/"
+    "main/data/20052_sandp_500.csv"
+)
+FORWARD_PE_SOURCE_URL = (
+    "https://github.com/AlphaLabX1/forward-pe-viewer/blob/main/"
+    "data/20052_sandp_500.csv"
+)
+CFTC_SP500_TFF_CSV_URL = (
+    "https://raw.githubusercontent.com/MFlab-inc/CFTC-COT/"
+    "main/data/csv/sp500_tff.csv"
+)
+CFTC_SP500_TFF_SOURCE_URL = (
+    "https://github.com/MFlab-inc/CFTC-COT/blob/main/data/csv/sp500_tff.csv"
+)
+CBOE_DAILY_STATS_URL = "https://www.cboe.com/markets/us/options/market-statistics/daily"
+AAII_SENTIMENT_URL = "https://www.aaii.com/sentimentsurvey/sent_results"
+FED_POLICY_RSS_URL = "https://www.federalreserve.gov/feeds/press_monetary.xml"
+ECB_POLICY_RSS_URL = "https://www.ecb.europa.eu/rss/press.html"
+BOJ_POLICY_RSS_URL = "https://www.boj.or.jp/en/rss/whatsnew.xml"
+POLICY_RSS_URLS = (FED_POLICY_RSS_URL, ECB_POLICY_RSS_URL, BOJ_POLICY_RSS_URL)
 TREASURY_URL = (
     "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml"
     "?data=daily_treasury_yield_curve&field_tdr_date_value_month={yyyymm}"
@@ -26,6 +68,14 @@ class SourceClient(Protocol):
     async def treasury_curve(self) -> list[SeriesPoint]: ...
     async def ofr(self) -> list[SeriesPoint]: ...
     async def lbma_gold(self) -> list[SeriesPoint]: ...
+    async def shiller(self, metric: str) -> list[SeriesPoint]: ...
+    async def gpr_geopolitical_shock(self) -> list[SeriesPoint]: ...
+    async def policy_regime_shock(self) -> list[SeriesPoint]: ...
+    async def market_breadth(self) -> list[SeriesPoint]: ...
+    async def sp500_forward_pe_percentile(self) -> list[SeriesPoint]: ...
+    async def cftc_equity_positioning(self) -> list[SeriesPoint]: ...
+    async def cboe_put_call_ratio(self) -> list[SeriesPoint]: ...
+    async def aaii_bull_bear_spread(self) -> list[SeriesPoint]: ...
 
 
 @dataclass
@@ -39,6 +89,18 @@ class PublicSourceClient:
     _fred_semaphore: asyncio.Semaphore = field(
         default_factory=lambda: asyncio.Semaphore(8), init=False, repr=False
     )
+    _shiller_lock: asyncio.Lock = field(
+        default_factory=asyncio.Lock, init=False, repr=False
+    )
+    _shiller_cache: dict[str, list[SeriesPoint]] | None = field(
+        default=None, init=False, repr=False
+    )
+    _shiller_cache_loaded_at: float = field(default=0.0, init=False, repr=False)
+    _gpr_lock: asyncio.Lock = field(
+        default_factory=asyncio.Lock, init=False, repr=False
+    )
+    _gpr_cache: list[SeriesPoint] | None = field(default=None, init=False, repr=False)
+    _gpr_cache_loaded_at: float = field(default=0.0, init=False, repr=False)
 
     async def _get_text(self, url: str, *, params: dict[str, str] | None = None) -> str:
         timeout = httpx.Timeout(self.timeout_seconds, connect=min(10.0, self.timeout_seconds))
@@ -51,7 +113,7 @@ class PublicSourceClient:
                         params=params,
                         headers={
                             "User-Agent": "risk29-engine/0.1",
-                            "Accept": "text/csv,text/plain,*/*",
+                            "Accept": "text/html,text/csv,text/plain,*/*",
                         },
                     )
                     response.raise_for_status()
@@ -64,7 +126,51 @@ class PublicSourceClient:
         assert last_error is not None
         raise last_error
 
-    async def _get_json(self, url: str):
+    async def _get_browser_text(
+        self,
+        url: str,
+        *,
+        params: dict[str, str] | None = None,
+    ) -> str:
+        timeout = httpx.Timeout(
+            self.timeout_seconds,
+            connect=min(10.0, self.timeout_seconds),
+        )
+        last_error: Exception | None = None
+        for attempt in range(max(1, self.retry_attempts)):
+            try:
+                async with httpx.AsyncClient(
+                    timeout=timeout,
+                    follow_redirects=True,
+                ) as client:
+                    response = await client.get(
+                        url,
+                        params=params,
+                        headers={
+                            "User-Agent": (
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                "Chrome/140.0.0.0 Safari/537.36"
+                            ),
+                            "Accept": (
+                                "text/html,application/xhtml+xml,"
+                                "application/xml;q=0.9,*/*;q=0.8"
+                            ),
+                            "Accept-Language": "en-US,en;q=0.9",
+                            "Cache-Control": "no-cache",
+                        },
+                    )
+                    response.raise_for_status()
+                    return response.text
+            except httpx.HTTPError as exc:
+                last_error = exc
+                if attempt + 1 >= max(1, self.retry_attempts):
+                    raise
+                await asyncio.sleep(0.35 * (attempt + 1))
+        assert last_error is not None
+        raise last_error
+
+    async def _get_json(self, url: str, *, params: dict[str, str] | None = None):
         timeout = httpx.Timeout(self.timeout_seconds, connect=min(10.0, self.timeout_seconds))
         last_error: Exception | None = None
         for attempt in range(max(1, self.retry_attempts)):
@@ -72,6 +178,7 @@ class PublicSourceClient:
                 async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
                     response = await client.get(
                         url,
+                        params=params,
                         headers={
                             "User-Agent": "risk29-engine/0.1",
                             "Accept": "application/json,*/*",
@@ -86,6 +193,424 @@ class PublicSourceClient:
                 await asyncio.sleep(0.35 * (attempt + 1))
         assert last_error is not None
         raise last_error
+
+    async def _get_bytes(self, url: str) -> bytes:
+        timeout = httpx.Timeout(self.timeout_seconds, connect=min(10.0, self.timeout_seconds))
+        last_error: Exception | None = None
+        for attempt in range(max(1, self.retry_attempts)):
+            try:
+                async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+                    response = await client.get(
+                        url,
+                        headers={
+                            "User-Agent": "risk29-engine/0.3",
+                            "Accept": "application/vnd.ms-excel,application/octet-stream,*/*",
+                        },
+                    )
+                    response.raise_for_status()
+                    return response.content
+            except httpx.HTTPError as exc:
+                last_error = exc
+                if attempt + 1 >= max(1, self.retry_attempts):
+                    raise
+                await asyncio.sleep(0.35 * (attempt + 1))
+        assert last_error is not None
+        raise last_error
+
+    @staticmethod
+    def _shiller_column_map(sheet) -> dict[str, int]:
+        headers: dict[int, str] = {}
+        upper = min(8, sheet.nrows)
+        for column in range(sheet.ncols):
+            parts = [
+                str(sheet.cell_value(row, column)).strip()
+                for row in range(1, upper)
+                if str(sheet.cell_value(row, column)).strip()
+            ]
+            headers[column] = re.sub(r"\s+", " ", " ".join(parts)).strip().lower()
+
+        def find(required: tuple[str, ...], forbidden: tuple[str, ...] = ()) -> int:
+            matches = [
+                column
+                for column, text in headers.items()
+                if text
+                and all(token in text for token in required)
+                and not any(token in text for token in forbidden)
+            ]
+            if not matches:
+                raise ValueError(
+                    "Shiller workbook layout changed; required column not found: "
+                    + ", ".join(required)
+                )
+            return matches[0]
+
+        return {
+            "date": find(("date",), ("fraction",)),
+            "cape": find(
+                ("cyclically adjusted", "cape"),
+                ("total return", "tr cape", "excess"),
+            ),
+            "excess_cape_yield": find(("excess cape yield",)),
+        }
+
+    @staticmethod
+    def _normalize_shiller_value(metric: str, value: float) -> float:
+        # Shiller stores Excess CAPE Yield as a decimal fraction in ie_data.xls
+        # (for example 0.0056 means 0.56%). Risk29's percent unit is expressed
+        # in percentage points, matching the rest of the engine.
+        if metric == "excess_cape_yield":
+            return value * 100.0
+        return value
+
+    async def _load_shiller_metrics(self) -> dict[str, list[SeriesPoint]]:
+        # The workbook is monthly. Cache it for six hours so CAPE and ECY share
+        # one download, while a long-lived process still picks up new releases.
+        now_mono = time.monotonic()
+        if (
+            self._shiller_cache is not None
+            and now_mono - self._shiller_cache_loaded_at < 6 * 60 * 60
+        ):
+            return self._shiller_cache
+
+        async with self._shiller_lock:
+            now_mono = time.monotonic()
+            if (
+                self._shiller_cache is not None
+                and now_mono - self._shiller_cache_loaded_at < 6 * 60 * 60
+            ):
+                return self._shiller_cache
+
+            page = await self._get_text(SHILLER_PAGE_URL)
+            candidates = re.findall(
+                r'href=["\']([^"\']*ie_data\.xls[^"\']*)["\']',
+                page,
+                flags=re.IGNORECASE,
+            )
+            if not candidates:
+                raise ValueError("Shiller data page: ie_data.xls download link not found")
+
+            download_url = urljoin(
+                SHILLER_PAGE_URL,
+                html.unescape(candidates[0]),
+            )
+            workbook_bytes = await self._get_bytes(download_url)
+            workbook = xlrd.open_workbook(file_contents=workbook_bytes)
+            sheet = workbook.sheet_by_name("Data")
+            columns = self._shiller_column_map(sheet)
+
+            metrics: dict[str, list[SeriesPoint]] = {
+                "cape": [],
+                "excess_cape_yield": [],
+            }
+            for row in range(sheet.nrows):
+                raw_date = sheet.cell_value(row, columns["date"])
+                if not isinstance(raw_date, (int, float)):
+                    continue
+                encoded = float(raw_date)
+                year = int(encoded)
+                month = int(round((encoded - year) * 100))
+                if year < 1871 or not 1 <= month <= 12:
+                    continue
+                observed = date(year, month, 1)
+
+                for metric in metrics:
+                    raw_value = sheet.cell_value(row, columns[metric])
+                    if not isinstance(raw_value, (int, float)):
+                        continue
+                    value = self._normalize_shiller_value(
+                        metric,
+                        float(raw_value),
+                    )
+                    if metric == "cape" and not 3.0 <= value <= 80.0:
+                        continue
+                    if metric == "excess_cape_yield" and not -20.0 <= value <= 40.0:
+                        continue
+                    metrics[metric].append(SeriesPoint(observed, value))
+
+            if len(metrics["cape"]) < 1000:
+                raise ValueError("Shiller CAPE: too few usable observations")
+            if len(metrics["excess_cape_yield"]) < 1000:
+                raise ValueError("Shiller Excess CAPE Yield: too few usable observations")
+
+            self._shiller_cache = metrics
+            self._shiller_cache_loaded_at = time.monotonic()
+            return metrics
+
+    async def shiller(self, metric: str) -> list[SeriesPoint]:
+        metrics = await self._load_shiller_metrics()
+        if metric not in metrics:
+            raise ValueError(f"unknown Shiller metric {metric}")
+        return metrics[metric]
+
+
+    @staticmethod
+    def _gpr_column_map(sheet) -> tuple[int, int, int]:
+        for row in range(min(20, sheet.nrows)):
+            labels = {
+                column: re.sub(
+                    r"\s+",
+                    " ",
+                    str(sheet.cell_value(row, column)).strip(),
+                ).upper()
+                for column in range(sheet.ncols)
+            }
+            gpr_columns = [
+                column for column, label in labels.items() if label == "GPRD"
+            ]
+            date_columns = [
+                column
+                for column, label in labels.items()
+                if label in {"DATE", "DAY", "OBSERVATION DATE", "OBSERVATION_DATE"}
+                or (label.endswith("DATE") and "UPDATE" not in label)
+            ]
+            if gpr_columns and date_columns:
+                return row, date_columns[0], gpr_columns[0]
+        raise ValueError("GPR workbook layout changed; DATE/GPRD columns not found")
+
+    @staticmethod
+    def _parse_gpr_date(raw: object, datemode: int) -> date | None:
+        if isinstance(raw, (int, float)):
+            numeric = float(raw)
+            if numeric >= 10_000_000:
+                text = str(int(round(numeric)))
+                try:
+                    return datetime.strptime(text, "%Y%m%d").date()
+                except ValueError:
+                    return None
+            try:
+                return xlrd.xldate_as_datetime(numeric, datemode).date()
+            except (ValueError, OverflowError, TypeError):
+                return None
+
+        text = str(raw or "").strip()
+        for fmt in ("%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y"):
+            try:
+                return datetime.strptime(text[:10] if fmt == "%Y-%m-%d" else text, fmt).date()
+            except ValueError:
+                continue
+        return None
+
+    async def gpr_geopolitical_shock(self) -> list[SeriesPoint]:
+        """
+        Load the Caldara-Iacoviello daily Geopolitical Risk index (GPRD).
+
+        This is preferable to an ad-hoc news keyword count for production:
+        the published index is academically documented, newspaper-normalized,
+        and updated weekly. A GitHub mirror is used only as a transport fallback
+        for the same source workbook.
+        """
+        now_mono = time.monotonic()
+        if (
+            self._gpr_cache is not None
+            and now_mono - self._gpr_cache_loaded_at < 6 * 60 * 60
+        ):
+            return self._gpr_cache
+
+        async with self._gpr_lock:
+            now_mono = time.monotonic()
+            if (
+                self._gpr_cache is not None
+                and now_mono - self._gpr_cache_loaded_at < 6 * 60 * 60
+            ):
+                return self._gpr_cache
+
+            workbook = None
+            last_error: Exception | None = None
+            for url in GPR_DAILY_URLS:
+                try:
+                    workbook_bytes = await self._get_bytes(url)
+                    workbook = xlrd.open_workbook(file_contents=workbook_bytes)
+                    break
+                except Exception as exc:
+                    last_error = exc
+            if workbook is None:
+                if last_error is not None:
+                    raise ValueError(
+                        f"GPR daily workbook unavailable: {type(last_error).__name__}: {last_error}"
+                    ) from last_error
+                raise ValueError("GPR daily workbook unavailable")
+
+            chosen = None
+            for sheet in workbook.sheets():
+                try:
+                    header_row, date_column, gpr_column = self._gpr_column_map(sheet)
+                    chosen = (sheet, header_row, date_column, gpr_column)
+                    break
+                except ValueError:
+                    continue
+            if chosen is None:
+                raise ValueError("GPR workbook layout changed; usable sheet not found")
+
+            sheet, header_row, date_column, gpr_column = chosen
+            points: list[SeriesPoint] = []
+            for row in range(header_row + 1, sheet.nrows):
+                observed = self._parse_gpr_date(
+                    sheet.cell_value(row, date_column),
+                    workbook.datemode,
+                )
+                raw_value = sheet.cell_value(row, gpr_column)
+                try:
+                    value = float(raw_value)
+                except (TypeError, ValueError):
+                    continue
+                if observed is None or value < 0:
+                    continue
+                points.append(SeriesPoint(observed, value))
+
+            points.sort(key=lambda point: point.date)
+            if len(points) < 60:
+                raise ValueError("GPR daily workbook: too few usable observations")
+
+            self._gpr_cache = points
+            self._gpr_cache_loaded_at = time.monotonic()
+            return points
+
+    @staticmethod
+    def _parse_feed_date(raw: str) -> date | None:
+        text = raw.strip()
+        if not text:
+            return None
+        try:
+            parsed = parsedate_to_datetime(text)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc).date()
+        except (TypeError, ValueError, OverflowError):
+            pass
+        try:
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc).date()
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _policy_event_severity(text: str) -> float:
+        normalized = re.sub(r"\s+", " ", html.unescape(text)).lower()
+        high = (
+            "emergency",
+            "unscheduled",
+            "intervention",
+            "swap line",
+            "quantitative easing",
+            "quantitative tightening",
+            "yield curve control",
+            "rate cut",
+            "rate hike",
+            "cuts interest rate",
+            "raises interest rate",
+            "lowers interest rate",
+            "raised the target range",
+            "lowered the target range",
+            "asset purchase programme",
+            "asset purchase program",
+        )
+        medium = (
+            "balance sheet",
+            "taper",
+            "standing repo",
+            "liquidity facility",
+            "negative interest rate",
+            "forward guidance",
+            "policy rate",
+            "interest rate decision",
+        )
+        routine = (
+            "fomc statement",
+            "monetary policy decision",
+            "monetary policy decisions",
+            "monetary policy meeting",
+            "policy board meeting",
+            "press conference",
+        )
+        if any(term in normalized for term in high):
+            return 90.0
+        if any(term in normalized for term in medium):
+            return 70.0
+        if any(term in normalized for term in routine):
+            return 35.0
+        return 10.0
+
+    @classmethod
+    def _parse_policy_feed_events(cls, body: str) -> list[tuple[date, float]]:
+        try:
+            root = ET.fromstring(body)
+        except ET.ParseError as exc:
+            raise ValueError(f"official policy RSS parse error: {exc}") from exc
+
+        events: list[tuple[date, float]] = []
+        for item in root.iter():
+            local = item.tag.rsplit("}", 1)[-1].lower()
+            if local not in {"item", "entry"}:
+                continue
+            text_parts: list[str] = []
+            observed: date | None = None
+            for child in item.iter():
+                child_local = child.tag.rsplit("}", 1)[-1].lower()
+                raw = "".join(child.itertext()).strip()
+                if not raw:
+                    continue
+                if child_local in {
+                    "title",
+                    "description",
+                    "summary",
+                    "content",
+                    "category",
+                }:
+                    text_parts.append(raw)
+                if observed is None and child_local in {
+                    "pubdate",
+                    "published",
+                    "updated",
+                    "date",
+                }:
+                    observed = cls._parse_feed_date(raw)
+            if observed is None:
+                continue
+            joined = re.sub(r"<[^>]+>", " ", " ".join(text_parts))
+            events.append((observed, cls._policy_event_severity(joined)))
+        return events
+
+    async def policy_regime_shock(self) -> list[SeriesPoint]:
+        """
+        Build a conservative event-risk score from official Fed/ECB/BoJ feeds.
+
+        The classifier is intentionally deterministic and headline/summary based.
+        A severe policy event starts high and decays for seven days; routine
+        meetings create only a mild bump. If one central-bank feed is down, the
+        remaining official feeds still keep the signal live.
+        """
+        results = await asyncio.gather(
+            *(self._get_text(url) for url in POLICY_RSS_URLS),
+            return_exceptions=True,
+        )
+        successful = [result for result in results if isinstance(result, str)]
+        if not successful:
+            raise ValueError("official policy RSS: all feeds unavailable")
+
+        events: list[tuple[date, float]] = []
+        for body in successful:
+            try:
+                events.extend(self._parse_policy_feed_events(body))
+            except ValueError:
+                continue
+        if not events:
+            raise ValueError("official policy RSS: no dated events parsed")
+
+        today = datetime.now(timezone.utc).date()
+        decay = (1.0, 0.85, 0.70, 0.55, 0.40, 0.30, 0.20, 0.15)
+        points: list[SeriesPoint] = []
+        for offset in range(44, -1, -1):
+            observed = today - timedelta(days=offset)
+            score = 10.0
+            for event_date, severity in events:
+                age = (observed - event_date).days
+                if 0 <= age < len(decay):
+                    candidate = 10.0 + (severity - 10.0) * decay[age]
+                    score = max(score, candidate)
+            points.append(SeriesPoint(observed, round(score, 2)))
+        return points
 
     async def fred(self, series_id: str) -> list[SeriesPoint]:
         # Risk29 only needs enough daily history for MA200 / 20-session momentum.
@@ -120,6 +645,317 @@ class PublicSourceClient:
             raise ValueError(f"FRED {series_id}: no usable observations")
         points.sort(key=lambda point: point.date)
         return points
+
+    @staticmethod
+    def _parse_market_breadth_csv(text: str) -> dict[date, float]:
+        rows = csv.DictReader(io.StringIO(text))
+        values: dict[date, float] = {}
+        for row in rows:
+            try:
+                observed = date.fromisoformat(str(row.get("date", "")).strip())
+                above_200d = float(str(row.get("above_200d", "")).strip())
+            except (ValueError, TypeError):
+                continue
+            if not 0.0 <= above_200d <= 100.0:
+                continue
+            values[observed] = above_200d
+        return values
+
+    @staticmethod
+    def _parse_market_ad_csv(text: str) -> dict[date, float]:
+        rows = csv.DictReader(io.StringIO(text))
+        values: dict[date, float] = {}
+        for row in rows:
+            try:
+                observed = date.fromisoformat(str(row.get("date", "")).strip())
+                advancers = float(str(row.get("advancers", "")).strip())
+                decliners = float(str(row.get("decliners", "")).strip())
+            except (ValueError, TypeError):
+                continue
+            directional = advancers + decliners
+            # S&P 500 currently contains just over 500 listed securities because
+            # a few constituents have multiple share classes. Reject obviously
+            # incomplete rows rather than manufacturing a breadth reading.
+            if not (400.0 <= directional <= 550.0):
+                continue
+            values[observed] = 100.0 * advancers / directional
+        return values
+
+    async def market_breadth(self) -> list[SeriesPoint]:
+        """
+        Build a conservative S&P 500 breadth-strength composite.
+
+        The transport archive republishes MacroMicro's S&P 500 breadth series.
+        We only combine dates present in BOTH files, so a lagging advance/decline
+        feed cannot be silently forward-filled and presented as current data.
+        The composite is 70% of constituents above their 200-day moving average
+        plus 30% of directional issues that advanced that session.
+
+        Freshness is handled by the engine from the latest common observation.
+        """
+        breadth_text, ad_text = await asyncio.gather(
+            self._get_text(MARKET_BREADTH_CSV_URL),
+            self._get_text(MARKET_AD_CSV_URL),
+        )
+        above_200d = self._parse_market_breadth_csv(breadth_text)
+        advancing_share = self._parse_market_ad_csv(ad_text)
+        common_dates = sorted(set(above_200d) & set(advancing_share))
+        if len(common_dates) < 120:
+            raise ValueError(
+                "S&P 500 market breadth: too few validated common observations"
+            )
+
+        points = [
+            SeriesPoint(
+                observed,
+                0.70 * above_200d[observed] + 0.30 * advancing_share[observed],
+            )
+            for observed in common_dates
+        ]
+        points.sort(key=lambda point: point.date)
+        return points
+
+    @staticmethod
+    def _parse_forward_pe_csv(text: str) -> list[SeriesPoint]:
+        rows = csv.DictReader(io.StringIO(text))
+        points: list[SeriesPoint] = []
+        for row in rows:
+            try:
+                observed = date.fromisoformat(str(row.get("date", "")).strip())
+                value = float(str(row.get("forward_pe", "")).strip())
+            except (ValueError, TypeError):
+                continue
+            # Forward P/E should be positive. A very wide upper guard catches
+            # malformed rows without imposing a market-view judgement.
+            if not 0.0 < value < 100.0:
+                continue
+            points.append(SeriesPoint(observed, value))
+        points.sort(key=lambda point: point.date)
+        return points
+
+    @staticmethod
+    def _forward_pe_percentile_points(
+        points: list[SeriesPoint],
+        *,
+        lookback: int = 2520,
+        min_observations: int = 1260,
+        output_points: int = 60,
+    ) -> list[SeriesPoint]:
+        if lookback < 2 or min_observations < 2:
+            raise ValueError("forward P/E percentile: invalid lookback")
+        if len(points) < min_observations:
+            raise ValueError("forward P/E percentile: insufficient history")
+
+        start = max(min_observations - 1, len(points) - max(2, output_points))
+        output: list[SeriesPoint] = []
+        for index in range(start, len(points)):
+            window = points[max(0, index - lookback + 1) : index + 1]
+            if len(window) < min_observations:
+                continue
+            current = points[index].value
+            values = [point.value for point in window]
+            below = sum(value < current for value in values)
+            equal = sum(value == current for value in values)
+            percentile = 100.0 * (below + 0.5 * equal) / len(values)
+            output.append(SeriesPoint(points[index].date, percentile))
+
+        if len(output) < 2:
+            raise ValueError("forward P/E percentile: too few scored observations")
+        return output
+
+    async def sp500_forward_pe_percentile(self) -> list[SeriesPoint]:
+        """
+        Return the S&P 500 forward P/E as a trailing 10-year percentile.
+
+        The upstream archive contains a daily forward-P/E series back to 2003.
+        Risk29 converts that level into a rolling percentile so the valuation
+        signal remains comparable across different market regimes. The source
+        is fail-closed if it does not contain at least five years of history.
+        """
+        text = await self._get_text(FORWARD_PE_CSV_URL)
+        raw = self._parse_forward_pe_csv(text)
+        return self._forward_pe_percentile_points(raw)
+
+    @staticmethod
+    def _parse_cftc_sp500_tff_csv(text: str) -> list[SeriesPoint]:
+        rows = csv.DictReader(io.StringIO(text))
+        points: list[SeriesPoint] = []
+        for row in rows:
+            try:
+                observed = date.fromisoformat(str(row.get("date", "")).strip())
+                open_interest = float(str(row.get("all", "")).strip())
+                leveraged_net = float(str(row.get("lev_net", "")).strip())
+            except (ValueError, TypeError):
+                continue
+            if open_interest <= 0:
+                continue
+            # Normalize contracts by open interest so secular changes in futures
+            # usage do not masquerade as a positioning regime shift.
+            points.append(
+                SeriesPoint(observed, 100.0 * leveraged_net / open_interest)
+            )
+        points.sort(key=lambda point: point.date)
+        return points
+
+    @staticmethod
+    def _rolling_zscore_points(
+        points: list[SeriesPoint],
+        *,
+        lookback: int = 156,
+        min_observations: int = 52,
+        output_points: int = 60,
+    ) -> list[SeriesPoint]:
+        if lookback < 2 or min_observations < 2:
+            raise ValueError("rolling z-score: invalid lookback")
+        if len(points) < min_observations:
+            raise ValueError("rolling z-score: insufficient history")
+
+        start = max(min_observations - 1, len(points) - max(2, output_points))
+        output: list[SeriesPoint] = []
+        for index in range(start, len(points)):
+            window = points[max(0, index - lookback + 1) : index + 1]
+            if len(window) < min_observations:
+                continue
+            values = [point.value for point in window]
+            mean = sum(values) / len(values)
+            variance = sum((value - mean) ** 2 for value in values) / len(values)
+            stdev = variance ** 0.5
+            if stdev <= 1e-12:
+                continue
+            zscore = (points[index].value - mean) / stdev
+            output.append(SeriesPoint(points[index].date, zscore))
+
+        if len(output) < 2:
+            raise ValueError("rolling z-score: too few scored observations")
+        return output
+
+    async def cftc_equity_positioning(self) -> list[SeriesPoint]:
+        """
+        Return S&P 500 leveraged-money positioning as a rolling 3-year z-score.
+
+        The GitHub transport mirror is built from the official CFTC Traders in
+        Financial Futures futures-only report. We normalize leveraged-money net
+        contracts by total open interest before z-scoring over 156 weeks.
+        """
+        text = await self._get_text(CFTC_SP500_TFF_CSV_URL)
+        raw = self._parse_cftc_sp500_tff_csv(text)
+        return self._rolling_zscore_points(raw)
+
+    @staticmethod
+    def _parse_cboe_put_call_html(text: str) -> list[SeriesPoint]:
+        ratio_match = re.search(
+            r"TOTAL\s+PUT/CALL\s+RATIO(?:<[^>]+>|\s)*([0-9]+(?:\.[0-9]+)?)",
+            text,
+            flags=re.IGNORECASE,
+        )
+        if ratio_match is None:
+            # Keep a text-only fallback for minor markup changes.
+            plain = re.sub(r"<[^>]+>", " ", html.unescape(text))
+            plain = re.sub(r"\s+", " ", plain)
+            ratio_match = re.search(
+                r"TOTAL\s+PUT/CALL\s+RATIO\s+([0-9]+(?:\.[0-9]+)?)",
+                plain,
+                flags=re.IGNORECASE,
+            )
+        if ratio_match is None:
+            raise ValueError("CBOE put/call: total ratio not found")
+
+        ratio = float(ratio_match.group(1))
+        if not 0.05 <= ratio <= 5.0:
+            raise ValueError("CBOE put/call: ratio outside validation bounds")
+
+        dates: list[date] = []
+        for value in re.findall(r"\b20\d{2}-\d{2}-\d{2}\b", text):
+            try:
+                dates.append(date.fromisoformat(value))
+            except ValueError:
+                continue
+        if not dates:
+            raise ValueError("CBOE put/call: session date not found")
+        return [SeriesPoint(max(dates), ratio)]
+
+    async def cboe_put_call_ratio(self) -> list[SeriesPoint]:
+        """
+        Return Cboe's official Total Put/Call Ratio from the daily statistics page.
+
+        Cboe renders the current session date and ratio in the page HTML. The
+        parser validates both fields and fails closed when the table changes.
+        """
+        text = await self._get_browser_text(CBOE_DAILY_STATS_URL)
+        return self._parse_cboe_put_call_html(text)
+
+    @staticmethod
+    def _parse_aaii_sentiment_html(
+        text: str,
+        *,
+        today: date | None = None,
+    ) -> list[SeriesPoint]:
+        # AAII's public historical page presents rows newest-first as:
+        # Reported Date | Bullish | Neutral | Bearish.
+        plain = re.sub(r"<[^>]+>", " ", html.unescape(text))
+        plain = re.sub(r"\s+", " ", plain)
+        pattern = re.compile(
+            r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+"
+            r"(\d{1,2})\s+"
+            r"(\d+(?:\.\d+)?)%\s+"
+            r"(\d+(?:\.\d+)?)%\s+"
+            r"(\d+(?:\.\d+)?)%",
+            flags=re.IGNORECASE,
+        )
+        matches = list(pattern.finditer(plain))
+        if not matches:
+            raise ValueError("AAII sentiment: no survey rows found")
+
+        anchor = today or datetime.now(timezone.utc).date()
+        month_map = {
+            "jan": 1,
+            "feb": 2,
+            "mar": 3,
+            "apr": 4,
+            "may": 5,
+            "jun": 6,
+            "jul": 7,
+            "aug": 8,
+            "sep": 9,
+            "oct": 10,
+            "nov": 11,
+            "dec": 12,
+        }
+        year = anchor.year
+        previous_month: int | None = None
+        points: list[SeriesPoint] = []
+        for match in matches:
+            month = month_map[match.group(1).lower()]
+            day = int(match.group(2))
+            bullish = float(match.group(3))
+            bearish = float(match.group(5))
+            if previous_month is None and month > anchor.month + 1:
+                year -= 1
+            elif previous_month is not None and month > previous_month:
+                year -= 1
+            previous_month = month
+
+            if not (0.0 <= bullish <= 100.0 and 0.0 <= bearish <= 100.0):
+                continue
+            try:
+                observed = date(year, month, day)
+            except ValueError:
+                continue
+            points.append(SeriesPoint(observed, bullish - bearish))
+
+        # De-duplicate any repeated markup fragments and return chronological data.
+        deduped = {point.date: point for point in points}
+        result = sorted(deduped.values(), key=lambda point: point.date)
+        if len(result) < 2:
+            raise ValueError("AAII sentiment: too few validated survey rows")
+        return result
+
+    async def aaii_bull_bear_spread(self) -> list[SeriesPoint]:
+        """
+        Return AAII bullish minus bearish percentage points from its public page.
+        """
+        text = await self._get_browser_text(AAII_SENTIMENT_URL)
+        return self._parse_aaii_sentiment_html(text)
 
     async def treasury_curve(self) -> list[SeriesPoint]:
         now = datetime.now(timezone.utc)

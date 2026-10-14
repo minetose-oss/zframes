@@ -958,12 +958,19 @@ export const frameLoaders: Record<string, FrameLoader> = {
   "risk-reward": {
     load: () => import("./risk-reward").then((m) => m.riskRewardFrame),
   },
+  "risk29-action-map": {
+    load: () =>
+      import("./risk29-action-map").then((m) => m.risk29ActionMapFrame),
+  },
   "risk29-categories": {
     load: () =>
       import("./risk29-categories").then((m) => m.risk29CategoriesFrame),
   },
   "risk29-changes": {
     load: () => import("./risk29-changes").then((m) => m.risk29ChangesFrame),
+  },
+  "risk29-decision": {
+    load: () => import("./risk29-decision").then((m) => m.risk29DecisionFrame),
   },
   "risk29-heatmap": {
     load: () => import("./risk29-heatmap").then((m) => m.risk29HeatmapFrame),

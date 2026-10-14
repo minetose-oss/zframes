@@ -2,7 +2,7 @@ name: Risk29 engine
 
 on:
   push:
-    branches: [risk29-phase1]
+    branches: [risk29-phase1, risk29-phase2]
     paths:
       - services/risk29-engine/**
       - .github/workflows/risk29-engine.yml
@@ -11,8 +11,8 @@ on:
       - services/risk29-engine/**
       - .github/workflows/risk29-engine.yml
   schedule:
-    - cron: "30 1 * * *"
-    - cron: "0 6 * * *"
+    - cron: "30 1 * * 1-5"
+    - cron: "0 6 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -81,13 +81,103 @@ jobs:
           mkdir -p risk29-live-data/risk29
           cp /tmp/risk29-published/latest.json risk29-live-data/risk29/latest.json
           cp /tmp/risk29-published/history.json risk29-live-data/risk29/history.json
+          cp /tmp/risk29-published/brief-th.json risk29-live-data/risk29/brief-th.json
+          cp /tmp/risk29-published/alert.json risk29-live-data/risk29/alert.json
           cd risk29-live-data
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add risk29/latest.json risk29/history.json
+          git add risk29/latest.json risk29/history.json risk29/brief-th.json risk29/alert.json
           if git diff --cached --quiet; then
             echo "Risk29 publication unchanged"
             exit 0
           fi
           git commit -m "data: refresh Risk29 live snapshot"
           git push origin HEAD:risk29-live-data
+
+      - name: Check material alert
+        id: material
+        shell: bash
+        run: |
+          SHOULD_NOTIFY="$(python -c 'import json; print(str(json.load(open("/tmp/risk29-published/alert.json"))["shouldNotify"]).lower())')"
+          echo "should_notify=$SHOULD_NOTIFY" >> "$GITHUB_OUTPUT"
+
+      - name: Push material alert to LINE
+        if: steps.material.outputs.should_notify == 'true'
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_TO_USER_ID: ${{ secrets.LINE_TO_USER_ID }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "").strip()
+          to = os.getenv("LINE_TO_USER_ID", "").strip()
+          if not token or not to:
+              print("Material alert detected; LINE credentials are not configured, so push is skipped.")
+              raise SystemExit(0)
+
+          alert = json.load(open("/tmp/risk29-published/alert.json", encoding="utf-8"))
+          payload = json.dumps(
+              {"to": to, "messages": [{"type": "text", "text": alert["messageThai"]}]},
+              ensure_ascii=False,
+          ).encode("utf-8")
+          request = urllib.request.Request(
+              "https://api.line.me/v2/bot/message/push",
+              data=payload,
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {token}",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=15) as response:
+              print(f"LINE material alert pushed: HTTP {response.status}")
+          PY
+
+      - name: Push Thai morning brief to LINE
+        if: github.event_name == 'schedule' && github.event.schedule == '30 1 * * 1-5'
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_TO_USER_ID: ${{ secrets.LINE_TO_USER_ID }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "").strip()
+          to = os.getenv("LINE_TO_USER_ID", "").strip()
+          if not token or not to:
+              print("Thai morning brief prepared; LINE credentials are not configured, so push is skipped.")
+              raise SystemExit(0)
+
+          brief = json.load(open("/tmp/risk29-published/brief-th.json", encoding="utf-8"))
+          score = "N/A" if brief["score"] is None else f'{brief["score"]:.1f}'
+          message = (
+              f'Risk29 Morning Brief | {brief["state"].upper()} {score}\n'
+              f'มุมมอง: {brief["posture"]}\n'
+              f'อะไรเปลี่ยน: {brief["whatChanged"]}\n'
+              f'ทำไมสำคัญ: {brief["why"]}\n'
+              f'สิ่งที่ควรพิจารณาวันนี้: {brief["actionToday"]}\n'
+              f'ความเชื่อมั่นข้อมูล: {brief["confidence"]}\n'
+              f'ข้อมูล ณ {brief["generatedAt"]} (UTC)'
+          )
+          # LINE text message length limit is 5,000 characters.
+          payload = json.dumps(
+              {"to": to, "messages": [{"type": "text", "text": message[:4900]}]},
+              ensure_ascii=False,
+          ).encode("utf-8")
+          request = urllib.request.Request(
+              "https://api.line.me/v2/bot/message/push",
+              data=payload,
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {token}",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=15) as response:
+              print(f"LINE Thai morning brief pushed: HTTP {response.status}")
+          PY
