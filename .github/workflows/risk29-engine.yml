@@ -156,12 +156,12 @@ jobs:
           brief = json.load(open("/tmp/risk29-published/brief-th.json", encoding="utf-8"))
           score = "N/A" if brief["score"] is None else f'{brief["score"]:.1f}'
           message = (
-              f'Risk29 Morning Brief | {brief["state"].upper()} {score}\\n'
-              f'มุมมอง: {brief["posture"]}\\n'
-              f'อะไรเปลี่ยน: {brief["whatChanged"]}\\n'
-              f'ทำไมสำคัญ: {brief["why"]}\\n'
-              f'สิ่งที่ควรพิจารณาวันนี้: {brief["actionToday"]}\\n'
-              f'ความเชื่อมั่นข้อมูล: {brief["confidence"]}\\n'
+              f'Risk29 Morning Brief | {brief["state"].upper()} {score}\n'
+              f'มุมมอง: {brief["posture"]}\n'
+              f'อะไรเปลี่ยน: {brief["whatChanged"]}\n'
+              f'ทำไมสำคัญ: {brief["why"]}\n'
+              f'สิ่งที่ควรพิจารณาวันนี้: {brief["actionToday"]}\n'
+              f'ความเชื่อมั่นข้อมูล: {brief["confidence"]}\n'
               f'ข้อมูล ณ {brief["generatedAt"]} (UTC)'
           )
           # LINE text message length limit is 5,000 characters.
