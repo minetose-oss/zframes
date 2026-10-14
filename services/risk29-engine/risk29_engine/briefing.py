@@ -176,6 +176,7 @@ def build_thai_brief(
 def build_material_alert(
     snapshot: Risk29Snapshot,
     previous: Risk29HistoryPoint | None = None,
+    previous_snapshot: Risk29Snapshot | None = None,
 ) -> Risk29MaterialAlert:
     reasons: list[str] = []
     delta = _previous_delta(snapshot, previous)
@@ -193,15 +194,41 @@ def build_material_alert(
         label, move = moves[0]
         reasons.append(f"หมวด {label} เปลี่ยน {move:+.1f} จุด")
 
-    issues = sum(
-        signal.state == "unavailable"
-        or signal.freshness in {"stale", "error"}
+    issue_states = {
+        signal.id: (signal.state, signal.freshness)
         for signal in snapshot.signals
+        if signal.state == "unavailable"
+        or signal.freshness in {"stale", "error"}
+    }
+    previous_issue_states = (
+        {
+            signal.id: (signal.state, signal.freshness)
+            for signal in previous_snapshot.signals
+            if signal.state == "unavailable"
+            or signal.freshness in {"stale", "error"}
+        }
+        if previous_snapshot is not None
+        else {}
     )
-    if issues:
-        reasons.append(f"ข้อมูลต้องตรวจสอบ {issues} รายการ")
+    new_or_changed_issues = [
+        signal_id
+        for signal_id, issue_state in issue_states.items()
+        if previous_issue_states.get(signal_id) != issue_state
+    ]
+    resolved_issues = [
+        signal_id
+        for signal_id in previous_issue_states
+        if signal_id not in issue_states
+    ]
+    if new_or_changed_issues:
+        reasons.append(
+            f"มี data-health issue ใหม่/เปลี่ยนสถานะ {len(new_or_changed_issues)} รายการ"
+        )
+    if resolved_issues:
+        reasons.append(f"data-health issue ฟื้นตัว {len(resolved_issues)} รายการ")
     if snapshot.score is None or snapshot.state == "unavailable":
-        reasons.append("คะแนนรวมยังยืนยันไม่ได้")
+        if previous_snapshot is None or previous_snapshot.state != "unavailable":
+            reasons.append("คะแนนรวมยังยืนยันไม่ได้")
 
     should_notify = bool(reasons)
     severity: Literal["clear", "review", "warning", "alert"]
