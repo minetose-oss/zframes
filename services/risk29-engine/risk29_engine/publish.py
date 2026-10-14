@@ -8,6 +8,7 @@ from pathlib import Path
 
 import httpx
 
+from .briefing import build_material_alert, build_thai_brief
 from .engine import Risk29Engine
 from .models import Risk29History, Risk29Snapshot
 from .sources import PublicSourceClient
@@ -85,6 +86,8 @@ async def publish(
             data_dir=data_dir,
             refresh_seconds=1,
         )
+        previous_history = engine.store.load_history()
+        previous = previous_history.points[-1] if previous_history.points else None
         snapshot = await engine.latest(force=True)
 
         if snapshot.score is None or snapshot.health.available < minimum_available:
@@ -95,8 +98,12 @@ async def publish(
             )
 
         history = _coalesce_history(engine.history(365))
+        brief = build_thai_brief(snapshot, previous)
+        alert = build_material_alert(snapshot, previous)
         (output_dir / "latest.json").write_text(snapshot.model_dump_json(indent=2) + "\n")
         (output_dir / "history.json").write_text(history.model_dump_json(indent=2) + "\n")
+        (output_dir / "brief-th.json").write_text(brief.model_dump_json(indent=2) + "\n")
+        (output_dir / "alert.json").write_text(alert.model_dump_json(indent=2) + "\n")
         return snapshot
 
 
