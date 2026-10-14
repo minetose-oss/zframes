@@ -5,6 +5,7 @@ import os
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 
+from .briefing import Risk29MaterialAlert, Risk29ThaiBrief, build_material_alert, build_thai_brief
 from .engine import Risk29Engine
 from .models import Risk29History, Risk29Registry, Risk29Snapshot
 from .published import PublishedSnapshotClient
@@ -81,6 +82,56 @@ async def latest(response: Response) -> Risk29Snapshot:
             status_code=503,
             detail="Published Risk29 snapshot is temporarily unavailable",
         ) from exc
+
+
+@app.get("/risk29/brief-th.json", response_model=Risk29ThaiBrief)
+async def thai_brief(response: Response) -> Risk29ThaiBrief:
+    if published_client is not None:
+        response.headers["Cache-Control"] = "public, max-age=30, s-maxage=60, stale-while-revalidate=300"
+        try:
+            return await published_client.thai_brief()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Published Risk29 Thai brief is temporarily unavailable",
+            ) from exc
+
+    response.headers["Cache-Control"] = "no-store"
+    snapshot = await engine.latest()
+    history = engine.history(365)
+    generated_at_ms = int(__import__("datetime").datetime.fromisoformat(
+        snapshot.generatedAt.replace("Z", "+00:00")
+    ).timestamp() * 1000)
+    previous = next(
+        (point for point in reversed(history.points) if point.time < generated_at_ms),
+        None,
+    )
+    return build_thai_brief(snapshot, previous)
+
+
+@app.get("/risk29/alert.json", response_model=Risk29MaterialAlert)
+async def material_alert(response: Response) -> Risk29MaterialAlert:
+    if published_client is not None:
+        response.headers["Cache-Control"] = "public, max-age=30, s-maxage=60, stale-while-revalidate=300"
+        try:
+            return await published_client.material_alert()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Published Risk29 material alert is temporarily unavailable",
+            ) from exc
+
+    response.headers["Cache-Control"] = "no-store"
+    snapshot = await engine.latest()
+    history = engine.history(365)
+    generated_at_ms = int(__import__("datetime").datetime.fromisoformat(
+        snapshot.generatedAt.replace("Z", "+00:00")
+    ).timestamp() * 1000)
+    previous = next(
+        (point for point in reversed(history.points) if point.time < generated_at_ms),
+        None,
+    )
+    return build_material_alert(snapshot, previous)
 
 
 @app.get("/risk29/history.json", response_model=Risk29History)
