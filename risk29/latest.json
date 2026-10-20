@@ -2,7 +2,7 @@
   "schemaVersion": "1",
   "modelVersion": "risk29-p2-engine-1.0.0",
   "thresholdVersion": "risk29-p2-provisional-v2",
-  "generatedAt": "2026-10-20T06:12:30.001531+00:00",
+  "generatedAt": "2026-10-20T10:43:24.769696+00:00",
   "score": 43.5,
   "state": "watch",
   "regime": "neutral",
@@ -96,8 +96,8 @@
       "change": 3.53,
       "changeWindow": "1d",
       "asOf": "2026-10-16",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 367950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 384204.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -117,8 +117,8 @@
       "change": 0.408516,
       "changeWindow": "1d",
       "asOf": "2026-10-19",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 108750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 125004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -138,8 +138,8 @@
       "change": 1.1127,
       "changeWindow": "1d",
       "asOf": "2026-10-19",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 108750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 125004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -159,8 +159,8 @@
       "change": 0.03,
       "changeWindow": "1d",
       "asOf": "2026-10-19",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 108750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 125004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -180,8 +180,8 @@
       "change": 0.08,
       "changeWindow": "1d",
       "asOf": "2026-10-16",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 367950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 384204.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -201,8 +201,8 @@
       "change": 0.01,
       "changeWindow": "1d",
       "asOf": "2026-10-16",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 367950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 384204.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -222,8 +222,8 @@
       "change": -0.04,
       "changeWindow": "1d",
       "asOf": "2026-10-16",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 367950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 384204.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -243,8 +243,8 @@
       "change": -0.135314,
       "changeWindow": "1d",
       "asOf": "2026-10-16",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 367950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 384204.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -264,8 +264,8 @@
       "change": 0.327,
       "changeWindow": "1d",
       "asOf": "2026-10-15",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 454350.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 470604.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -285,8 +285,8 @@
       "change": -0.220691,
       "changeWindow": "1d",
       "asOf": "2026-10-19",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 108750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 125004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -306,8 +306,8 @@
       "change": 1.441565,
       "changeWindow": "1m",
       "asOf": "2026-09-01",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 4255950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 4272204.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -327,8 +327,8 @@
       "change": -0.07,
       "changeWindow": "3m",
       "asOf": "2026-09-01",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 4255950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 4272204.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -348,8 +348,8 @@
       "change": -0.13,
       "changeWindow": "3m",
       "asOf": "2026-10-16",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 367950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 384204.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -369,8 +369,8 @@
       "change": 2.74,
       "changeWindow": "3m",
       "asOf": "2026-10-16",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 367950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 384204.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -390,8 +390,8 @@
       "change": 0.023,
       "changeWindow": "3m",
       "asOf": "2026-10-09",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 972750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 989004.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -411,8 +411,8 @@
       "change": -0.01,
       "changeWindow": "1d",
       "asOf": "2026-10-16",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 367950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 384204.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -432,8 +432,8 @@
       "change": 0.135058,
       "changeWindow": "4w",
       "asOf": "2026-10-14",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 540750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 557004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -453,8 +453,8 @@
       "change": 0.129734,
       "changeWindow": "1m",
       "asOf": "2026-10-01",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 1663950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 1680204.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -474,8 +474,8 @@
       "change": -0.262554,
       "changeWindow": "1m",
       "asOf": "2026-10-01",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 1663950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 1680204.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -495,8 +495,8 @@
       "change": 115.093307,
       "changeWindow": "5d",
       "asOf": "2026-10-19",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 108750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 125004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -516,8 +516,8 @@
       "change": 0.0,
       "changeWindow": "1d",
       "asOf": "2026-10-20",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 22350.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 38604.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -537,8 +537,8 @@
       "change": 4.105673,
       "changeWindow": "1d",
       "asOf": "2026-10-14",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 540750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 557004.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -558,8 +558,8 @@
       "change": -1.395215,
       "changeWindow": "1d",
       "asOf": "2026-10-19",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 108750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 125004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -579,8 +579,8 @@
       "change": 0.144584,
       "changeWindow": "1d",
       "asOf": "2026-10-14",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 540750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 557004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -600,8 +600,8 @@
       "change": -7.783538,
       "changeWindow": "1d",
       "asOf": "2026-10-16",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 367950.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 384204.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -621,8 +621,8 @@
       "change": -0.15873,
       "changeWindow": "1d",
       "asOf": "2026-10-19",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 108750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 125004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -642,8 +642,8 @@
       "change": 0.084957,
       "changeWindow": "1w",
       "asOf": "2026-10-13",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 627150.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 643404.769696,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -663,8 +663,8 @@
       "change": null,
       "changeWindow": null,
       "asOf": "2026-10-19",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 108750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 125004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -684,87 +684,14 @@
       "change": -4.2,
       "changeWindow": "1w",
       "asOf": "2026-10-14",
-      "fetchedAt": "2026-10-20T06:12:30.001531+00:00",
-      "ageSeconds": 540750.001531,
+      "fetchedAt": "2026-10-20T10:43:24.769696+00:00",
+      "ageSeconds": 557004.769696,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
     }
   ],
-  "changes": [
-    {
-      "signalId": "nasdaq_trend",
-      "label": "Nasdaq Trend",
-      "fromState": "normal",
-      "toState": "warning",
-      "scoreDelta": 30.0,
-      "summary": "Nasdaq Trend moved NORMAL → WARNING."
-    },
-    {
-      "signalId": "vix",
-      "label": "VIX",
-      "fromState": "normal",
-      "toState": "watch",
-      "scoreDelta": 17.65,
-      "summary": "VIX moved NORMAL → WATCH."
-    },
-    {
-      "signalId": "geopolitical_event_shock",
-      "label": "Geopolitical / Event Shock",
-      "fromState": "alert",
-      "toState": "warning",
-      "scoreDelta": -10.61,
-      "summary": "Geopolitical / Event Shock moved ALERT → WARNING."
-    },
-    {
-      "signalId": "market_breadth",
-      "label": "Market Breadth",
-      "fromState": "watch",
-      "toState": "watch",
-      "scoreDelta": 10.35,
-      "summary": "Market Breadth risk score moved +10.3 points."
-    },
-    {
-      "signalId": "broad_dollar",
-      "label": "Broad Dollar Index",
-      "fromState": "warning",
-      "toState": "watch",
-      "scoreDelta": -9.55,
-      "summary": "Broad Dollar Index moved WARNING → WATCH."
-    },
-    {
-      "signalId": "realized_volatility_regime",
-      "label": "Realized Volatility Regime",
-      "fromState": "normal",
-      "toState": "normal",
-      "scoreDelta": -9.49,
-      "summary": "Realized Volatility Regime risk score moved -9.5 points."
-    },
-    {
-      "signalId": "sp500_trend",
-      "label": "S&P 500 Trend",
-      "fromState": "watch",
-      "toState": "warning",
-      "scoreDelta": 6.0,
-      "summary": "S&P 500 Trend moved WATCH → WARNING."
-    },
-    {
-      "signalId": "put_call_ratio",
-      "label": "Put/Call Ratio",
-      "fromState": "normal",
-      "toState": "normal",
-      "scoreDelta": -5.0,
-      "summary": "Put/Call Ratio risk score moved -5.0 points."
-    },
-    {
-      "signalId": "curve_2s10s",
-      "label": "2Y-10Y Curve",
-      "fromState": "watch",
-      "toState": "normal",
-      "scoreDelta": -2.1,
-      "summary": "2Y-10Y Curve moved WATCH → NORMAL."
-    }
-  ],
+  "changes": [],
   "health": {
     "available": 29,
     "stale": 0,
