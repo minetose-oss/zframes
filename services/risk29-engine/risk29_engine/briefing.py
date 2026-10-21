@@ -10,6 +10,29 @@ from .models import (
 )
 
 
+class Risk29BriefSignalHealth(WireModel):
+    id: str
+    label: str
+    category: str
+    state: Risk29State
+    freshness: str
+    asOf: str | None
+    ageSeconds: float | None
+    reason: str | None = None
+
+
+class Risk29BriefDataHealth(WireModel):
+    total: int
+    usable: int
+    fresh: int
+    delayed: int
+    stale: int
+    missing: int
+    errored: int
+    coveragePct: float
+    issues: list[Risk29BriefSignalHealth]
+
+
 class Risk29ThaiBrief(WireModel):
     schemaVersion: Literal["1"] = "1"
     generatedAt: str
@@ -21,6 +44,7 @@ class Risk29ThaiBrief(WireModel):
     actionToday: str
     confidence: Literal["normal", "degraded"]
     topDrivers: list[str]
+    dataHealth: Risk29BriefDataHealth | None = None
 
 
 class Risk29MaterialAlert(WireModel):
@@ -114,6 +138,50 @@ def _top_drivers(snapshot: Risk29Snapshot, limit: int = 3) -> list[str]:
     return [label for _, label in ranked[:limit]]
 
 
+def _brief_data_health(snapshot: Risk29Snapshot) -> Risk29BriefDataHealth:
+    fresh = sum(signal.freshness == "fresh" for signal in snapshot.signals)
+    delayed = sum(signal.freshness == "delayed" for signal in snapshot.signals)
+    stale = sum(signal.freshness == "stale" for signal in snapshot.signals)
+    errored = sum(signal.freshness == "error" for signal in snapshot.signals)
+    missing = sum(
+        signal.state == "unavailable" and signal.freshness != "error"
+        for signal in snapshot.signals
+    )
+    usable = sum(
+        signal.state != "unavailable"
+        and signal.riskScore is not None
+        and signal.value is not None
+        and signal.freshness in {"fresh", "delayed"}
+        for signal in snapshot.signals
+    )
+    total = len(snapshot.signals)
+    issues = [
+        Risk29BriefSignalHealth(
+            id=signal.id,
+            label=signal.label,
+            category=signal.category,
+            state=signal.state,
+            freshness=signal.freshness,
+            asOf=signal.asOf,
+            ageSeconds=signal.ageSeconds,
+            reason=signal.reason,
+        )
+        for signal in snapshot.signals
+        if signal.state == "unavailable" or signal.freshness in {"stale", "error"}
+    ]
+    return Risk29BriefDataHealth(
+        total=total,
+        usable=usable,
+        fresh=fresh,
+        delayed=delayed,
+        stale=stale,
+        missing=missing,
+        errored=errored,
+        coveragePct=round((usable / total * 100) if total else 0.0, 1),
+        issues=issues,
+    )
+
+
 def build_thai_brief(
     snapshot: Risk29Snapshot,
     previous: Risk29HistoryPoint | None = None,
@@ -148,7 +216,9 @@ def build_thai_brief(
         reverse=True,
     )[:2]
     category_text = ", ".join(
-        f"{category.label} {category.score:.0f}" for category in categories if category.score is not None
+        f"{category.label} {category.score:.0f}"
+        for category in categories
+        if category.score is not None
     )
     drivers = _top_drivers(snapshot)
     why_parts: list[str] = []
@@ -158,7 +228,11 @@ def build_thai_brief(
         why_parts.append(f"ตัวขับเคลื่อนหลัก: {', '.join(drivers)}")
     if issues:
         why_parts.append(f"มีข้อมูลที่ต้องตรวจสอบ {issues} รายการ")
-    why = " · ".join(why_parts) if why_parts else "ยังไม่มีรายละเอียดตัวขับเคลื่อนที่ใช้งานได้"
+    why = (
+        " · ".join(why_parts)
+        if why_parts
+        else "ยังไม่มีรายละเอียดตัวขับเคลื่อนที่ใช้งานได้"
+    )
 
     return Risk29ThaiBrief(
         generatedAt=snapshot.generatedAt,
@@ -170,6 +244,7 @@ def build_thai_brief(
         actionToday=_ACTION[snapshot.state],
         confidence=confidence,
         topDrivers=drivers,
+        dataHealth=_brief_data_health(snapshot),
     )
 
 
