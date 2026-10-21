@@ -88,6 +88,31 @@ def test_thai_brief_maps_watch_to_selective_action() -> None:
     assert "หลีกเลี่ยงการไล่ราคา" in brief.actionToday
     assert brief.confidence == "normal"
     assert len(brief.topDrivers) == 3
+    assert brief.dataHealth is not None
+    assert brief.dataHealth.total == 8
+    assert brief.dataHealth.usable == 8
+    assert brief.dataHealth.coveragePct == 100.0
+    assert brief.dataHealth.issues == []
+
+
+def test_thai_brief_exposes_signal_level_stale_issue() -> None:
+    snapshot = _snapshot()
+    snapshot.signals[0].freshness = "stale"
+    snapshot.signals[0].ageSeconds = 604800
+    snapshot.health.stale = 1
+
+    brief = build_thai_brief(snapshot, _previous())
+
+    assert brief.confidence == "degraded"
+    assert brief.dataHealth is not None
+    assert brief.dataHealth.stale == 1
+    assert brief.dataHealth.usable == 7
+    assert brief.dataHealth.coveragePct == 87.5
+    assert len(brief.dataHealth.issues) == 1
+    issue = brief.dataHealth.issues[0]
+    assert issue.id == "s-macro"
+    assert issue.freshness == "stale"
+    assert issue.ageSeconds == 604800
 
 
 def test_material_alert_is_clear_when_nothing_material_changed() -> None:
@@ -127,6 +152,7 @@ def test_unavailable_snapshot_fails_closed() -> None:
     assert alert.shouldNotify is True
     assert brief.confidence == "degraded"
     assert "ตรวจสอบข้อมูล" in brief.posture
+
 
 def test_material_alert_does_not_repeat_unchanged_data_issue() -> None:
     previous_snapshot = _snapshot()
