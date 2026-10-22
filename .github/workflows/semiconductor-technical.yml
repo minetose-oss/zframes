@@ -14,11 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: risk29-live-data
+          ref: main
           persist-credentials: true
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Refresh historical series and technical checks
         run: python risk29/live_semiconductor.py
       - name: Commit validated result
@@ -28,5 +28,5 @@ jobs:
           git add risk29/semiconductor-latest.json
           if ! git diff --cached --quiet; then
             git commit -m "data: refresh semiconductor technical status"
-            git push origin HEAD:risk29-live-data
+            git push origin HEAD:main
           fi
