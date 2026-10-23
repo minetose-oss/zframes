@@ -1,0 +1,368 @@
+{
+  "schemaVersion": "1",
+  "generatedAt": "2026-10-23T10:46:04.101344+00:00",
+  "points": [
+    {
+      "time": 1789560924232,
+      "score": 36.24,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 59.11,
+        "credit": 26.99,
+        "sentiment": 35.5,
+        "liquidity": 5.0,
+        "global": 29.22,
+        "technical": 60.0
+      }
+    },
+    {
+      "time": 1789655172119,
+      "score": 37.19,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 61.35,
+        "credit": 26.09,
+        "sentiment": 38.55,
+        "liquidity": 5.0,
+        "global": 29.3,
+        "technical": 60.0
+      }
+    },
+    {
+      "time": 1789714144103,
+      "score": 32.74,
+      "state": "normal",
+      "categoryScores": {
+        "macro": 61.75,
+        "credit": 26.09,
+        "sentiment": 38.55,
+        "liquidity": 5.0,
+        "global": 28.08,
+        "technical": 24.0
+      }
+    },
+    {
+      "time": 1791392670150,
+      "score": 31.5,
+      "state": "normal",
+      "categoryScores": {
+        "macro": 37.28,
+        "credit": 40.59,
+        "sentiment": 25.05,
+        "liquidity": 17.34,
+        "global": 57.98,
+        "technical": 12.0
+      }
+    },
+    {
+      "time": 1791418242298,
+      "score": 27.9,
+      "state": "normal",
+      "categoryScores": {
+        "macro": 36.76,
+        "credit": 40.01,
+        "sentiment": 25.05,
+        "liquidity": 22.66,
+        "global": 22.83,
+        "technical": 12.0
+      }
+    },
+    {
+      "time": 1791526353752,
+      "score": 29.79,
+      "state": "normal",
+      "categoryScores": {
+        "macro": 37.36,
+        "credit": 40.42,
+        "sentiment": 25.4,
+        "liquidity": 19.72,
+        "global": 40.23,
+        "technical": 12.0
+      }
+    },
+    {
+      "time": 1791618438342,
+      "score": 37.47,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 37.72,
+        "credit": 41.25,
+        "valuation": 86.53,
+        "sentiment": 27.05,
+        "liquidity": 19.2,
+        "global": 40.53,
+        "technical": 12.0
+      }
+    },
+    {
+      "time": 1791710805794,
+      "score": 36.74,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 37.72,
+        "credit": 41.25,
+        "valuation": 86.53,
+        "sentiment": 27.05,
+        "qualitative": 25.37,
+        "liquidity": 19.2,
+        "global": 40.53,
+        "technical": 12.0
+      }
+    },
+    {
+      "time": 1791721604644,
+      "score": 36.79,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 37.72,
+        "credit": 41.25,
+        "valuation": 86.53,
+        "sentiment": 27.05,
+        "qualitative": 25.37,
+        "liquidity": 19.2,
+        "global": 38.36,
+        "technical": 14.71
+      }
+    },
+    {
+      "time": 1791731912307,
+      "score": 37.74,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 37.72,
+        "credit": 41.25,
+        "valuation": 72.32,
+        "sentiment": 37.41,
+        "qualitative": 25.37,
+        "liquidity": 19.2,
+        "global": 38.36,
+        "technical": 24.65
+      }
+    },
+    {
+      "time": 1791956482865,
+      "score": 36.15,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 22.44,
+        "credit": 41.19,
+        "valuation": 72.36,
+        "sentiment": 36.74,
+        "qualitative": 47.13,
+        "liquidity": 20.04,
+        "global": 39.66,
+        "technical": 21.87
+      }
+    },
+    {
+      "time": 1792044125383,
+      "score": 42.1,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.16,
+        "credit": 41.7,
+        "valuation": 72.3,
+        "sentiment": 38.56,
+        "qualitative": 47.13,
+        "liquidity": 20.44,
+        "global": 39.39,
+        "technical": 33.02
+      }
+    },
+    {
+      "time": 1792060645452,
+      "score": 42.1,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.16,
+        "credit": 41.7,
+        "valuation": 72.3,
+        "sentiment": 38.56,
+        "qualitative": 47.13,
+        "liquidity": 20.44,
+        "global": 39.39,
+        "technical": 33.02
+      }
+    },
+    {
+      "time": 1792130424451,
+      "score": 42.19,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.73,
+        "credit": 42.43,
+        "valuation": 71.81,
+        "sentiment": 41.89,
+        "qualitative": 47.13,
+        "liquidity": 19.6,
+        "global": 39.16,
+        "technical": 28.46
+      }
+    },
+    {
+      "time": 1792146243913,
+      "score": 42.19,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.73,
+        "credit": 42.43,
+        "valuation": 71.81,
+        "sentiment": 41.89,
+        "qualitative": 47.13,
+        "liquidity": 19.6,
+        "global": 39.16,
+        "technical": 28.46
+      }
+    },
+    {
+      "time": 1792391064240,
+      "score": 42.81,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.18,
+        "credit": 42.26,
+        "valuation": 72.11,
+        "sentiment": 40.52,
+        "qualitative": 47.13,
+        "liquidity": 20.31,
+        "global": 39.16,
+        "technical": 36.81
+      }
+    },
+    {
+      "time": 1792410034151,
+      "score": 42.81,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.18,
+        "credit": 42.26,
+        "valuation": 72.11,
+        "sentiment": 40.52,
+        "qualitative": 47.13,
+        "liquidity": 20.31,
+        "global": 39.16,
+        "technical": 36.81
+      }
+    },
+    {
+      "time": 1792476750001,
+      "score": 43.5,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 46.52,
+        "credit": 43.36,
+        "valuation": 71.56,
+        "sentiment": 43.68,
+        "qualitative": 41.83,
+        "liquidity": 19.93,
+        "global": 35.77,
+        "technical": 46.03
+      }
+    },
+    {
+      "time": 1792493004769,
+      "score": 43.5,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 46.52,
+        "credit": 43.36,
+        "valuation": 71.56,
+        "sentiment": 43.68,
+        "qualitative": 41.83,
+        "liquidity": 19.93,
+        "global": 35.77,
+        "technical": 46.03
+      }
+    },
+    {
+      "time": 1792563061886,
+      "score": 42.79,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.59,
+        "credit": 43.9,
+        "valuation": 71.77,
+        "sentiment": 41.74,
+        "qualitative": 41.83,
+        "liquidity": 19.24,
+        "global": 33.66,
+        "technical": 42.14
+      }
+    },
+    {
+      "time": 1792580060545,
+      "score": 42.79,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.59,
+        "credit": 43.9,
+        "valuation": 71.77,
+        "sentiment": 41.74,
+        "qualitative": 41.83,
+        "liquidity": 19.24,
+        "global": 33.66,
+        "technical": 42.14
+      }
+    },
+    {
+      "time": 1792649728837,
+      "score": 42.16,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.67,
+        "credit": 44.3,
+        "valuation": 71.78,
+        "sentiment": 42.86,
+        "qualitative": 41.83,
+        "liquidity": 19.97,
+        "global": 41.51,
+        "technical": 24.54
+      }
+    },
+    {
+      "time": 1792666493906,
+      "score": 42.16,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.67,
+        "credit": 44.3,
+        "valuation": 71.78,
+        "sentiment": 42.86,
+        "qualitative": 41.83,
+        "liquidity": 19.97,
+        "global": 41.51,
+        "technical": 24.54
+      }
+    },
+    {
+      "time": 1792735774295,
+      "score": 42.98,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.81,
+        "credit": 43.84,
+        "valuation": 71.87,
+        "sentiment": 43.83,
+        "qualitative": 41.83,
+        "liquidity": 21.04,
+        "global": 40.87,
+        "technical": 30.54
+      }
+    },
+    {
+      "time": 1792752364101,
+      "score": 42.98,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 47.81,
+        "credit": 43.84,
+        "valuation": 71.87,
+        "sentiment": 43.83,
+        "qualitative": 41.83,
+        "liquidity": 21.04,
+        "global": 40.87,
+        "technical": 30.54
+      }
+    }
+  ]
+}

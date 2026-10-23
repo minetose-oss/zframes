@@ -15,6 +15,7 @@ import { frameMetas } from "@zframes/frames/schemas";
 import {
   BINANCE_MANIFEST,
   KEYLESS_MANIFEST,
+  RISK29_MANIFEST,
   WALLET_MANIFEST,
 } from "@zframes/plugins/registry";
 import tailwindcss from "@tailwindcss/vite";
@@ -46,12 +47,16 @@ export default defineConfig({
       // the store-default resolution below applies.
       file: process.env.ZFRAMES_DASHBOARD_FILE,
       catalogue: catalogueSummary(frameMetas),
-      // The dev composition: in-repo `pnpm dev` is where the fleet and the
-      // keyed tier are developed, so dev mounts all of them — explicitly,
-      // here, at the host. This is what the providers route answers and what
-      // the relay allowlist derives from; a bare `zframes serve` install
-      // mounts only what its operator added (`zframes providers`).
-      plugins: [KEYLESS_MANIFEST, BINANCE_MANIFEST, WALLET_MANIFEST],
+      // The dev composition: in-repo `pnpm dev` is where the fleet, Risk29 and
+      // the keyed tier are developed, so dev mounts all of them explicitly.
+      // Risk29 owns unique capabilities and therefore does not compete with the
+      // public keyless fleet's first-match routing.
+      plugins: [
+        KEYLESS_MANIFEST,
+        RISK29_MANIFEST,
+        BINANCE_MANIFEST,
+        WALLET_MANIFEST,
+      ],
     }),
   ],
   define: {
@@ -71,6 +76,7 @@ export default defineConfig({
       "@zframes/frames",
       "@zframes/plugins",
       "@zframes/provider-demo",
+      "@zframes/provider-risk29",
       "@zframes/provider-binance",
       "@zframes/provider-wallet",
       "@zframes/providers-keyless",

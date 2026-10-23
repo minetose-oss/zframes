@@ -1,0 +1,33 @@
+{
+  "name": "@zframes/provider-risk29",
+  "version": "0.0.0",
+  "description": "POC zframes provider for the Risk29 investment-risk intelligence service. Consumes versioned Risk29 snapshot/history JSON and never recalculates scores in the UI layer.",
+  "license": "MIT",
+  "author": "minetose-oss",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/minetose-oss/zframes.git",
+    "directory": "packages/provider-risk29"
+  },
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./manifest": "./src/manifest.ts",
+    "./plugin": "./src/plugin.ts"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zframes/data-primitives": "workspace:*",
+    "@zframes/spec": "workspace:*",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}
