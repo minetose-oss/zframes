@@ -2,7 +2,7 @@
   "schemaVersion": "1",
   "modelVersion": "risk29-p2-engine-1.0.0",
   "thresholdVersion": "risk29-p2-provisional-v2",
-  "generatedAt": "2026-10-27T06:29:39.602953+00:00",
+  "generatedAt": "2026-10-27T11:19:35.370719+00:00",
   "score": 43.34,
   "state": "watch",
   "regime": "neutral",
@@ -96,8 +96,8 @@
       "change": 0.42,
       "changeWindow": "1d",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -117,8 +117,8 @@
       "change": -0.518697,
       "changeWindow": "1d",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -138,8 +138,8 @@
       "change": 0.824647,
       "changeWindow": "1d",
       "asOf": "2026-10-26",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 109779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 127175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -159,8 +159,8 @@
       "change": 0.01,
       "changeWindow": "1d",
       "asOf": "2026-10-26",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 109779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 127175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -180,8 +180,8 @@
       "change": -0.02,
       "changeWindow": "1d",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -201,8 +201,8 @@
       "change": 0.02,
       "changeWindow": "1d",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -222,8 +222,8 @@
       "change": 0.02,
       "changeWindow": "1d",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -243,8 +243,8 @@
       "change": -0.027111,
       "changeWindow": "1d",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -264,8 +264,8 @@
       "change": 0.496,
       "changeWindow": "1d",
       "asOf": "2026-10-22",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 455379.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 472775.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -285,8 +285,8 @@
       "change": 0.368193,
       "changeWindow": "1d",
       "asOf": "2026-10-26",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 109779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 127175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -306,8 +306,8 @@
       "change": 1.441565,
       "changeWindow": "1m",
       "asOf": "2026-09-01",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 4861779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 4879175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -327,8 +327,8 @@
       "change": -0.07,
       "changeWindow": "3m",
       "asOf": "2026-09-01",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 4861779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 4879175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -348,8 +348,8 @@
       "change": -0.12,
       "changeWindow": "3m",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -369,8 +369,8 @@
       "change": 3.18,
       "changeWindow": "3m",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -390,8 +390,8 @@
       "change": 0.035,
       "changeWindow": "3m",
       "asOf": "2026-10-16",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 973779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 991175.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -411,8 +411,8 @@
       "change": 0.02,
       "changeWindow": "1d",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -432,8 +432,8 @@
       "change": 0.540817,
       "changeWindow": "4w",
       "asOf": "2026-10-21",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 541779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 559175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -453,8 +453,8 @@
       "change": 0.129734,
       "changeWindow": "1m",
       "asOf": "2026-10-01",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 2269779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 2287175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -474,8 +474,8 @@
       "change": -0.262554,
       "changeWindow": "1m",
       "asOf": "2026-10-01",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 2269779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 2287175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -495,8 +495,8 @@
       "change": -79.618729,
       "changeWindow": "5d",
       "asOf": "2026-10-26",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 109779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 127175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -516,8 +516,8 @@
       "change": 0.0,
       "changeWindow": "1d",
       "asOf": "2026-10-27",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 23379.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 40775.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -537,8 +537,8 @@
       "change": -1.539979,
       "changeWindow": "1d",
       "asOf": "2026-10-20",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 628179.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 645575.370719,
       "freshness": "stale",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -558,8 +558,8 @@
       "change": -0.061471,
       "changeWindow": "1d",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -579,8 +579,8 @@
       "change": 0.050376,
       "changeWindow": "1d",
       "asOf": "2026-10-20",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 628179.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 645575.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -600,8 +600,8 @@
       "change": -12.844952,
       "changeWindow": "1d",
       "asOf": "2026-10-23",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 368979.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 386375.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -621,8 +621,8 @@
       "change": 0.039683,
       "changeWindow": "1d",
       "asOf": "2026-10-26",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 109779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 127175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -642,8 +642,8 @@
       "change": 0.536289,
       "changeWindow": "1w",
       "asOf": "2026-10-20",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 628179.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 645575.370719,
       "freshness": "delayed",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -663,8 +663,8 @@
       "change": null,
       "changeWindow": null,
       "asOf": "2026-10-26",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 109779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 127175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
@@ -684,87 +684,14 @@
       "change": -6.0,
       "changeWindow": "1w",
       "asOf": "2026-10-21",
-      "fetchedAt": "2026-10-27T06:29:39.602953+00:00",
-      "ageSeconds": 541779.602953,
+      "fetchedAt": "2026-10-27T11:19:35.370719+00:00",
+      "ageSeconds": 559175.370719,
       "freshness": "fresh",
       "reason": null,
       "thresholdVersion": "risk29-p2-provisional-v2"
     }
   ],
-  "changes": [
-    {
-      "signalId": "sp500_trend",
-      "label": "S&P 500 Trend",
-      "fromState": "normal",
-      "toState": "warning",
-      "scoreDelta": 48.0,
-      "summary": "S&P 500 Trend moved NORMAL → WARNING."
-    },
-    {
-      "signalId": "geopolitical_event_shock",
-      "label": "Geopolitical / Event Shock",
-      "fromState": "warning",
-      "toState": "watch",
-      "scoreDelta": -31.76,
-      "summary": "Geopolitical / Event Shock moved WARNING → WATCH."
-    },
-    {
-      "signalId": "market_breadth",
-      "label": "Market Breadth",
-      "fromState": "watch",
-      "toState": "watch",
-      "scoreDelta": 18.02,
-      "summary": "Market Breadth risk score moved +18.0 points."
-    },
-    {
-      "signalId": "sofr_iorb_funding_spread",
-      "label": "SOFR-IORB Funding Spread",
-      "fromState": "normal",
-      "toState": "watch",
-      "scoreDelta": 12.21,
-      "summary": "SOFR-IORB Funding Spread moved NORMAL → WATCH."
-    },
-    {
-      "signalId": "broad_dollar",
-      "label": "Broad Dollar Index",
-      "fromState": "watch",
-      "toState": "watch",
-      "scoreDelta": -9.04,
-      "summary": "Broad Dollar Index risk score moved -9.0 points."
-    },
-    {
-      "signalId": "realized_volatility_regime",
-      "label": "Realized Volatility Regime",
-      "fromState": "normal",
-      "toState": "normal",
-      "scoreDelta": 7.4,
-      "summary": "Realized Volatility Regime risk score moved +7.4 points."
-    },
-    {
-      "signalId": "put_call_ratio",
-      "label": "Put/Call Ratio",
-      "fromState": "normal",
-      "toState": "normal",
-      "scoreDelta": -7.0,
-      "summary": "Put/Call Ratio risk score moved -7.0 points."
-    },
-    {
-      "signalId": "gold_trend",
-      "label": "Gold Trend",
-      "fromState": "normal",
-      "toState": "normal",
-      "scoreDelta": 6.53,
-      "summary": "Gold Trend risk score moved +6.5 points."
-    },
-    {
-      "signalId": "hy_oas",
-      "label": "US HY OAS",
-      "fromState": "watch",
-      "toState": "normal",
-      "scoreDelta": -0.5,
-      "summary": "US HY OAS moved WATCH → NORMAL."
-    }
-  ],
+  "changes": [],
   "health": {
     "available": 29,
     "stale": 1,
