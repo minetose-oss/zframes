@@ -1,12 +1,13 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-11-05T13:46:45.729797+00:00",
+  "generatedAt": "2026-11-06T08:06:34.170252+00:00",
   "shouldNotify": true,
   "severity": "review",
-  "score": 46.05,
+  "score": 46.01,
   "state": "watch",
   "reasons": [
-    "มี material signal change 1 รายการ"
+    "มี material signal change 7 รายการ",
+    "หมวด Technical เปลี่ยน +6.8 จุด"
   ],
-  "messageThai": "Risk29 WATCH 46.0 — มี material signal change 1 รายการ"
+  "messageThai": "Risk29 WATCH 46.0 — มี material signal change 7 รายการ · หมวด Technical เปลี่ยน +6.8 จุด"
 }
