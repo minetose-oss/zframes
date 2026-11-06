@@ -18,6 +18,7 @@
     "./schemas": "./src/schemas.ts",
     "./lazy": "./src/lazy.ts",
     "./lazy-registry": "./src/lazy-registry.tsx",
+    "./risk29-poc": "./src/risk29-poc.ts",
     "./asset-logo": "./src/asset-logo.tsx"
   },
   "sideEffects": false,

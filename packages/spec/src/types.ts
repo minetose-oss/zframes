@@ -98,6 +98,10 @@ export type Capability =
   | "bond-market-stats"
   | "bond-issuance"
   | "retail-gold-price"
+  // Private intelligence capabilities. Scores/states are calculated upstream;
+  // providers only transport the versioned Risk29 contract.
+  | "risk29-snapshot"
+  | "risk29-history"
   | "portfolio";
 
 // ── Crypto market data ───────────────────────────────────────────────────────
