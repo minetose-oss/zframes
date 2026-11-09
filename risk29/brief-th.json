@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-11-09T08:13:49.660730+00:00",
-  "score": 47.41,
+  "generatedAt": "2026-11-09T14:47:31.715706+00:00",
+  "score": 46.8,
   "state": "watch",
   "posture": "เลือกลงทุนและคุมความเสี่ยง",
-  "whatChanged": "Risk29 เพิ่มขึ้น 2.2 จุดจากรอบก่อน",
+  "whatChanged": "Risk29 ลดลง 0.6 จุดจากรอบก่อน",
   "why": "หมวดความเสี่ยงสูงสุด: Technical 77, Valuation 68 · ตัวขับเคลื่อนหลัก: 10Y TIPS Real Yield (risk 81, impact 3.7 จุด), CAPE / Long-Term Valuation (risk 91, impact 3.7 จุด), Excess CAPE Yield (ERP Proxy) (risk 82, impact 3.3 จุด)",
   "actionToday": "หลีกเลี่ยงการไล่ราคา ลดสถานะที่ conviction ต่ำ และเก็บสภาพคล่องไว้สำหรับจังหวะที่ดีกว่า",
   "confidence": "normal",
