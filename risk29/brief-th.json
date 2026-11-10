@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-11-10T08:33:38.698578+00:00",
-  "score": 45.51,
+  "generatedAt": "2026-11-10T14:00:38.453558+00:00",
+  "score": 45.41,
   "state": "watch",
   "posture": "เลือกลงทุนและคุมความเสี่ยง",
-  "whatChanged": "Risk29 ลดลง 1.3 จุดจากรอบก่อน",
+  "whatChanged": "Risk29 ลดลง 0.1 จุดจากรอบก่อน",
   "why": "หมวดความเสี่ยงสูงสุด: Valuation 68, Technical 62 · ตัวขับเคลื่อนหลัก: Realized Volatility Regime (risk 85, impact 4.3 จุด), 10Y TIPS Real Yield (risk 82, impact 3.7 จุด), CAPE / Long-Term Valuation (risk 91, impact 3.7 จุด) · มีข้อมูลที่ต้องตรวจสอบ 3 รายการ",
   "actionToday": "หลีกเลี่ยงการไล่ราคา ลดสถานะที่ conviction ต่ำ และเก็บสภาพคล่องไว้สำหรับจังหวะที่ดีกว่า",
   "confidence": "degraded",
