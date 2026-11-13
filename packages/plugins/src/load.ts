@@ -16,6 +16,7 @@ import { validateProviderPlugin } from "@zframes/spec/provider-plugin";
 /** id → the plugin module's dynamic import (its own browser chunk). */
 const PLUGIN_MODULES: Record<string, () => Promise<unknown>> = {
   keyless: () => import("@zframes/providers-keyless/plugin"),
+  risk29: () => import("@zframes/provider-risk29/plugin"),
   binance: () => import("@zframes/provider-binance/plugin"),
   wallet: () => import("@zframes/provider-wallet/plugin"),
   demo: () => import("@zframes/provider-demo/plugin"),

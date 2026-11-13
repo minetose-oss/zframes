@@ -1,0 +1,32 @@
+name: Semiconductor Technical Data
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 1 * * 1-5'
+permissions:
+  contents: write
+concurrency:
+  group: semiconductor-technical-data
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: risk29-live-data
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refresh historical series and technical checks
+        run: python risk29/live_semiconductor.py
+      - name: Commit validated result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add risk29/semiconductor-latest.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: refresh semiconductor technical status"
+            git push origin HEAD:risk29-live-data
+          fi

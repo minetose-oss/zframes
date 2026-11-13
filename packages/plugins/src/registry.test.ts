@@ -23,11 +23,12 @@ describe("BUILTIN_PLUGINS", () => {
     }
   });
 
-  it("covers the four first-party plugins", () => {
+  it("covers the five first-party plugins", () => {
     expect([...BUILTIN_PLUGINS.keys()].sort()).toEqual([
       "binance",
       "demo",
       "keyless",
+      "risk29",
       "wallet",
     ]);
   });
@@ -44,9 +45,10 @@ describe("resolveInstallation", () => {
   });
 
   it("mounts installed plugins in list order, without the demo", () => {
-    const installation = resolveInstallation(["keyless", "binance"]);
+    const installation = resolveInstallation(["keyless", "risk29", "binance"]);
     expect(installation.manifests.map((m) => m.id)).toEqual([
       "keyless",
+      "risk29",
       "binance",
     ]);
     expect(installation.demoFallback).toBe(false);
