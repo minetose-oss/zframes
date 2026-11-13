@@ -1,10 +1,13 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-11-12T14:21:43.784713+00:00",
-  "shouldNotify": false,
-  "severity": "clear",
-  "score": 45.18,
+  "generatedAt": "2026-11-13T08:17:11.378363+00:00",
+  "shouldNotify": true,
+  "severity": "review",
+  "score": 44.82,
   "state": "watch",
-  "reasons": [],
-  "messageThai": "Risk29 WATCH 45.2 — ไม่มี Material Change"
+  "reasons": [
+    "มี material signal change 7 รายการ",
+    "data-health issue ฟื้นตัว 1 รายการ"
+  ],
+  "messageThai": "Risk29 WATCH 44.8 — มี material signal change 7 รายการ · data-health issue ฟื้นตัว 1 รายการ"
 }
