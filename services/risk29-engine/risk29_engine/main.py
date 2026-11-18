@@ -62,3 +62,38 @@ async def latest() -> Risk29Snapshot:
 @app.get("/risk29/history.json", response_model=Risk29History)
 def history(days: int = Query(default=30, ge=1, le=365)) -> Risk29History:
     return engine.history(days)
+
+
+@app.get("/risk29/brief-th.json")
+async def brief_th() -> dict:
+    """Thai brief derived from the same live snapshot as latest.json."""
+    snapshot = await engine.latest()
+    score = snapshot.score
+    unavailable = score is None or snapshot.state == "unavailable"
+    ranked = sorted(
+        (signal for signal in snapshot.signals if signal.riskScore is not None),
+        key=lambda signal: signal.riskScore,
+        reverse=True,
+    )[:3]
+    drivers = [f"{signal.label} (risk {signal.riskScore:.0f})" for signal in ranked]
+    incomplete = snapshot.health.available < snapshot.health.total
+    return {
+        "schemaVersion": "1",
+        "generatedAt": snapshot.generatedAt,
+        "score": score,
+        "state": snapshot.state,
+        "posture": "ข้อมูลไม่เพียงพอสำหรับตัดสินใจ" if unavailable else
+                   ("ระมัดระวังความเสี่ยง" if snapshot.state in ("warning", "alert") else "เลือกลงทุนและคุมความเสี่ยง"),
+        "whatChanged": f"พบสัญญาณเปลี่ยนแปลง {len(snapshot.changes)} รายการ",
+        "why": (
+            f"ข้อมูลพร้อมใช้ {snapshot.health.available}/{snapshot.health.total} สัญญาณ; "
+            + ("ตัวขับเคลื่อนความเสี่ยง: " + ", ".join(drivers) if drivers else "ไม่มีตัวขับเคลื่อนที่ตรวจสอบได้")
+        ),
+        "actionToday": (
+            "งดใช้คะแนนรวมตัดสินใจลงทุนจนกว่าข้อมูลจะครบตามเกณฑ์"
+            if unavailable else
+            "ควบคุมขนาดสถานะและติดตามสัญญาณเสี่ยงก่อนเพิ่มการลงทุน"
+        ),
+        "confidence": "unavailable" if unavailable else ("degraded" if incomplete else "normal"),
+        "topDrivers": drivers,
+    }
