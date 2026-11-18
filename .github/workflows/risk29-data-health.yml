@@ -2,7 +2,7 @@ name: Risk29 Data Health CI
 
 on:
   push:
-    branches: [investment-data-engine-phase1]
+    branches: [risk29-live-data, investment-data-engine-phase1]
     paths:
       - 'scripts/risk29_health_validator.py'
       - 'scripts/risk29_health_probe.py'
@@ -14,6 +14,8 @@ on:
       - 'scripts/risk29_health_probe.py'
       - 'tests/test_risk29_health_validator.py'
       - '.github/workflows/risk29-data-health.yml'
+  schedule:
+    - cron: '15 1,9 * * *' # 08:15 and 16:15 Asia/Bangkok (UTC+7)
   workflow_dispatch:
 
 permissions:
@@ -33,7 +35,6 @@ jobs:
   live-health:
     runs-on: ubuntu-latest
     needs: unit-tests
-    continue-on-error: true # report source outages without blocking a code-only PR
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
