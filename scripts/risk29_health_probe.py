@@ -28,12 +28,29 @@ def get_json(url: str) -> dict:
 
 def probe() -> dict:
     failures = []
+    endpoints = {}
     for label, base in (("live", LIVE), ("github-fallback", FALLBACK)):
         try:
-            brief = get_json(f"{base}/brief-th.json")
-            latest = get_json(f"{base}/latest.json")
+            payloads = {}
+            for name in ("brief-th.json", "latest.json"):
+                url = f"{base}/{name}"
+                key = f"{label}/{name}"
+                try:
+                    payloads[name] = get_json(url)
+                    endpoints[key] = {"httpStatus": 200, "ok": True}
+                except HTTPError as exc:
+                    endpoints[key] = {"httpStatus": exc.code, "ok": False, "error": str(exc)[:250]}
+                except (URLError, TimeoutError, ValueError, OSError, RuntimeError) as exc:
+                    endpoints[key] = {"httpStatus": None, "ok": False, "error": str(exc)[:250]}
+            if len(payloads) != 2:
+                raise RuntimeError("endpoint failure: " + ", ".join(
+                    f"{key}={value['httpStatus']}" for key, value in endpoints.items()
+                    if key.startswith(label + "/") and not value["ok"]))
+            brief = payloads["brief-th.json"]
+            latest = payloads["latest.json"]
             result = validate(brief, latest, source=label)
             result["probeFailures"] = failures
+            result["endpoints"] = endpoints
             # Invalid live snapshots must not be silently accepted as healthy.
             if result["decisionGate"] != "FAIL":
                 if label == "live":
@@ -56,6 +73,7 @@ def probe() -> dict:
         "currentScore": None, "currentState": None,
         "comparison": {"status": "COMPARISON UNAVAILABLE"},
         "probeFailures": failures,
+        "endpoints": endpoints,
     }
 
 
@@ -66,7 +84,8 @@ def main() -> None:
     result = probe()
     Path(args.output).write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps({"source": result["sourceUsed"], "gate": result["decisionGate"],
-                      "failures": result.get("probeFailures", [])}))
+                      "failures": result.get("probeFailures", []),
+                      "endpoints": result.get("endpoints", {})}))
     if result["decisionGate"] == "FAIL":
         sys.exit(1)
 
