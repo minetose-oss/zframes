@@ -10,6 +10,11 @@ from .models import Risk29History, Risk29Snapshot
 from .sources import PublicSourceClient
 
 is_vercel = os.getenv("VERCEL") == "1"
+# Vercel entrypoint imports this module directly; app.py defaults do not run.
+# The package directory is read-only in serverless, so snapshots must use /tmp.
+if is_vercel:
+    os.environ.setdefault("RISK29_DATA_DIR", "/tmp/risk29-engine")
+    os.environ.setdefault("RISK29_REFRESH_SECONDS", "300")
 source_client = PublicSourceClient(
     # Vercel must never wait on slow public upstreams long enough to hit the
     # function invocation ceiling. On serverless we prefer a visible
