@@ -36,6 +36,15 @@ def probe() -> dict:
             result["probeFailures"] = failures
             # Invalid live snapshots must not be silently accepted as healthy.
             if result["decisionGate"] != "FAIL":
+                if label == "live":
+                    result["liveApiHealth"] = "PASS"
+                    result["fallbackHealth"] = "NOT_USED"
+                    return result
+                # Fallback is diagnostic only; it must not mask a broken live API.
+                result["liveApiHealth"] = "FAIL"
+                result["fallbackHealth"] = "PASS"
+                result["decisionGate"] = "FAIL"
+                result["errors"] = ["Production API unavailable; fallback snapshot is not production health"]
                 return result
             failures.append({"source": label, "reason": "; ".join(result["errors"])})
         except (HTTPError, URLError, TimeoutError, ValueError, OSError, RuntimeError, json.JSONDecodeError) as exc:
@@ -43,6 +52,7 @@ def probe() -> dict:
     return {
         "checkedAt": datetime.now(timezone.utc).isoformat(),
         "sourceUsed": "none", "freshnessPass": False, "decisionGate": "FAIL",
+        "liveApiHealth": "FAIL", "fallbackHealth": "FAIL",
         "currentScore": None, "currentState": None,
         "comparison": {"status": "COMPARISON UNAVAILABLE"},
         "probeFailures": failures,
