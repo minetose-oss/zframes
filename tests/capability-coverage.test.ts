@@ -83,6 +83,7 @@ const KEYLESS_MANIFEST = fileURLToPath(
 /** The fleet, built exactly once (see `beforeAll`). */
 let fleet: MarketDataProvider[] = [];
 let keyless: MarketDataProvider[] = [];
+let risk29: MarketDataProvider | undefined;
 let binance: MarketDataProvider | undefined;
 let wallet: MarketDataProvider | undefined;
 let advertised: ReadonlySet<Capability> = new Set();
@@ -107,18 +108,20 @@ beforeAll(async () => {
     // Fresh modules so provider module bodies (module-level TtlCaches, any
     // import-time work) are evaluated with the stub in place.
     vi.resetModules();
-    const [keylessMod, binanceMod, walletMod] = await Promise.all([
+    const [keylessMod, risk29Mod, binanceMod, walletMod] = await Promise.all([
       import("../packages/providers-keyless/src/index"),
+      import("../packages/provider-risk29/src/index"),
       import("../packages/provider-binance/src/index"),
       import("../packages/provider-wallet/src/index"),
     ]);
     keyless = keylessMod.createKeylessProviders();
+    risk29 = new risk29Mod.Risk29Provider("https://risk29.example");
     binance = new binanceMod.BinanceProvider();
     wallet = new walletMod.WalletProvider();
     // Exactly what the dev host mounts (apps/runtime/vite.config.ts passes
     // the keyless + keyed manifests; the plugin loader constructs the same
     // instances via each package's `plugin` module).
-    fleet = [...keyless, binance, wallet];
+    fleet = [...keyless, risk29, binance, wallet];
     constructionFetchCalls = fetchMock.mock.calls;
   } finally {
     vi.unstubAllGlobals();
@@ -128,7 +131,7 @@ beforeAll(async () => {
 });
 
 describe("frame ↔ provider capability coverage", () => {
-  it("mounts one instance per keyless provider package, plus the keyed pair", () => {
+  it("mounts keyless providers, Risk29, and the keyed account pair", () => {
     const manifest = JSON.parse(readFileSync(KEYLESS_MANIFEST, "utf8")) as {
       dependencies?: Record<string, string>;
     };
@@ -140,7 +143,7 @@ describe("frame ↔ provider capability coverage", () => {
     // unreachable — and would silently weaken every check below.
     expect(declared.length).toBeGreaterThan(20);
     expect(keyless).toHaveLength(declared.length);
-    expect(fleet).toHaveLength(declared.length + 2);
+    expect(fleet).toHaveLength(declared.length + 3);
     // `venue` pins resolve case-insensitively by provider NAME
     // (useProviderFor), so a duplicate name makes one of them unreachable.
     expect(new Set(fleet.map((p) => p.name)).size).toBe(fleet.length);
@@ -194,7 +197,7 @@ describe("frame ↔ provider capability coverage", () => {
     ).toEqual(Object.keys(UNCONSUMED_BY_FRAMES).sort());
   });
 
-  it("the keyless set alone serves every frame need except portfolio", () => {
+  it("the keyless set alone leaves only private Risk29 and portfolio needs", () => {
     // The published CLI mounts `createKeylessProviders()` and nothing else, so
     // every non-account frame must be fully served without the keyed tier.
     // The list is explicit on purpose: a new frame that needs a connected
@@ -209,17 +212,28 @@ describe("frame ↔ provider capability coverage", () => {
       "portfolio-value-bars",
       "portfolio-value",
     ]);
-    expect(unservedNeeds(allFrameMetas, keylessAdvertised)).toEqual(
-      accountFrames.map((m) => `${m.name} → portfolio`),
+    const privateRisk29Needs = allFrameMetas.flatMap((m) =>
+      m.capabilities
+        .filter(
+          (capability) =>
+            capability === "risk29-snapshot" || capability === "risk29-history",
+        )
+        .map((capability) => `${m.name} → ${capability}`),
     );
+    expect(unservedNeeds(allFrameMetas, keylessAdvertised)).toEqual([
+      ...privateRisk29Needs,
+      ...accountFrames.map((m) => `${m.name} → portfolio`),
+    ]);
   });
 
   it("the keyed pair is required for portfolio and adds nothing else", () => {
     expect(keylessAdvertised.has("portfolio")).toBe(false);
-    const keyedOnly = [...advertised].filter(
-      (capability) => !keylessAdvertised.has(capability),
-    );
-    expect(keyedOnly).toEqual(["portfolio"]);
+    expect(risk29?.capabilities).toEqual(["risk29-snapshot", "risk29-history"]);
+    const keyedOnly = new Set([
+      ...(binance?.capabilities ?? []),
+      ...(wallet?.capabilities ?? []),
+    ]);
+    expect([...keyedOnly]).toEqual(["portfolio"]);
     expect(binance?.capabilities).toEqual(["portfolio"]);
     expect(wallet?.capabilities).toEqual(["portfolio"]);
     // Both keyed providers advertise the SAME single capability, so capability

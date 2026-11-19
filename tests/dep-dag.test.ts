@@ -41,6 +41,7 @@ const DAG: Record<string, string[]> = {
   plugins: [
     "@zframes/provider-binance",
     "@zframes/provider-demo",
+    "@zframes/provider-risk29",
     "@zframes/provider-wallet",
     "@zframes/providers-keyless",
     "@zframes/spec",

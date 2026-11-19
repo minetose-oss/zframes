@@ -34,6 +34,13 @@ import {
   closeHistoryMeta,
 } from "./schemas/markets";
 import {
+  risk29CategoriesMeta,
+  risk29ChangesMeta,
+  risk29HeatmapMeta,
+  risk29HistoryMeta,
+  risk29ScoreMeta,
+} from "./schemas/risk29";
+import {
   tvlTreemapMeta,
   bitcoinDominanceMeta,
   dexVolumeTreemapMeta,
@@ -330,6 +337,7 @@ import {
 import { dinoGameMeta, snakeMeta, flappyBirdMeta } from "./schemas/games";
 
 export * from "./schemas/markets";
+export * from "./schemas/risk29";
 export * from "./schemas/crypto";
 export * from "./schemas/bitcoin";
 export * from "./schemas/onchain";
@@ -372,6 +380,11 @@ export const frameMetas: FrameMeta[] = [
   priceTickerMeta,
   returnCalendarMeta,
   returnDistributionMeta,
+  risk29CategoriesMeta,
+  risk29ChangesMeta,
+  risk29HeatmapMeta,
+  risk29HistoryMeta,
+  risk29ScoreMeta,
   rsiMomentumMeta,
   topMoversMeta,
   vixGaugeMeta,

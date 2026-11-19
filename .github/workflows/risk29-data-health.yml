@@ -1,0 +1,51 @@
+name: Risk29 Data Health CI
+# Probes https://risk29-engine-phase1b-live.vercel.app and fails closed when that payload is unhealthy.
+
+on:
+  push:
+    branches: [main, risk29-live-data, investment-data-engine-phase1]
+    paths:
+      - "scripts/risk29_health_validator.py"
+      - "scripts/risk29_health_probe.py"
+      - "tests/test_risk29_health_validator.py"
+      - ".github/workflows/risk29-data-health.yml"
+  pull_request:
+    paths:
+      - "scripts/risk29_health_validator.py"
+      - "scripts/risk29_health_probe.py"
+      - "tests/test_risk29_health_validator.py"
+      - ".github/workflows/risk29-data-health.yml"
+  schedule:
+    - cron: "15 1,9 * * *" # 08:15 and 16:15 Asia/Bangkok (UTC+7)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run validator tests
+        run: python -m unittest discover -s tests -p 'test_risk29_health_validator.py' -v
+
+  live-health:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Probe production and fallback
+        run: python scripts/risk29_health_probe.py --output risk29-data-health.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: risk29-data-health
+          path: risk29-data-health.json
+          if-no-files-found: warn

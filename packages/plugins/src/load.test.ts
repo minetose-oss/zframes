@@ -20,6 +20,7 @@ const module = (id: string, opts: { synthetic?: boolean } = {}) => ({
 
 const MODULES = {
   keyless: async () => module("keyless"),
+  risk29: async () => module("risk29"),
   binance: async () => module("binance"),
   demo: async () => module("demo", { synthetic: true }),
   broken: async () => ({ not: "a plugin" }),
@@ -34,8 +35,15 @@ beforeEach(() => {
 
 describe("loadPluginProviders", () => {
   it("loads the named plugins in order", async () => {
-    const result = await loadPluginProviders(["keyless", "binance"], MODULES);
-    expect(result.providers.map((p) => p.name)).toEqual(["keyless", "binance"]);
+    const result = await loadPluginProviders(
+      ["keyless", "risk29", "binance"],
+      MODULES,
+    );
+    expect(result.providers.map((p) => p.name)).toEqual([
+      "keyless",
+      "risk29",
+      "binance",
+    ]);
     // Nothing mounted fabricates its data.
     expect(result.synthetic).toBe("none");
     expect(result.syntheticPlugins).toEqual([]);

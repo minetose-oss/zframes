@@ -21,11 +21,18 @@ import { KEYLESS_MANIFEST } from "@zframes/providers-keyless/manifest";
 import { DEMO_MANIFEST } from "@zframes/provider-demo/manifest";
 import { BINANCE_MANIFEST } from "@zframes/provider-binance/manifest";
 import { WALLET_MANIFEST } from "@zframes/provider-wallet/manifest";
+import { RISK29_MANIFEST } from "@zframes/provider-risk29/manifest";
 
 // Re-exported for hosts that compose a mount by hand (apps/runtime's
 // vite.config passes the dev composition to `dashboardWriteback`), so a host
-// names manifests from ONE module instead of four provider packages.
-export { BINANCE_MANIFEST, DEMO_MANIFEST, KEYLESS_MANIFEST, WALLET_MANIFEST };
+// names manifests from ONE module instead of individual provider packages.
+export {
+  BINANCE_MANIFEST,
+  DEMO_MANIFEST,
+  KEYLESS_MANIFEST,
+  RISK29_MANIFEST,
+  WALLET_MANIFEST,
+};
 
 /**
  * Every plugin an installation can name, keyed by manifest id. Listing order
@@ -34,9 +41,13 @@ export { BINANCE_MANIFEST, DEMO_MANIFEST, KEYLESS_MANIFEST, WALLET_MANIFEST };
  */
 export const BUILTIN_PLUGINS: ReadonlyMap<string, ProviderPluginManifest> =
   new Map(
-    [KEYLESS_MANIFEST, BINANCE_MANIFEST, WALLET_MANIFEST, DEMO_MANIFEST].map(
-      (manifest) => [manifest.id, manifest],
-    ),
+    [
+      KEYLESS_MANIFEST,
+      RISK29_MANIFEST,
+      BINANCE_MANIFEST,
+      WALLET_MANIFEST,
+      DEMO_MANIFEST,
+    ].map((manifest) => [manifest.id, manifest]),
   );
 
 /** What a host mounts, resolved from the operator's installed-plugin list. */

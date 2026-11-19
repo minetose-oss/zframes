@@ -1,5 +1,10 @@
 name: Risk29 Phase 3 scheduler
 
+# Cron runs only from the default branch. The engine checkout is that
+# commit (main, once this file is merged). Snapshots are committed to
+# risk29-live-data, which is the branch production reads and the Vercel
+# production branch. That branch is not deleted on merge, and the Actions
+# bot can push there without main's review rules.
 on:
   schedule:
     - cron: "30 1 * * 1-5"
@@ -16,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: risk29-phase2
+          ref: ${{ github.sha }}
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -41,7 +46,7 @@ jobs:
       - name: Check out engine source
         uses: actions/checkout@v7
         with:
-          ref: risk29-phase2
+          ref: ${{ github.sha }}
 
       - uses: actions/setup-python@v6
         with:
