@@ -3,7 +3,7 @@ name: Risk29 Data Health CI
 
 on:
   push:
-    branches: [risk29-live-data, investment-data-engine-phase1]
+    branches: [main, risk29-live-data, investment-data-engine-phase1]
     paths:
       - "scripts/risk29_health_validator.py"
       - "scripts/risk29_health_probe.py"
