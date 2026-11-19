@@ -14,6 +14,39 @@ class FakeSources:
         first = self.end - timedelta(days=count - 1)
         return [SeriesPoint(first + timedelta(days=i), start + step * i) for i in range(count)]
 
+    def _monthly_series(self, start: float, growth: float, count: int = 24):
+        end_month = self.end.year * 12 + (self.end.month - 1)
+        first_month = end_month - (count - 1)
+        points = []
+        for i in range(count):
+            month_index = first_month + i
+            year, month_zero = divmod(month_index, 12)
+            observed = date(year, month_zero + 1, 1)
+            points.append(SeriesPoint(observed, start * ((1 + growth) ** i)))
+        return points
+
+    def _weekly_series(self, start: float, step: float, count: int = 80):
+        first = self.end - timedelta(days=7 * (count - 1))
+        return [
+            SeriesPoint(first + timedelta(days=7 * i), start + step * i)
+            for i in range(count)
+        ]
+
+    def _monthly_level_series(self, start: float, step: float, count: int = 24):
+        end_month = self.end.year * 12 + (self.end.month - 1)
+        first_month = end_month - (count - 1)
+        points = []
+        for i in range(count):
+            month_index = first_month + i
+            year, month_zero = divmod(month_index, 12)
+            points.append(
+                SeriesPoint(
+                    date(year, month_zero + 1, 1),
+                    start + step * i,
+                )
+            )
+        return points
+
     async def fred(self, series_id: str):
         if series_id == "VIXCLS":
             return self._series(17.0, 0.015)
@@ -29,6 +62,32 @@ class FakeSources:
             return self._series(1.6, 0.0005)
         if series_id == "DTWEXBGS":
             return self._series(118.0, 0.01)
+        if series_id == "CPILFESL":
+            return self._monthly_series(300.0, 0.0025)
+        if series_id == "SAHMREALTIME":
+            return self._monthly_series(0.18, 0.03)
+        if series_id == "BAA10Y":
+            return self._series(1.7, 0.001)
+        if series_id == "BAMLH0A3HYC":
+            return self._series(8.5, 0.010)
+        if series_id == "BAMLH0A1HYBB":
+            return self._series(2.0, 0.002)
+        if series_id == "NFCI":
+            return self._series(-0.6, 0.001, 80)
+        if series_id == "SOFR":
+            return self._series(3.50, 0.0005)
+        if series_id == "IORB":
+            return self._series(3.50, 0.0002)
+        if series_id == "NASDAQQGLDI":
+            return self._series(2200.0, 1.5)
+        if series_id == "WALCL":
+            return self._weekly_series(6_600_000.0, 1_500.0)
+        if series_id == "WTREGEN":
+            return self._weekly_series(850_000.0, -250.0)
+        if series_id == "RRPONTSYD":
+            return self._series(8.0, -0.01)
+        if series_id == "DCOILWTICO":
+            return self._series(72.0, 0.04)
         raise AssertionError(series_id)
 
     async def treasury_curve(self):
@@ -39,6 +98,34 @@ class FakeSources:
 
     async def lbma_gold(self):
         return self._series(3200, 2.0, 240)
+
+    async def shiller(self, metric: str):
+        if metric == "cape":
+            return self._monthly_level_series(30.0, 0.4)
+        if metric == "excess_cape_yield":
+            return self._monthly_level_series(3.0, -0.08)
+        raise AssertionError(metric)
+
+    async def gpr_geopolitical_shock(self):
+        return self._series(90.0, 0.50, 60)
+
+    async def policy_regime_shock(self):
+        return self._series(10.0, 0.10, 60)
+
+    async def market_breadth(self):
+        return self._series(62.0, -0.03, 180)
+
+    async def sp500_forward_pe_percentile(self):
+        return self._series(55.0, 0.05, 60)
+
+    async def cftc_equity_positioning(self):
+        return self._series(-0.2, -0.01, 60)
+
+    async def cboe_put_call_ratio(self):
+        return [SeriesPoint(self.end, 0.82)]
+
+    async def aaii_bull_bear_spread(self):
+        return self._weekly_series(-8.0, 0.25, 24)
 
 
 @pytest.mark.asyncio
@@ -54,12 +141,12 @@ async def test_engine_builds_contract_and_history(tmp_path):
     snapshot = await engine.latest(force=True)
 
     assert snapshot.schemaVersion == "1"
-    assert snapshot.modelVersion == "risk29-p1-engine-0.1.1"
-    assert snapshot.thresholdVersion == "risk29-p1-provisional-v1"
-    assert len(snapshot.signals) == 10
-    assert snapshot.health.total == 10
+    assert snapshot.modelVersion == "risk29-p2-engine-1.0.0"
+    assert snapshot.thresholdVersion == "risk29-p2-provisional-v2"
+    assert len(snapshot.signals) == 29
+    assert snapshot.health.total == 29
     assert snapshot.health.errored == 0
-    assert snapshot.health.available == 10
+    assert snapshot.health.available == 29
     assert snapshot.score is not None
     assert snapshot.state != "unavailable"
     assert [category.id for category in snapshot.categories] == [
@@ -72,10 +159,161 @@ async def test_engine_builds_contract_and_history(tmp_path):
         "global",
         "technical",
     ]
+    inflation = next(signal for signal in snapshot.signals if signal.id == "core_inflation_momentum")
+    assert inflation.value is not None
+    assert inflation.changeWindow == "1m"
+    assert inflation.sourceSeries == "CPILFESL"
+
+    sahm = next(signal for signal in snapshot.signals if signal.id == "sahm_labor_deterioration")
+    assert sahm.value is not None
+    assert sahm.changeWindow == "3m"
+    assert sahm.sourceSeries == "SAHMREALTIME"
+
+    baa = next(signal for signal in snapshot.signals if signal.id == "baa_treasury_spread")
+    assert baa.value is not None
+    assert baa.changeWindow == "3m"
+    assert baa.sourceSeries == "BAA10Y"
+
+    ccc_bb = next(
+        signal for signal in snapshot.signals if signal.id == "ccc_bb_stress_spread"
+    )
+    assert ccc_bb.value is not None
+    assert ccc_bb.value > 0
+    assert ccc_bb.changeWindow == "3m"
+    assert ccc_bb.sourceSeries == "BAMLH0A3HYC - BAMLH0A1HYBB"
+
+    nfci = next(signal for signal in snapshot.signals if signal.id == "chicago_fed_nfci")
+    assert nfci.value is not None
+    assert nfci.changeWindow == "3m"
+    assert nfci.sourceSeries == "NFCI"
+
+    sofr_iorb = next(
+        signal for signal in snapshot.signals if signal.id == "sofr_iorb_funding_spread"
+    )
+    assert sofr_iorb.value is not None
+    assert sofr_iorb.changeWindow == "1d"
+    assert sofr_iorb.sourceSeries == "SOFR - IORB"
+
+    gold = next(signal for signal in snapshot.signals if signal.id == "gold_trend")
+    assert gold.value is not None
+    assert gold.source == "Nasdaq/FRED"
+    assert gold.sourceSeries == "NASDAQQGLDI"
+
+    net_liquidity = next(
+        signal for signal in snapshot.signals if signal.id == "us_net_liquidity"
+    )
+    assert net_liquidity.value is not None
+    assert net_liquidity.changeWindow == "4w"
+    assert net_liquidity.sourceSeries == "WALCL - WTREGEN - RRPONTSYD"
+
+    cape = next(signal for signal in snapshot.signals if signal.id == "cape_long_term_valuation")
+    assert cape.value is not None
+    assert cape.source == "Robert Shiller"
+    assert cape.sourceSeries == "CAPE"
+    assert cape.changeWindow == "1m"
+
+    erp = next(signal for signal in snapshot.signals if signal.id == "equity_risk_premium")
+    assert erp.value is not None
+    assert erp.source == "Robert Shiller"
+    assert erp.sourceSeries == "Excess CAPE Yield"
+    assert erp.changeWindow == "1m"
+
     valuation = next(category for category in snapshot.categories if category.id == "valuation")
     qualitative = next(category for category in snapshot.categories if category.id == "qualitative")
-    assert valuation.score is None and valuation.state == "unavailable"
-    assert qualitative.score is None and qualitative.state == "unavailable"
+    assert valuation.score is not None and valuation.state != "unavailable"
+    assert valuation.availableSignals == 3
+    assert valuation.totalSignals == 3
+    assert qualitative.score is not None and qualitative.state != "unavailable"
+    assert qualitative.availableSignals == 2
+    assert qualitative.totalSignals == 2
+
+    geopolitical = next(
+        signal for signal in snapshot.signals if signal.id == "geopolitical_event_shock"
+    )
+    assert geopolitical.value is not None
+    assert geopolitical.changeWindow == "5d"
+    assert geopolitical.source == "Caldara-Iacoviello GPR"
+
+    policy = next(signal for signal in snapshot.signals if signal.id == "policy_regime_shock")
+    assert policy.value is not None
+    assert policy.source == "Fed/ECB/BoJ official RSS"
+
+    oil = next(signal for signal in snapshot.signals if signal.id == "oil_shock")
+    assert oil.value is not None
+    assert oil.unit == "percent"
+    assert oil.sourceSeries == "DCOILWTICO"
+    assert oil.changeWindow == "1d"
+
+    realized_vol = next(
+        signal for signal in snapshot.signals
+        if signal.id == "realized_volatility_regime"
+    )
+    assert realized_vol.value is not None
+    assert realized_vol.unit == "percent"
+    assert realized_vol.sourceSeries == "SP500"
+    assert realized_vol.changeWindow == "1d"
+
+    cross_asset = next(
+        signal for signal in snapshot.signals
+        if signal.id == "cross_asset_correlation_spike"
+    )
+    assert cross_asset.value is not None
+    assert cross_asset.unit == "z-score"
+    assert cross_asset.sourceSeries == (
+        "SP500 + NASDAQQGLDI + DCOILWTICO + DTWEXBGS"
+    )
+    assert cross_asset.changeWindow == "1d"
+
+    market_breadth = next(
+        signal for signal in snapshot.signals if signal.id == "market_breadth"
+    )
+    assert market_breadth.value is not None
+    assert market_breadth.unit == "percent"
+    assert market_breadth.sourceSeries == (
+        "70% S&P 500 % > 200DMA + 30% advancers share"
+    )
+    assert market_breadth.changeWindow == "1d"
+
+    forward_pe = next(
+        signal for signal in snapshot.signals
+        if signal.id == "sp500_forward_pe_percentile"
+    )
+    assert forward_pe.value is not None
+    assert forward_pe.unit == "percentile"
+    assert forward_pe.sourceSeries == "10Y rolling percentile of S&P 500 forward P/E"
+    assert forward_pe.changeWindow == "1d"
+
+    cftc = next(
+        signal for signal in snapshot.signals
+        if signal.id == "cftc_equity_positioning"
+    )
+    assert cftc.value is not None
+    assert cftc.unit == "z-score"
+    assert cftc.sourceSeries == (
+        "S&P 500 leveraged-money net / open interest, 3Y z-score"
+    )
+    assert cftc.changeWindow == "1w"
+
+    put_call = next(
+        signal for signal in snapshot.signals if signal.id == "put_call_ratio"
+    )
+    assert put_call.value == pytest.approx(0.82)
+    assert put_call.unit == "ratio"
+    assert put_call.source == "Cboe official daily statistics"
+
+    aaii = next(
+        signal for signal in snapshot.signals if signal.id == "aaii_bull_bear_spread"
+    )
+    assert aaii.value is not None
+    assert aaii.unit == "pct-points"
+    assert aaii.source == "AAII official sentiment survey"
+    assert aaii.changeWindow == "1w"
+
+    sentiment = next(
+        category for category in snapshot.categories if category.id == "sentiment"
+    )
+    assert sentiment.availableSignals == 4
+    assert sentiment.totalSignals == 4
 
     history = engine.history(30)
     assert len(history.points) == 1
@@ -106,8 +344,10 @@ async def test_one_source_failure_does_not_zero_the_model(tmp_path):
     assert snapshot.health.errored == 1
     assert snapshot.score is not None
     liquidity = next(category for category in snapshot.categories if category.id == "liquidity")
-    assert liquidity.state == "unavailable"
-    assert liquidity.score is None
+    assert liquidity.state != "unavailable"
+    assert liquidity.score is not None
+    assert liquidity.availableSignals == 3
+    assert liquidity.totalSignals == 4
 
 
 class FredTimeoutSources(FakeSources):
@@ -126,8 +366,8 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
 
     snapshot = await engine.latest(force=True)
 
-    assert snapshot.health.available == 3
-    assert snapshot.health.errored == 7
+    assert snapshot.health.available == 11
+    assert snapshot.health.errored == 18
     assert snapshot.score is None
     assert snapshot.state == "unavailable"
     assert snapshot.regime == "unavailable"
