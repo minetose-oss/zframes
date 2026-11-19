@@ -49,3 +49,47 @@ jobs:
           name: risk29-data-health
           path: risk29-data-health.json
           if-no-files-found: warn
+
+  health-failure-alert:
+    name: Notify Risk29 health failure
+    needs: [unit-tests, live-health]
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify LINE of health failure
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_TO_USER_ID: ${{ secrets.LINE_TO_USER_ID }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          UNIT_RESULT: ${{ needs.unit-tests.result }}
+          LIVE_RESULT: ${{ needs.live-health.result }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          import urllib.request
+
+          token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "").strip()
+          recipient = os.environ.get("LINE_TO_USER_ID", "").strip()
+          if not token or not recipient:
+              print("::error::Risk29 health failed but LINE credentials are missing; notification not delivered.")
+              sys.exit(1)
+          run_url = f"https://github.com/{os.environ['REPO']}/actions/runs/{os.environ['RUN_ID']}"
+          message = (
+              "🚨 Risk29 DATA HEALTH FAIL\\n"
+              f"Unit tests: {os.environ['UNIT_RESULT']} | Live health: {os.environ['LIVE_RESULT']}\\n"
+              "Do not treat stale/missing signals as zero risk. Review production and fallback.\\n"
+              f"Run: {run_url}"
+          )
+          data = json.dumps({"to": recipient, "messages": [{"type": "text", "text": message}]}).encode()
+          req = urllib.request.Request(
+              "https://api.line.me/v2/bot/message/push", data=data, method="POST",
+              headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+          )
+          with urllib.request.urlopen(req, timeout=15) as response:
+              if response.status != 200:
+                  raise RuntimeError(f"LINE push returned HTTP {response.status}")
+              print(f"Risk29 health failure alert delivered: HTTP {response.status}")
+          PY
