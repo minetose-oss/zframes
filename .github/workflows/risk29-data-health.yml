@@ -16,7 +16,9 @@ on:
       - "tests/test_risk29_health_validator.py"
       - ".github/workflows/risk29-data-health.yml"
   schedule:
-    - cron: "15 1,9 * * *" # 08:15 and 16:15 Asia/Bangkok (UTC+7)
+    - cron: "45 1 * * *" # 08:45 Asia/Bangkok (UTC+7), after morning publish
+    - cron: "15 6 * * *" # 13:15 Asia/Bangkok, after afternoon publish
+    - cron: "15 9 * * *" # 16:15 Asia/Bangkok
   workflow_dispatch:
 
 permissions:
