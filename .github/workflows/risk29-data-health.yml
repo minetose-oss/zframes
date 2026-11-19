@@ -20,12 +20,22 @@ on:
     - cron: "15 6 * * *" # 13:15 Asia/Bangkok, after afternoon publish
     - cron: "15 9 * * *" # 16:15 Asia/Bangkok
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run health checks or send a safe LINE test notification"
+        required: true
+        type: choice
+        default: health-check
+        options:
+          - health-check
+          - test-alert
 
 permissions:
   contents: read
 
 jobs:
   unit-tests:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.mode != 'test-alert' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +46,7 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_risk29_health_validator.py' -v
 
   live-health:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.mode != 'test-alert' }}
     runs-on: ubuntu-latest
     needs: unit-tests
     steps:
@@ -55,7 +66,7 @@ jobs:
   health-failure-alert:
     name: Notify Risk29 health failure
     needs: [unit-tests, live-health]
-    if: ${{ failure() }}
+    if: ${{ failure() && (github.event_name != 'workflow_dispatch' || inputs.mode != 'test-alert') }}
     runs-on: ubuntu-latest
     steps:
       - name: Notify LINE of health failure
@@ -94,4 +105,45 @@ jobs:
               if response.status != 200:
                   raise RuntimeError(f"LINE push returned HTTP {response.status}")
               print(f"Risk29 health failure alert delivered: HTTP {response.status}")
+          PY
+
+  test-line-alert:
+    name: Test LINE alert (no production changes)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'test-alert' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send labeled LINE test message
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_TO_USER_ID: ${{ secrets.LINE_TO_USER_ID }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.request
+
+          token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "").strip()
+          recipient = os.environ.get("LINE_TO_USER_ID", "").strip()
+          if not token or not recipient:
+              print("::error::LINE credentials missing; test message not sent.")
+              sys.exit(1)
+          url = f"https://github.com/{os.environ['REPO']}/actions/runs/{os.environ['RUN_ID']}"
+          message = "[TEST ONLY] Risk29 LINE Health Alert\\nThis is a delivery test, NOT a real Risk29 failure.\\n" + url
+          data = json.dumps({"to": recipient, "messages": [{"type": "text", "text": message}]}).encode("utf-8")
+          request = urllib.request.Request(
+              "https://api.line.me/v2/bot/message/push", data=data, method="POST",
+              headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=15) as response:
+                  if response.status != 200:
+                      raise RuntimeError(f"Unexpected LINE HTTP {response.status}")
+                  print("LINE test push accepted (HTTP 200). Confirm recipient delivery separately.")
+          except urllib.error.HTTPError as exc:
+              print(f"::error::LINE test push rejected: HTTP {exc.code}")
+              sys.exit(1)
           PY
