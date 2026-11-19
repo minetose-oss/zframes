@@ -1,5 +1,5 @@
 name: Risk29 Data Health CI
-# Probes the production alias and fails closed when that payload is unhealthy.
+# Probes https://risk29-engine-phase1b-live.vercel.app and fails closed when that payload is unhealthy.
 
 on:
   push:
