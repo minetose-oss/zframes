@@ -1,4 +1,5 @@
 name: Risk29 Data Health CI
+# Probes the production alias and fails closed when that payload is unhealthy.
 
 on:
   push:
