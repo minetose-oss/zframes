@@ -1,0 +1,39 @@
+name: Risk29 EIA Workbook Probe
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/risk29-eia-workbook-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'xlrd==2.0.2'
+      - name: Inspect public workbook
+        run: |
+          python - <<'PY'
+          import urllib.request, hashlib, json, xlrd
+          url = "https://www.eia.gov/dnav/pet/hist_xls/RWTCd.xls"
+          with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent":"risk29-engine/0.1"}), timeout=30) as response:
+              raw = response.read(10000001)
+          if len(raw) > 10000000:
+              raise ValueError("Workbook exceeds diagnostic limit")
+          book = xlrd.open_workbook(file_contents=raw)
+          report = {"sha256": hashlib.sha256(raw).hexdigest(), "datemode":book.datemode,"sheets":[]}
+          for sheet in book.sheets():
+              report["sheets"].append({"name":sheet.name,"rows":sheet.nrows,"columns":sheet.ncols,
+                  "headers":[[str(sheet.cell_value(r,c))[:250] for c in range(min(12,sheet.ncols))] for r in range(min(12,sheet.nrows))]})
+          print(json.dumps(report, indent=2))
+          with open("eia-workbook-structure.json","w") as f:
+              json.dump(report,f,indent=2)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eia-workbook-structure
+          path: eia-workbook-structure.json
