@@ -63,3 +63,28 @@ class CreditShadowTest(unittest.TestCase):
         self.assertEqual(out["coverage"]["fundamentalsObserved"], 0)
         self.assertEqual(out["issuers"]["ORCL"]["fundamentals"]["status"], "UNAVAILABLE")
         self.assertFalse(out["buySignalEligible"])
+
+    def test_fmp_fills_only_fundamentals_without_unlocking_buy(self):
+        from urllib.parse import parse_qs, urlsplit
+
+        from credit_shadow import ISSUERS
+
+        def fixture(url):
+            if urlsplit(url).hostname != "financialmodelingprep.com":
+                raise URLError("SEC unavailable")
+            query = parse_qs(urlsplit(url).query)
+            ticker = query["symbol"][0]
+            self.assertEqual(query["apikey"], ["fixture-key"])
+            return [{
+                "symbol": ticker, "cik": f"{ISSUERS[ticker]:010}",
+                "reportedCurrency": "USD", "period": "Q3", "date": "2026-09-30",
+                "filingDate": "2026-11-03", "operatingCashFlow": 100,
+                "capitalExpenditure": -40, "freeCashFlow": 61 if ticker == "META" else 60,
+            }]
+
+        out = observe(fixture, now=datetime(2026, 11, 25, tzinfo=timezone.utc), fmp_key="fixture-key")
+        self.assertEqual(out["coverage"]["fmpObserved"], 4)
+        self.assertEqual(out["issuers"]["ORCL"]["fundamentals"]["cashCapexUsd"], 40)
+        self.assertEqual(out["issuers"]["ORCL"]["refinancing"]["status"], "UNAVAILABLE")
+        self.assertNotIn("fixture-key", str(out))
+        self.assertFalse(out["buySignalEligible"])
