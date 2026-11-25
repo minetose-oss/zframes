@@ -2,6 +2,7 @@ name: Semiconductor Technical Data
 on:
   workflow_dispatch:
   schedule:
+    # 08:30 Asia/Bangkok after the US close (01:30 UTC).
     - cron: "30 1 * * 1-5"
 permissions:
   contents: write
@@ -12,18 +13,49 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout validated code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: app
+          persist-credentials: false
+      - name: Checkout publication branch
+        uses: actions/checkout@v4
         with:
           ref: risk29-live-data
+          path: live
           persist-credentials: true
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Refresh historical series and technical checks
-        run: python risk29/live_semiconductor.py
+        env:
+          SEMICONDUCTOR_OUTPUT_PATH: ${{ github.workspace }}/live/risk29/semiconductor-latest.json
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
+        run: python app/risk29/live_semiconductor.py
+      - name: Validate fail-closed schema
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("live/risk29/semiconductor-latest.json")
+          data=json.loads(p.read_text())
+          assert data["schemaVersion"] == "2.0"
+          assert set(data["symbols"]) == {"SMH", "SOXX"}
+          assert data["minimumSessions"] >= 220
+          for symbol, value in data["symbols"].items():
+              if value.get("sessions", 0) < 220:
+                  assert value.get("status") == "TECHNICAL DATA GAP"
+          assert data["buySignalEligible"] is False or (
+              data["overall"] == "RECOVERY CONFIRMED"
+              and data["breadth"]["status"] == "PASS"
+              and not data["vetoes"]
+          )
+          PY
       - name: Format published JSON
-        run: npx --yes prettier@3.9.6 --write risk29/semiconductor-latest.json
+        run: npx --yes prettier@3.9.6 --write live/risk29/semiconductor-latest.json
       - name: Commit validated result
+        working-directory: live
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
