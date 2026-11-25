@@ -77,3 +77,32 @@ class ProductionSyncTests(unittest.TestCase):
         from scripts.risk29_health_probe import compare_sync
         self.assertEqual(compare_sync({"generatedAt": "a"}, {"generatedAt": "b"})["status"], "MISMATCH")
         self.assertEqual(compare_sync({}, {})["status"], "UNKNOWN")
+
+
+class ProviderHealthSyncTests(unittest.TestCase):
+    def test_provider_sync(self):
+        from scripts.risk29_health_probe import compare_provider_sync
+        payload = {"generatedAt": "a", "providers": {"WTI": {"dataFreshness": "stale"}}}
+        self.assertEqual(compare_provider_sync(payload, payload, {"generatedAt": "a"})["status"], "PASS")
+        self.assertEqual(compare_provider_sync(payload, payload, {"generatedAt": "b"})["status"], "MISMATCH")
+        self.assertEqual(compare_provider_sync(payload, {"generatedAt": "a", "providers": {}}, {"generatedAt": "a"})["status"], "MISMATCH")
+        self.assertEqual(compare_provider_sync({}, {}, {})["status"], "UNKNOWN")
+
+    def test_probe_missing_live_provider_endpoint(self):
+        from unittest.mock import patch
+        from urllib.error import HTTPError
+        from scripts import risk29_health_probe as probe
+        brief, latest = fixture()
+        stamp = datetime.now(timezone.utc).isoformat()
+        brief["generatedAt"] = latest["generatedAt"] = stamp
+        def fetch(url):
+            if url.endswith("provider-health.json"):
+                if url.startswith(probe.LIVE):
+                    raise HTTPError(url, 404, "Not Found", {}, None)
+                return {"generatedAt": stamp, "providers": {}}
+            return brief if url.endswith("brief-th.json") else latest
+        with patch.object(probe, "get_json", side_effect=fetch):
+            result = probe.probe()
+        self.assertEqual(result["decisionGate"], "FAIL")
+        self.assertEqual(result["liveApiHealth"], "FAIL")
+        self.assertEqual(result["endpoints"]["live/provider-health.json"]["httpStatus"], 404)
