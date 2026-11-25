@@ -91,10 +91,17 @@ async def publish(
         previous_snapshot = engine.store.load_latest()
         snapshot = await engine.latest(force=True)
 
-        if snapshot.score is None or snapshot.health.available < minimum_available:
+        usable = sum(
+            signal.state != "unavailable"
+            and signal.freshness in {"fresh", "delayed"}
+            and signal.value is not None
+            and signal.riskScore is not None
+            for signal in snapshot.signals
+        )
+        if snapshot.score is None or usable < minimum_available:
             raise RuntimeError(
                 "Refusing to publish low-coverage Risk29 snapshot: "
-                f"available={snapshot.health.available}/{snapshot.health.total}, "
+                f"usable={usable}/{snapshot.health.total}, "
                 f"score={snapshot.score!r}"
             )
 
