@@ -1,14 +1,14 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-11-24T16:46:00.306588+00:00",
+  "generatedAt": "2026-11-25T02:01:10.175090+00:00",
   "shouldNotify": true,
   "severity": "review",
-  "score": 49.03,
+  "score": 49.25,
   "state": "watch",
   "reasons": [
-    "มี material signal change 4 รายการ",
-    "หมวด Sentiment เปลี่ยน -10.1 จุด",
-    "มี data-health issue ใหม่/เปลี่ยนสถานะ 2 รายการ"
+    "มี material signal change 2 รายการ",
+    "หมวด Technical เปลี่ยน -10.4 จุด",
+    "มี data-health issue ใหม่/เปลี่ยนสถานะ 1 รายการ"
   ],
-  "messageThai": "Risk29 WATCH 49.0 — มี material signal change 4 รายการ · หมวด Sentiment เปลี่ยน -10.1 จุด · มี data-health issue ใหม่/เปลี่ยนสถานะ 2 รายการ"
+  "messageThai": "Risk29 WATCH 49.2 — มี material signal change 2 รายการ · หมวด Technical เปลี่ยน -10.4 จุด · มี data-health issue ใหม่/เปลี่ยนสถานะ 1 รายการ"
 }
