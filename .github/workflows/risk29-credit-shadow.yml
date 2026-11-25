@@ -1,0 +1,46 @@
+name: Risk29 Credit Shadow Pilot
+
+on:
+  pull_request:
+    paths:
+      - "risk29/credit_shadow.py"
+      - "risk29/test_credit_shadow.py"
+      - ".github/workflows/risk29-credit-shadow.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Test fail-closed behavior
+        run: python -m unittest discover -s risk29 -p test_credit_shadow.py -v
+      - name: Collect SEC pilot evidence
+        if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+        run: python risk29/credit_shadow.py --output credit-shadow.json
+      - name: Check FMP fallback on the credit pilot branch
+        if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/risk29-credit-shadow')
+        env:
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+        run: |
+          if [ -z "$FMP_API_KEY" ]; then
+            echo "FMP is not configured for this run; keeping SEC-only evidence."
+          else
+            python risk29/credit_shadow.py --output credit-shadow.json --omit-fmp-values
+          fi
+      - name: Upload shadow evidence
+        if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: risk29-credit-shadow
+          path: credit-shadow.json
+          if-no-files-found: error
