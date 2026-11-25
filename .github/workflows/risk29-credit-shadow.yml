@@ -27,6 +27,16 @@ jobs:
       - name: Collect SEC pilot evidence
         if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
         run: python risk29/credit_shadow.py --output credit-shadow.json
+      - name: Check FMP fallback on the credit pilot branch
+        if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/risk29-credit-shadow')
+        env:
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+        run: |
+          if [ -z "$FMP_API_KEY" ]; then
+            echo "FMP is not configured for this run; keeping SEC-only evidence."
+          else
+            python risk29/credit_shadow.py --output credit-shadow.json --omit-fmp-values
+          fi
       - name: Upload shadow evidence
         if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/upload-artifact@v4
