@@ -7,6 +7,7 @@ import re
 from datetime import date, datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 ISSUERS = {"ORCL": 1341439, "MSFT": 789019, "AMZN": 1018724, "META": 1326801}
@@ -14,6 +15,7 @@ SEC = "https://data.sec.gov"
 OCF = "NetCashProvidedByUsedInOperatingActivities"
 CAPEX = "PaymentsToAcquirePropertyPlantAndEquipment"
 FINRA = "https://www.finra.org/finra-data/fixed-income"
+FMP = "https://financialmodelingprep.com/stable/cash-flow-statement"
 
 
 def sec_json(url):
@@ -98,7 +100,38 @@ def financing_filings(payload, cik, as_of):
             "filings": rows, "note": "Filing leads only; absence is not evidence of no refinancing or stress."}
 
 
-def observe(fetch=sec_json, now=None):
+def fmp_fundamentals(ticker, cik, as_of, key, fetch=sec_json):
+    rows = fetch(FMP + "?" + urlencode(
+        {"symbol": ticker, "period": "quarter", "limit": 4, "apikey": key}
+    ))
+    if not isinstance(rows, list) or not rows:
+        return {"status": "DATA GAP", "provider": "FMP", "reason": "No quarterly statements returned"}
+    rows = [r for r in rows if date.fromisoformat(r["date"]) <= as_of
+            and date.fromisoformat(r["filingDate"]) <= as_of]
+    if not rows:
+        return {"status": "DATA GAP", "provider": "FMP", "reason": "No statements filed by cutoff"}
+    row = max(rows, key=lambda r: (r["date"], r["filingDate"]))
+    end, filed = (date.fromisoformat(row[k]) for k in ("date", "filingDate"))
+    ocf, capex, fcf = (row[k] for k in ("operatingCashFlow", "capitalExpenditure", "freeCashFlow"))
+    if (
+        row.get("symbol") != ticker or str(row.get("cik", "")).lstrip("0") != str(cik)
+        or row.get("reportedCurrency") != "USD" or row.get("period") not in {"Q1", "Q2", "Q3", "Q4"}
+        or filed < end or any(type(v) is not int for v in (ocf, capex, fcf))
+        or capex > 0 or abs(fcf - (ocf + capex)) > 1
+        or any(r != row for r in rows if (r["date"], r["filingDate"]) == (row["date"], row["filingDate"]))
+    ):
+        return {"status": "DATA GAP", "provider": "FMP", "reason": "Invalid or conflicting quarterly facts"}
+    return {
+        "status": "OBSERVED" if (as_of - end).days <= 150 else "STALE",
+        "provider": "FMP", "sourceUrl": FMP, "asOf": end.isoformat(),
+        "filedAt": filed.isoformat(), "periodBasis": "fiscal quarter; not YTD or TTM",
+        "operatingCashFlowUsd": ocf, "cashCapexUsd": -capex, "freeCashFlowUsd": fcf,
+        "capexToFcfRatio": -capex / fcf if fcf > 0 else None,
+        "capexToFcfStatus": "OBSERVED" if fcf > 0 else "NOT MEANINGFUL: FCF <= 0",
+    }
+
+
+def observe(fetch=sec_json, now=None, fmp_key=None):
     now = now or datetime.now(timezone.utc)
     issuers = {}
     for ticker, cik in ISSUERS.items():
@@ -116,6 +149,15 @@ def observe(fetch=sec_json, now=None):
                 entry[field] = {"status": "UNAVAILABLE", "reason": type(err).__name__}
                 if isinstance(err, HTTPError):
                     entry[field]["httpStatus"] = err.code
+        if fmp_key and entry["fundamentals"]["status"] != "OBSERVED":
+            entry["secFundamentalsEvidence"] = entry["fundamentals"]
+            try:
+                entry["fundamentals"] = fmp_fundamentals(ticker, cik, now.date(), fmp_key, fetch)
+            except (URLError, OSError, ValueError, KeyError, TypeError, AttributeError) as err:
+                entry["fundamentals"] = {"status": "UNAVAILABLE", "provider": "FMP",
+                                         "reason": type(err).__name__}
+                if isinstance(err, HTTPError):
+                    entry["fundamentals"]["httpStatus"] = err.code
         issuers[ticker] = entry
     return {
         "generatedAt": now.isoformat(), "mode": "SHADOW", "status": "CREDIT DATA GAP",
@@ -123,6 +165,8 @@ def observe(fetch=sec_json, now=None):
         "coverage": {
             "issuerCount": len(issuers),
             "fundamentalsObserved": sum(v["fundamentals"]["status"] == "OBSERVED" for v in issuers.values()),
+            "fmpObserved": sum(v["fundamentals"]["status"] == "OBSERVED" and
+                               v["fundamentals"].get("provider") == "FMP" for v in issuers.values()),
             "bondMarketVerified": 0, "cdsVerified": 0,
         },
     }
@@ -131,8 +175,17 @@ def observe(fetch=sec_json, now=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--omit-fmp-values", action="store_true",
+                        help="Keep only evidence metadata for FMP in uploaded artifacts")
     args = parser.parse_args()
-    result = observe()
+    result = observe(fmp_key=os.environ.get("FMP_API_KEY", "").strip())
+    if args.omit_fmp_values:
+        for entry in result["issuers"].values():
+            evidence = entry["fundamentals"]
+            if evidence.get("provider") == "FMP":
+                for field in ("operatingCashFlowUsd", "cashCapexUsd", "freeCashFlowUsd",
+                              "capexToFcfRatio", "capexToFcfStatus"):
+                    evidence.pop(field, None)
     args.output.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     print(json.dumps({"status": result["status"], "coverage": result["coverage"]}))
 
