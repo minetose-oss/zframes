@@ -205,7 +205,7 @@ class Risk29Engine:
         health = Risk29Health(
             available=sum(
                 signal.state != "unavailable"
-                and signal.freshness != "error"
+                and signal.freshness in {"fresh", "delayed"}
                 and signal.value is not None
                 and signal.riskScore is not None
                 for signal in signals
