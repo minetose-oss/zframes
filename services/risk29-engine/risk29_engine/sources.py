@@ -19,6 +19,9 @@ import xlrd
 from .scoring import SeriesPoint
 
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
+# Official Nasdaq Composite daily closes. FRED's NASDAQCOM reprint of this
+# same index can stop several sessions behind Nasdaq's own history.
+NASDAQ_COMPOSITE_HISTORY_URL = "https://api.nasdaq.com/api/quote/COMP/historical"
 OFR_URL = "https://www.financialresearch.gov/financial-stress-index/data/fsi.csv"
 LBMA_GOLD_URL = "https://prices.lbma.org.uk/json/gold_pm.json"
 SHILLER_PAGE_URL = "https://shillerdata.com/"
@@ -644,7 +647,80 @@ class PublicSourceClient:
         if not points:
             raise ValueError(f"FRED {series_id}: no usable observations")
         points.sort(key=lambda point: point.date)
+        if series_id == "NASDAQCOM":
+            points = await self._extend_nasdaq_composite(points, today)
         return points
+
+    async def _extend_nasdaq_composite(
+        self,
+        points: list[SeriesPoint],
+        today: date,
+    ) -> list[SeriesPoint]:
+        """Append official Nasdaq closes that FRED has not reprinted yet.
+
+        The overlapping session must match, so a different index cannot be
+        spliced onto the FRED history. A Nasdaq outage leaves the FRED series
+        unchanged.
+        """
+        start = max(points[-1].date - timedelta(days=14), today - timedelta(days=800))
+        try:
+            body = await self._get_json(
+                NASDAQ_COMPOSITE_HISTORY_URL,
+                params={
+                    "assetclass": "index",
+                    "fromdate": start.isoformat(),
+                    "todate": today.isoformat(),
+                    "limit": "500",
+                },
+            )
+            extra = self._parse_nasdaq_composite_history(body)
+        except (httpx.HTTPError, ValueError, TypeError):
+            return points
+        return self._extend_with_newer_closes(points, extra)
+
+    @staticmethod
+    def _parse_nasdaq_composite_history(body: object) -> list[SeriesPoint]:
+        if not isinstance(body, dict):
+            raise ValueError("Nasdaq composite: unexpected response")
+        data = body.get("data")
+        table = data.get("tradesTable") if isinstance(data, dict) else None
+        rows = table.get("rows") if isinstance(table, dict) else None
+        if not isinstance(rows, list):
+            raise ValueError("Nasdaq composite: no history rows")
+        by_date: dict[date, float] = {}
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            try:
+                observed = datetime.strptime(str(row.get("date")), "%m/%d/%Y").date()
+                value = float(str(row.get("close")).replace(",", ""))
+            except (ValueError, TypeError):
+                continue
+            if value <= 0:
+                continue
+            by_date[observed] = value
+        if not by_date:
+            raise ValueError("Nasdaq composite: no usable closes")
+        return [SeriesPoint(observed, by_date[observed]) for observed in sorted(by_date)]
+
+    @staticmethod
+    def _extend_with_newer_closes(
+        base: list[SeriesPoint],
+        extra: list[SeriesPoint],
+        *,
+        tolerance: float = 0.05,
+    ) -> list[SeriesPoint]:
+        if not base or not extra:
+            return base
+        extra_by_date = {point.date: point.value for point in extra}
+        last = base[-1]
+        official = extra_by_date.get(last.date)
+        if official is None or abs(official - last.value) > tolerance:
+            return base
+        newer = [point for point in extra if point.date > last.date]
+        if not newer:
+            return base
+        return [*base, *newer]
 
     @staticmethod
     def _parse_market_breadth_csv(text: str) -> dict[date, float]:

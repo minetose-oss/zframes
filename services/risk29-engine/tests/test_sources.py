@@ -176,3 +176,38 @@ def test_aaii_parser_handles_year_boundary():
     )
     assert points[0].date.isoformat() == "2026-12-31"
     assert points[1].date.isoformat() == "2027-01-07"
+
+
+def test_nasdaq_composite_parser_reads_official_closes():
+    from datetime import date
+
+    from risk29_engine.scoring import SeriesPoint
+
+    body = {
+        "data": {
+            "tradesTable": {
+                "rows": [
+                    {"date": "11/20/2026", "close": "22,617.73"},
+                    {"date": "11/19/2026", "close": "23,879.20"},
+                ]
+            }
+        }
+    }
+    points = PublicSourceClient._parse_nasdaq_composite_history(body)
+    assert [point.date for point in points] == [
+        date(2026, 11, 19),
+        date(2026, 11, 20),
+    ]
+    assert points[-1].value == pytest.approx(22617.73)
+
+    base = [SeriesPoint(date(2026, 11, 19), 23879.20)]
+    extended = PublicSourceClient._extend_with_newer_closes(base, points)
+    assert extended[-1].date == date(2026, 11, 20)
+
+    mismatched = PublicSourceClient._extend_with_newer_closes(
+        [SeriesPoint(date(2026, 11, 19), 100.0)],
+        points,
+    )
+    assert len(mismatched) == 1
+    assert mismatched[0].date == date(2026, 11, 19)
+    assert mismatched[0].value == pytest.approx(100.0)

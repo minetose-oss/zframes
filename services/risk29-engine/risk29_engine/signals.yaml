@@ -65,7 +65,7 @@ signals:
   - id: nasdaq_trend
     label: Nasdaq Trend
     category: technical
-    source: FRED
+    source: FRED/Nasdaq
     source_series: NASDAQCOM
     unit: index
     fetch: fred
