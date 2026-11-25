@@ -13,6 +13,7 @@ from urllib.parse import urljoin
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from typing import Protocol
+from zoneinfo import ZoneInfo
 
 import httpx
 import xlrd
@@ -86,6 +87,7 @@ class SourceClient(Protocol):
 
 @dataclass
 class PublicSourceClient:
+    provider_health: dict = field(default_factory=dict, init=False)
     timeout_seconds: float = 20.0
     retry_attempts: int = 2
     # Fetch FRED series concurrently. The request-level timeout is deliberately
@@ -683,12 +685,27 @@ class PublicSourceClient:
                         continue
             else:
                 extra = []
+                health = {"provider": "EIA", "series": series_id,
+                          "releaseTimezone": "America/New_York",
+                          "nextReleaseAt": None, "releaseStatus": "UNKNOWN",
+                          "sources": {"xls": "UNKNOWN", "html": "NOT_CHECKED"}}
+                self.provider_health[series_id] = health
+                local_today = datetime.now(ZoneInfo("America/New_York")).date()
                 try:
                     raw = await self._get_bytes("https://www.eia.gov/dnav/pet/hist_xls/RWTCd.xls")
                     extra = self._parse_eia_wti_workbook(raw, today)
+                    health["sources"]["xls"] = "HEALTHY"
+                    book = xlrd.open_workbook(file_contents=raw)
+                    for sheet in book.sheets():
+                        if sheet.name.strip().lower() == "contents" and sheet.ncols >= 3:
+                            for row in range(min(20, sheet.nrows)):
+                                if str(sheet.cell_value(row, 1)).strip().lower() == "next release date:":
+                                    release = str(sheet.cell_value(row, 2))
+                                    health.update(self._eia_release_metadata("Next Release Date: " + release, local_today, extra[-1].date))
                     logger.warning("EIA XLS provider_health=HEALTHY latest=%s", extra[-1].date)
                 except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, OSError) as exc:
                     reason = str(exc) if isinstance(exc, ValueError) and str(exc).startswith("EIA WTI:") else type(exc).__name__
+                    health["sources"]["xls"] = "DEGRADED"
                     logger.warning("EIA XLS failed reason=%s provider_health=DEGRADED", reason)
                 if not extra or (points and extra[-1].date <= points[-1].date):
                     try:
@@ -696,9 +713,14 @@ class PublicSourceClient:
                         html_points = self._parse_eia_wti_html(raw_html, today)
                         if not extra or html_points[-1].date > extra[-1].date:
                             extra = html_points
-                        logger.warning("EIA HTML observations=%d latest=%s provider_health=HEALTHY release_status=%s", len(html_points), html_points[-1].date, self._eia_release_status(raw_html, today, html_points[-1].date))
+                        health["sources"]["html"] = "HEALTHY"
+                        metadata = self._eia_release_metadata(raw_html, local_today, html_points[-1].date)
+                        if metadata["nextReleaseDate"] is not None:
+                            health.update(metadata)
+                        logger.warning("EIA HTML observations=%d latest=%s provider_health=HEALTHY release_status=%s", len(html_points), html_points[-1].date, self._eia_release_status(raw_html, local_today, html_points[-1].date))
                     except (httpx.HTTPError, ValueError, TypeError, OSError) as exc:
                         reason = str(exc) if isinstance(exc, ValueError) and str(exc).startswith("EIA WTI:") else type(exc).__name__
+                        health["sources"]["html"] = "DEGRADED"
                         logger.warning("EIA HTML failed reason=%s", reason)
             extra = sorted({p.date: p for p in extra}.values(), key=lambda p: p.date)
             result = self._extend_with_newer_closes(points, extra, tolerance=0.01) if points else extra
@@ -717,6 +739,10 @@ class PublicSourceClient:
                 status = "no_new_data"
             else:
                 status = "extended"
+            if series_id == "DCOILWTICO":
+                health["providerHealth"] = ("DEGRADED" if "DEGRADED" in health["sources"].values() or status in {"overlap_missing", "overlap_mismatch", "no_valid_observations"} else "HEALTHY")
+                health["lastObservation"] = result[-1].date.isoformat() if result else None
+                health["mergeStatus"] = status
             logger.warning(
                 "official_provider series=%s status=%s primary_last=%s backup_last=%s observations=%d appended=%d",
                 series_id, status, primary_last, backup_last, len(extra), len(result) - len(points),
@@ -725,6 +751,19 @@ class PublicSourceClient:
         except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, KeyError, OSError) as exc:
             logger.warning("official_provider series=%s status=error error_type=%s", series_id, type(exc).__name__)
             return points
+
+    @staticmethod
+    def _eia_release_metadata(raw: str, today: date, latest: date) -> dict:
+        plain = " ".join(html.unescape(re.sub(r"<[^>]*>", " ", raw)).split())
+        match = re.search(r"Next Release Date\s*:\s*(\d{1,2}/\d{1,2}/\d{4})", plain, re.I)
+        release = None
+        if match:
+            try:
+                release = datetime.strptime(match[1], "%m/%d/%Y").date().isoformat()
+            except ValueError:
+                pass
+        return {"nextReleaseDate": release, "nextReleaseAt": None,
+                "releaseStatus": PublicSourceClient._eia_release_status(raw, today, latest)}
 
     @staticmethod
     def _eia_release_status(raw: str, today: date, latest: date) -> str:
