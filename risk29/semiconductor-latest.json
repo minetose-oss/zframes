@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-24T11:12:04.639590+00:00",
+  "generatedAt": "2026-11-25T09:58:36.372525+00:00",
   "provider": "Stooq",
   "providerType": "daily historical OHLCV",
   "symbols": {
     "SMH": {
       "status": "TECHNICAL DATA GAP",
-      "reason": "provider unavailable or invalid CSV"
+      "reason": "<urlopen error timed out>"
     },
     "SOXX": {
       "status": "TECHNICAL DATA GAP",
-      "reason": "provider unavailable or invalid CSV"
+      "reason": "<urlopen error timed out>"
     }
   },
   "overall": "TECHNICAL DATA GAP"
