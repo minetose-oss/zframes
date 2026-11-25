@@ -4,6 +4,7 @@ import asyncio
 import csv
 import html
 import io
+import logging
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -17,6 +18,8 @@ import httpx
 import xlrd
 
 from .scoring import SeriesPoint
+
+logger = logging.getLogger(__name__)
 
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 # Official Nasdaq Composite daily closes. FRED's NASDAQCOM reprint of this
@@ -682,6 +685,7 @@ class PublicSourceClient:
                 raw = await self._get_bytes("https://www.eia.gov/dnav/pet/hist_xls/RWTCd.xls")
                 book = xlrd.open_workbook(file_contents=raw)
                 sheet = book.sheet_by_name("Data 1")
+                logger.info("EIA WTI workbook rows=%d datemode=%d", sheet.nrows, book.datemode)
                 extra = []
                 for i in range(3, sheet.nrows):
                     try:
@@ -692,8 +696,29 @@ class PublicSourceClient:
                     except (ValueError, TypeError, OverflowError):
                         continue
             extra = sorted({p.date: p for p in extra}.values(), key=lambda p: p.date)
-            return self._extend_with_newer_closes(points, extra, tolerance=0.01) if points else extra
-        except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, KeyError, OSError):
+            result = self._extend_with_newer_closes(points, extra, tolerance=0.01) if points else extra
+            primary_last = points[-1].date if points else None
+            backup_last = extra[-1].date if extra else None
+            overlap = next((p.value for p in extra if p.date == primary_last), None)
+            if not extra:
+                status = "no_valid_observations"
+            elif not points:
+                status = "fallback_history"
+            elif overlap is None:
+                status = "overlap_missing"
+            elif abs(overlap - points[-1].value) > 0.01:
+                status = "overlap_mismatch"
+            elif len(result) == len(points):
+                status = "no_new_data"
+            else:
+                status = "extended"
+            logger.warning(
+                "official_provider series=%s status=%s primary_last=%s backup_last=%s observations=%d appended=%d",
+                series_id, status, primary_last, backup_last, len(extra), len(result) - len(points),
+            )
+            return result
+        except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, KeyError, OSError) as exc:
+            logger.warning("official_provider series=%s status=error error_type=%s", series_id, type(exc).__name__)
             return points
 
     async def _extend_nasdaq_composite(
