@@ -616,6 +616,17 @@ class PublicSourceClient:
         return points
 
     async def fred(self, series_id: str) -> list[SeriesPoint]:
+        try:
+            return await self._fred_primary(series_id)
+        except (httpx.HTTPError, ValueError, OSError):
+            if series_id not in {"VIXCLS", "DCOILWTICO"}:
+                raise
+            points = await self._extend_official_history(series_id, [], datetime.now(timezone.utc).date())
+            if len(points) < 220:
+                raise ValueError(f"{series_id}: insufficient official fallback history")
+            return points
+
+    async def _fred_primary(self, series_id: str) -> list[SeriesPoint]:
         # Risk29 only needs enough daily history for MA200 / 20-session momentum.
         # Asking FRED for the full lifetime of each series is needlessly heavy in
         # a serverless function and was observed to cause ReadTimeouts on Vercel.
@@ -664,7 +675,7 @@ class PublicSourceClient:
                         d = datetime.strptime(row["DATE"], "%m/%d/%Y").date()
                         v = float(row["CLOSE"])
                         if d <= today and 0 < v < 200:
-                            extra.append(SeriesPoint(d, v))
+                            extra.append(SeriesPoint(d, v, "CBOE Official"))
                     except (KeyError, ValueError, TypeError):
                         continue
             else:
@@ -677,11 +688,11 @@ class PublicSourceClient:
                         d = xlrd.xldate_as_datetime(sheet.cell_value(i, 0), book.datemode).date()
                         v = float(sheet.cell_value(i, 1))
                         if d <= today and -100 < v < 300:
-                            extra.append(SeriesPoint(d, v))
+                            extra.append(SeriesPoint(d, v, "EIA Official"))
                     except (ValueError, TypeError, OverflowError):
                         continue
             extra = sorted({p.date: p for p in extra}.values(), key=lambda p: p.date)
-            return self._extend_with_newer_closes(points, extra, tolerance=0.01)
+            return self._extend_with_newer_closes(points, extra, tolerance=0.01) if points else extra
         except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, KeyError, OSError):
             return points
 
