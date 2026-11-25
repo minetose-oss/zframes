@@ -10,6 +10,7 @@ from typing import Any, Callable
 
 import yaml
 
+from .market_calendar import market_freshness
 from .models import (
     Risk29Category,
     Risk29Change,
@@ -281,6 +282,9 @@ class Risk29Engine:
                 float(freshness_cfg.get("fresh_hours", 72)),
                 float(freshness_cfg.get("delayed_hours", 120)),
             )
+            freshness_reason = None
+            if signal_id in {"sp500_trend", "nasdaq_trend", "vix"}:
+                freshness, freshness_reason = market_freshness(latest.date, now, freshness)
             transform = str(cfg.get("transform"))
             if transform == "core_inflation_3m_annualized_vs_12m":
                 current_3m, _gap, previous_3m, _previous_gap = (
@@ -406,6 +410,7 @@ class Risk29Engine:
                 fetchedAt=fetched_at,
                 ageSeconds=age_seconds,
                 freshness=freshness,
+                reason=freshness_reason,
                 thresholdVersion=self.threshold_version,
             )
         except Exception as exc:
