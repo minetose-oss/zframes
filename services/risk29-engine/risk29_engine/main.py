@@ -157,3 +157,16 @@ async def history(
             status_code=503,
             detail="Published Risk29 history is temporarily unavailable",
         ) from exc
+
+
+@app.get("/risk29/provider-health.json")
+async def provider_health(response: Response) -> dict:
+    response.headers["Cache-Control"] = "no-store"
+    if published_client is None:
+        raise HTTPException(status_code=503, detail="Published provider health is not configured")
+    try:
+        return await published_client.provider_health()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503, detail="Published provider health is temporarily unavailable"
+        ) from exc
