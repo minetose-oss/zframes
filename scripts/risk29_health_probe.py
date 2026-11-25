@@ -26,6 +26,14 @@ def get_json(url: str) -> dict:
         return json.load(response)
 
 
+def compare_sync(live: dict, durable: dict) -> dict:
+    if not live.get("generatedAt") or not durable.get("generatedAt"):
+        return {"status": "UNKNOWN"}
+    return {"status": "PASS" if live == durable else "MISMATCH",
+            "liveGeneratedAt": live["generatedAt"],
+            "githubGeneratedAt": durable["generatedAt"]}
+
+
 def probe() -> dict:
     failures = []
     endpoints = {}
@@ -56,6 +64,14 @@ def probe() -> dict:
                 if label == "live":
                     result["liveApiHealth"] = "PASS"
                     result["fallbackHealth"] = "NOT_USED"
+                    try:
+                        durable = get_json(f"{FALLBACK}/latest.json")
+                        result["productionSync"] = compare_sync(latest, durable)
+                    except (HTTPError, URLError, TimeoutError, ValueError, OSError, RuntimeError):
+                        result["productionSync"] = {"status": "UNKNOWN"}
+                    if result["productionSync"]["status"] != "PASS":
+                        result["decisionGate"] = "FAIL"
+                        result.setdefault("errors", []).append("Production snapshot sync not verified")
                     return result
                 # Fallback is diagnostic only; it must not mask a broken live API.
                 result["liveApiHealth"] = "FAIL"
