@@ -13,6 +13,7 @@ from .models import Risk29Direction, Risk29Freshness, Risk29State
 class SeriesPoint:
     date: date
     value: float
+    source: str | None = None
 
 
 def clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:
