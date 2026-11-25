@@ -66,3 +66,14 @@ class HealthValidatorTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProductionSyncTests(unittest.TestCase):
+    def test_sync_exact_match(self):
+        from scripts.risk29_health_probe import compare_sync
+        self.assertEqual(compare_sync({"generatedAt": "a"}, {"generatedAt": "a"})["status"], "PASS")
+
+    def test_sync_mismatch_and_unknown(self):
+        from scripts.risk29_health_probe import compare_sync
+        self.assertEqual(compare_sync({"generatedAt": "a"}, {"generatedAt": "b"})["status"], "MISMATCH")
+        self.assertEqual(compare_sync({}, {})["status"], "UNKNOWN")

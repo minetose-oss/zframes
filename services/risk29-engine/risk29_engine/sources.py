@@ -686,16 +686,17 @@ class PublicSourceClient:
                 try:
                     raw = await self._get_bytes("https://www.eia.gov/dnav/pet/hist_xls/RWTCd.xls")
                     extra = self._parse_eia_wti_workbook(raw, today)
+                    logger.warning("EIA XLS provider_health=HEALTHY latest=%s", extra[-1].date)
                 except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, OSError) as exc:
                     reason = str(exc) if isinstance(exc, ValueError) and str(exc).startswith("EIA WTI:") else type(exc).__name__
-                    logger.warning("EIA XLS failed reason=%s", reason)
+                    logger.warning("EIA XLS failed reason=%s provider_health=DEGRADED", reason)
                 if not extra or (points and extra[-1].date <= points[-1].date):
                     try:
                         raw_html = await self._get_text("https://www.eia.gov/dnav/pet/hist/RWTCD.htm")
                         html_points = self._parse_eia_wti_html(raw_html, today)
                         if not extra or html_points[-1].date > extra[-1].date:
                             extra = html_points
-                        logger.warning("EIA HTML observations=%d latest=%s", len(html_points), html_points[-1].date)
+                        logger.warning("EIA HTML observations=%d latest=%s provider_health=HEALTHY release_status=%s", len(html_points), html_points[-1].date, self._eia_release_status(raw_html, today, html_points[-1].date))
                     except (httpx.HTTPError, ValueError, TypeError, OSError) as exc:
                         reason = str(exc) if isinstance(exc, ValueError) and str(exc).startswith("EIA WTI:") else type(exc).__name__
                         logger.warning("EIA HTML failed reason=%s", reason)
@@ -724,6 +725,25 @@ class PublicSourceClient:
         except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, KeyError, OSError) as exc:
             logger.warning("official_provider series=%s status=error error_type=%s", series_id, type(exc).__name__)
             return points
+
+    @staticmethod
+    def _eia_release_status(raw: str, today: date, latest: date) -> str:
+        """Use advertised dates only; never infer a holiday release schedule."""
+        plain = " ".join(html.unescape(re.sub(r"<[^>]*>", " ", raw)).split())
+        match = re.search(r"Next Release Date\s*:\s*(\d{1,2}/\d{1,2}/\d{4})", plain, re.I)
+        if not match:
+            return "UNKNOWN"
+        try:
+            next_release = datetime.strptime(match[1], "%m/%d/%Y").date()
+        except ValueError:
+            return "UNKNOWN"
+        if latest > today:
+            return "UNKNOWN"
+        if today < next_release:
+            return "AWAITING_RELEASE"
+        if today == next_release:
+            return "RELEASE_DAY"
+        return "OVERDUE"
 
     @staticmethod
     def _parse_eia_wti_html(raw: str, today: date) -> list[SeriesPoint]:
@@ -797,7 +817,7 @@ class PublicSourceClient:
                 if sheet.ncols < 2:
                     continue
                 header = str(sheet.cell_value(row, 1)).lower()
-                if ("cushing" in header and "wti" in header and "spot" in header) or "rwtc" in header:
+                if ("cushing" in header and "wti" in header and "spot" in header) or re.fullmatch(r"(?:pet[._])?rwtc[d]?(?:\.d)?", header.strip()):
                     candidates.append((sheet, row))
                     break
         if len(candidates) != 1:

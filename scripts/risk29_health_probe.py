@@ -12,7 +12,10 @@ import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from risk29_health_validator import validate
+if __package__:
+    from .risk29_health_validator import validate
+else:
+    from risk29_health_validator import validate
 
 LIVE = "https://risk29-engine-phase1b-live.vercel.app/risk29"
 FALLBACK = "https://raw.githubusercontent.com/minetose-oss/zframes/risk29-live-data/risk29"
@@ -24,6 +27,14 @@ def get_json(url: str) -> dict:
         if response.status != 200:
             raise RuntimeError(f"HTTP {response.status}")
         return json.load(response)
+
+
+def compare_sync(live: dict, durable: dict) -> dict:
+    if not live.get("generatedAt") or not durable.get("generatedAt"):
+        return {"status": "UNKNOWN"}
+    return {"status": "PASS" if live == durable else "MISMATCH",
+            "liveGeneratedAt": live["generatedAt"],
+            "githubGeneratedAt": durable["generatedAt"]}
 
 
 def probe() -> dict:
@@ -56,6 +67,14 @@ def probe() -> dict:
                 if label == "live":
                     result["liveApiHealth"] = "PASS"
                     result["fallbackHealth"] = "NOT_USED"
+                    try:
+                        durable = get_json(f"{FALLBACK}/latest.json")
+                        result["productionSync"] = compare_sync(latest, durable)
+                    except (HTTPError, URLError, TimeoutError, ValueError, OSError, RuntimeError):
+                        result["productionSync"] = {"status": "UNKNOWN"}
+                    if result["productionSync"]["status"] != "PASS":
+                        result["decisionGate"] = "FAIL"
+                        result.setdefault("errors", []).append("Production snapshot sync not verified")
                     return result
                 # Fallback is diagnostic only; it must not mask a broken live API.
                 result["liveApiHealth"] = "FAIL"
