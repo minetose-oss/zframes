@@ -37,13 +37,22 @@ def compare_sync(live: dict, durable: dict) -> dict:
             "githubGeneratedAt": durable["generatedAt"]}
 
 
+def compare_provider_sync(live: dict, durable: dict, latest: dict) -> dict:
+    result = compare_sync(live, durable)
+    if not isinstance(live.get("providers"), dict) or not isinstance(durable.get("providers"), dict):
+        result["status"] = "UNKNOWN"
+    elif live.get("generatedAt") != latest.get("generatedAt"):
+        result["status"] = "MISMATCH"
+    return result
+
+
 def probe() -> dict:
     failures = []
     endpoints = {}
     for label, base in (("live", LIVE), ("github-fallback", FALLBACK)):
         try:
             payloads = {}
-            for name in ("brief-th.json", "latest.json"):
+            for name in ("brief-th.json", "latest.json", "provider-health.json"):
                 url = f"{base}/{name}"
                 key = f"{label}/{name}"
                 try:
@@ -53,7 +62,7 @@ def probe() -> dict:
                     endpoints[key] = {"httpStatus": exc.code, "ok": False, "error": str(exc)[:250]}
                 except (URLError, TimeoutError, ValueError, OSError, RuntimeError) as exc:
                     endpoints[key] = {"httpStatus": None, "ok": False, "error": str(exc)[:250]}
-            if len(payloads) != 2:
+            if len(payloads) != 3:
                 raise RuntimeError("endpoint failure: " + ", ".join(
                     f"{key}={value['httpStatus']}" for key, value in endpoints.items()
                     if key.startswith(label + "/") and not value["ok"]))
@@ -72,6 +81,15 @@ def probe() -> dict:
                         result["productionSync"] = compare_sync(latest, durable)
                     except (HTTPError, URLError, TimeoutError, ValueError, OSError, RuntimeError):
                         result["productionSync"] = {"status": "UNKNOWN"}
+                    try:
+                        durable_health = get_json(f"{FALLBACK}/provider-health.json")
+                        result["providerHealthSync"] = compare_provider_sync(
+                            payloads["provider-health.json"], durable_health, latest)
+                    except (HTTPError, URLError, TimeoutError, ValueError, OSError, RuntimeError):
+                        result["providerHealthSync"] = {"status": "UNKNOWN"}
+                    if result["providerHealthSync"]["status"] != "PASS":
+                        result["decisionGate"] = "FAIL"
+                        result.setdefault("errors", []).append("Provider health sync not verified")
                     if result["productionSync"]["status"] != "PASS":
                         result["decisionGate"] = "FAIL"
                         result.setdefault("errors", []).append("Production snapshot sync not verified")
