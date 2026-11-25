@@ -8,6 +8,7 @@ from risk29_engine.sources import PublicSourceClient
 
 
 class Sheet:
+    name = "Data 1"
     ncols = 2
 
     def __init__(self, rows):
@@ -29,7 +30,7 @@ class Book:
 
 
 def workbook(monkeypatch, rows):
-    monkeypatch.setattr("risk29_engine.sources.xlrd.open_workbook", lambda **kwargs: Book(rows))
+    monkeypatch.setattr("risk29_engine.sources.xlrd.open_workbook", lambda **kwargs: Book([["Sourcekey", "RWTC"], *[row for row in rows if row != ["metadata", ""]]]))
 
 
 HEADER = ["Date", "Cushing, OK WTI Spot Price FOB (Dollars per Barrel)"]
@@ -66,3 +67,7 @@ async def test_eia_diagnostics(monkeypatch, caplog, price, status):
     result = await client._extend_official_history("DCOILWTICO", base, TODAY)
     assert f"status={status}" in caplog.text
     assert len(result) == (2 if status == "extended" else 1)
+    health = client.provider_health["DCOILWTICO"]
+    assert health["sources"]["xls"] == "HEALTHY"
+    assert health["mergeStatus"] == status
+    assert health["providerHealth"] == ("HEALTHY" if status == "extended" else "DEGRADED")

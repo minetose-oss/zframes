@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import os
+import json
 import tempfile
 from pathlib import Path
 
@@ -116,6 +117,13 @@ async def publish(
         (output_dir / "history.json").write_text(history.model_dump_json(indent=2) + "\n")
         (output_dir / "brief-th.json").write_text(brief.model_dump_json(indent=2) + "\n")
         (output_dir / "alert.json").write_text(alert.model_dump_json(indent=2) + "\n")
+        providers = getattr(source_client, "provider_health", {})
+        oil = next((s for s in snapshot.signals if s.id == "oil_shock"), None)
+        if "DCOILWTICO" in providers and oil is not None:
+            providers["DCOILWTICO"]["dataFreshness"] = oil.freshness
+        (output_dir / "provider-health.json").write_text(
+            json.dumps({"generatedAt": str(snapshot.generatedAt), "providers": providers}, indent=2) + "\n"
+        )
         return snapshot
 
 

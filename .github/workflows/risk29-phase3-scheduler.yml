@@ -9,6 +9,8 @@ on:
   schedule:
     - cron: "30 23 * * *"
     - cron: "0 6 * * 1-5"
+    # Additional polling, not an asserted EIA release time (UTC).
+    - cron: "20 16,20 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -83,10 +85,11 @@ jobs:
           cp /tmp/risk29-published/history.json risk29-live-data/risk29/history.json
           cp /tmp/risk29-published/brief-th.json risk29-live-data/risk29/brief-th.json
           cp /tmp/risk29-published/alert.json risk29-live-data/risk29/alert.json
+          cp /tmp/risk29-published/provider-health.json risk29-live-data/risk29/provider-health.json
           cd risk29-live-data
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add risk29/latest.json risk29/history.json risk29/brief-th.json risk29/alert.json
+          git add risk29/latest.json risk29/history.json risk29/brief-th.json risk29/alert.json risk29/provider-health.json
           if git diff --cached --quiet; then
             echo "Risk29 publication unchanged"
             exit 0
