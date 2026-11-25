@@ -2,7 +2,7 @@ name: Risk29 EIA Workbook Probe
 on:
   pull_request:
     paths:
-      - '.github/workflows/risk29-eia-workbook-probe.yml'
+      - ".github/workflows/risk29-eia-workbook-probe.yml"
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,8 +13,8 @@ jobs:
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - run: pip install 'xlrd==2.0.2'
+          python-version: "3.12"
+      - run: pip install "xlrd==2.0.2"
       - name: Inspect public workbook
         run: |
           python - <<'PY'
