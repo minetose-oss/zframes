@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 import httpx
+import json
 
 from .briefing import Risk29MaterialAlert, Risk29ThaiBrief
 from .models import Risk29History, Risk29Snapshot
@@ -35,6 +36,15 @@ class PublishedSnapshotClient:
             )
             response.raise_for_status()
             return response.text
+
+    async def provider_health(self) -> dict:
+        payload = json.loads(await self._get_text("provider-health.json"))
+        if not isinstance(payload, dict) or not isinstance(payload.get("providers"), dict):
+            raise ValueError("Invalid provider health payload")
+        stamp = datetime.fromisoformat(payload["generatedAt"])
+        if stamp.tzinfo is None:
+            raise ValueError("Provider health timestamp must be timezone-aware")
+        return payload
 
     async def latest(self) -> Risk29Snapshot:
         return Risk29Snapshot.model_validate_json(await self._get_text("latest.json"))
