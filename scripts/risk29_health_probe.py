@@ -12,7 +12,10 @@ import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from risk29_health_validator import validate
+if __package__:
+    from .risk29_health_validator import validate
+else:
+    from risk29_health_validator import validate
 
 LIVE = "https://risk29-engine-phase1b-live.vercel.app/risk29"
 FALLBACK = "https://raw.githubusercontent.com/minetose-oss/zframes/risk29-live-data/risk29"
