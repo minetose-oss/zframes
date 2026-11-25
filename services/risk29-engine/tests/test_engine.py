@@ -378,3 +378,31 @@ async def test_low_coverage_fails_closed_instead_of_showing_low_risk(tmp_path):
     liquidity = next(category for category in snapshot.categories if category.id == "liquidity")
     assert macro.score is not None
     assert liquidity.score is not None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("stale_count", [0, 1, 29])
+async def test_health_wire_contract_and_usable_coverage(tmp_path, monkeypatch, stale_count):
+    from risk29_engine.models import Risk29Snapshot
+
+    now = datetime(2026, 9, 16, 2, tzinfo=timezone.utc)
+    engine = Risk29Engine(FakeSources(), data_dir=tmp_path, now_fn=lambda: now)
+    original = engine._build_signal
+    ids = {cfg["id"] for cfg in engine.config["signals"][:stale_count]}
+
+    async def build(cfg, timestamp):
+        signal = await original(cfg, timestamp)
+        return signal.model_copy(update={"freshness": "stale"}) if cfg["id"] in ids else signal
+
+    monkeypatch.setattr(engine, "_build_signal", build)
+    snapshot = await engine.latest(force=True)
+    assert snapshot.health.available == 29
+    assert snapshot.health.stale == stale_count
+    assert snapshot.health.total == 29
+    assert Risk29Snapshot.model_validate_json(snapshot.model_dump_json()) == snapshot
+    assert engine.store.load_latest() == snapshot
+    if stale_count == 29:
+        assert snapshot.score is None
+        assert snapshot.state == "unavailable"
+    else:
+        assert snapshot.score is not None
