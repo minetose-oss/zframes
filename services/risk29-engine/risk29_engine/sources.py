@@ -616,6 +616,17 @@ class PublicSourceClient:
         return points
 
     async def fred(self, series_id: str) -> list[SeriesPoint]:
+        try:
+            return await self._fred_primary(series_id)
+        except (httpx.HTTPError, ValueError, OSError):
+            if series_id not in {"VIXCLS", "DCOILWTICO"}:
+                raise
+            points = await self._extend_official_history(series_id, [], datetime.now(timezone.utc).date())
+            if len(points) < 220:
+                raise ValueError(f"{series_id}: insufficient official fallback history")
+            return points
+
+    async def _fred_primary(self, series_id: str) -> list[SeriesPoint]:
         # Risk29 only needs enough daily history for MA200 / 20-session momentum.
         # Asking FRED for the full lifetime of each series is needlessly heavy in
         # a serverless function and was observed to cause ReadTimeouts on Vercel.
@@ -649,7 +660,41 @@ class PublicSourceClient:
         points.sort(key=lambda point: point.date)
         if series_id == "NASDAQCOM":
             points = await self._extend_nasdaq_composite(points, today)
+        if series_id in {"VIXCLS", "DCOILWTICO"}:
+            points = await self._extend_official_history(series_id, points, today)
         return points
+
+    async def _extend_official_history(self, series_id, points, today):
+        """Extend only matching official series; retain primary on failure."""
+        try:
+            if series_id == "VIXCLS":
+                raw = await self._get_text("https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv")
+                extra = []
+                for row in csv.DictReader(io.StringIO(raw)):
+                    try:
+                        d = datetime.strptime(row["DATE"], "%m/%d/%Y").date()
+                        v = float(row["CLOSE"])
+                        if d <= today and 0 < v < 200:
+                            extra.append(SeriesPoint(d, v, "CBOE Official"))
+                    except (KeyError, ValueError, TypeError):
+                        continue
+            else:
+                raw = await self._get_bytes("https://www.eia.gov/dnav/pet/hist_xls/RWTCd.xls")
+                book = xlrd.open_workbook(file_contents=raw)
+                sheet = book.sheet_by_name("Data 1")
+                extra = []
+                for i in range(3, sheet.nrows):
+                    try:
+                        d = xlrd.xldate_as_datetime(sheet.cell_value(i, 0), book.datemode).date()
+                        v = float(sheet.cell_value(i, 1))
+                        if d <= today and -100 < v < 300:
+                            extra.append(SeriesPoint(d, v, "EIA Official"))
+                    except (ValueError, TypeError, OverflowError):
+                        continue
+            extra = sorted({p.date: p for p in extra}.values(), key=lambda p: p.date)
+            return self._extend_with_newer_closes(points, extra, tolerance=0.01) if points else extra
+        except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, KeyError, OSError):
+            return points
 
     async def _extend_nasdaq_composite(
         self,
