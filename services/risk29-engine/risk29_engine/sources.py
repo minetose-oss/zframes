@@ -811,13 +811,19 @@ class PublicSourceClient:
     @staticmethod
     def _parse_eia_wti_workbook(raw: bytes, today: date) -> list[SeriesPoint]:
         book = xlrd.open_workbook(file_contents=raw)
+        # Verified EIA workbook: Contents repeats the benchmark title;
+        # the actual data sheet has adjacent Sourcekey/RWTC and Date/title rows.
         candidates = []
         for sheet in book.sheets():
-            for row in range(min(12, sheet.nrows)):
-                if sheet.ncols < 2:
-                    continue
-                header = str(sheet.cell_value(row, 1)).lower()
-                if ("cushing" in header and "wti" in header and "spot" in header) or re.fullmatch(r"(?:pet[._])?rwtc[d]?(?:\.d)?", header.strip()):
+            if sheet.name.strip().lower() == "contents" or sheet.ncols != 2:
+                continue
+            for row in range(1, min(12, sheet.nrows)):
+                key = str(sheet.cell_value(row - 1, 1)).strip().upper()
+                label = str(sheet.cell_value(row, 1)).strip().lower()
+                if (str(sheet.cell_value(row - 1, 0)).strip().lower() == "sourcekey"
+                    and key == "RWTC"
+                    and str(sheet.cell_value(row, 0)).strip().lower() == "date"
+                    and label == "cushing, ok wti spot price fob (dollars per barrel)"):
                     candidates.append((sheet, row))
                     break
         if len(candidates) != 1:
