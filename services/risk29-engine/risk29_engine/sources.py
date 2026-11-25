@@ -683,18 +683,7 @@ class PublicSourceClient:
                         continue
             else:
                 raw = await self._get_bytes("https://www.eia.gov/dnav/pet/hist_xls/RWTCd.xls")
-                book = xlrd.open_workbook(file_contents=raw)
-                sheet = book.sheet_by_name("Data 1")
-                logger.info("EIA WTI workbook rows=%d datemode=%d", sheet.nrows, book.datemode)
-                extra = []
-                for i in range(3, sheet.nrows):
-                    try:
-                        d = xlrd.xldate_as_datetime(sheet.cell_value(i, 0), book.datemode).date()
-                        v = float(sheet.cell_value(i, 1))
-                        if d <= today and -100 < v < 300:
-                            extra.append(SeriesPoint(d, v, "EIA Official"))
-                    except (ValueError, TypeError, OverflowError):
-                        continue
+                extra = self._parse_eia_wti_workbook(raw, today)
             extra = sorted({p.date: p for p in extra}.values(), key=lambda p: p.date)
             result = self._extend_with_newer_closes(points, extra, tolerance=0.01) if points else extra
             primary_last = points[-1].date if points else None
@@ -720,6 +709,40 @@ class PublicSourceClient:
         except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, KeyError, OSError) as exc:
             logger.warning("official_provider series=%s status=error error_type=%s", series_id, type(exc).__name__)
             return points
+
+    @staticmethod
+    def _parse_eia_wti_workbook(raw: bytes, today: date) -> list[SeriesPoint]:
+        book = xlrd.open_workbook(file_contents=raw)
+        candidates = []
+        for sheet in book.sheets():
+            for row in range(min(12, sheet.nrows)):
+                if sheet.ncols < 2:
+                    continue
+                header = str(sheet.cell_value(row, 1)).lower()
+                if ("cushing" in header and "wti" in header and "spot" in header) or "rwtc" in header:
+                    candidates.append((sheet, row))
+                    break
+        if len(candidates) != 1:
+            raise ValueError("EIA WTI: missing or ambiguous series header")
+        sheet, header_row = candidates[0]
+        logger.warning("EIA WTI workbook rows=%d datemode=%d", sheet.nrows, book.datemode)
+        points = {}
+        for i in range(header_row + 1, sheet.nrows):
+            try:
+                cell = sheet.cell_value(i, 0)
+                d = (date.fromisoformat(cell.strip()) if isinstance(cell, str)
+                     else xlrd.xldate_as_datetime(cell, book.datemode).date())
+                v = float(sheet.cell_value(i, 1))
+            except (ValueError, TypeError, OverflowError):
+                continue
+            if not (date(1986, 1, 1) <= d <= today and -100 < v < 300):
+                continue
+            if d in points and points[d].value != v:
+                raise ValueError("EIA WTI: conflicting duplicate observation")
+            points[d] = SeriesPoint(d, v, "EIA Official")
+        if not points:
+            raise ValueError("EIA WTI: no valid observations")
+        return [points[d] for d in sorted(points)]
 
     async def _extend_nasdaq_composite(
         self,
