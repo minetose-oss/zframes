@@ -206,7 +206,7 @@ class Risk29Engine:
         health = Risk29Health(
             available=sum(
                 signal.state != "unavailable"
-                and signal.freshness in {"fresh", "delayed"}
+                and signal.freshness != "error"
                 and signal.value is not None
                 and signal.riskScore is not None
                 for signal in signals
@@ -233,7 +233,14 @@ class Risk29Engine:
             category.weight for category in configured_categories if category.score is not None
         )
         weight_coverage = available_weight / configured_weight if configured_weight else 0.0
-        signal_coverage = health.available / health.total if health.total else 0.0
+        usable = sum(
+            signal.state != "unavailable"
+            and signal.freshness in {"fresh", "delayed"}
+            and signal.value is not None
+            and signal.riskScore is not None
+            for signal in signals
+        )
+        signal_coverage = usable / health.total if health.total else 0.0
         min_signal_coverage = float(self.config.get("minimum_signal_coverage", 0.70))
         min_weight_coverage = float(self.config.get("minimum_weight_coverage", 0.75))
         enough_coverage = (
