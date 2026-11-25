@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-11-25T12:41:27.098705+00:00",
+  "generatedAt": "2026-11-25T16:33:21.603336+00:00",
   "points": [
     {
       "time": 1789560924232,
@@ -1082,6 +1082,21 @@
         "liquidity": 31.87,
         "global": 31.56,
         "technical": 81.06
+      }
+    },
+    {
+      "time": 1795624401603,
+      "score": 49.17,
+      "state": "watch",
+      "categoryScores": {
+        "macro": 50.83,
+        "credit": 51.09,
+        "valuation": 61.17,
+        "sentiment": 51.86,
+        "qualitative": 25.55,
+        "liquidity": 31.69,
+        "global": 31.56,
+        "technical": 81.02
       }
     }
   ]
