@@ -682,8 +682,23 @@ class PublicSourceClient:
                     except (KeyError, ValueError, TypeError):
                         continue
             else:
-                raw = await self._get_bytes("https://www.eia.gov/dnav/pet/hist_xls/RWTCd.xls")
-                extra = self._parse_eia_wti_workbook(raw, today)
+                extra = []
+                try:
+                    raw = await self._get_bytes("https://www.eia.gov/dnav/pet/hist_xls/RWTCd.xls")
+                    extra = self._parse_eia_wti_workbook(raw, today)
+                except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, OSError) as exc:
+                    reason = str(exc) if isinstance(exc, ValueError) and str(exc).startswith("EIA WTI:") else type(exc).__name__
+                    logger.warning("EIA XLS failed reason=%s", reason)
+                if not extra or (points and extra[-1].date <= points[-1].date):
+                    try:
+                        raw_html = await self._get_text("https://www.eia.gov/dnav/pet/hist/RWTCD.htm")
+                        html_points = self._parse_eia_wti_html(raw_html, today)
+                        if not extra or html_points[-1].date > extra[-1].date:
+                            extra = html_points
+                        logger.warning("EIA HTML observations=%d latest=%s", len(html_points), html_points[-1].date)
+                    except (httpx.HTTPError, ValueError, TypeError, OSError) as exc:
+                        reason = str(exc) if isinstance(exc, ValueError) and str(exc).startswith("EIA WTI:") else type(exc).__name__
+                        logger.warning("EIA HTML failed reason=%s", reason)
             extra = sorted({p.date: p for p in extra}.values(), key=lambda p: p.date)
             result = self._extend_with_newer_closes(points, extra, tolerance=0.01) if points else extra
             primary_last = points[-1].date if points else None
@@ -709,6 +724,69 @@ class PublicSourceClient:
         except (httpx.HTTPError, ValueError, TypeError, xlrd.XLRDError, KeyError, OSError) as exc:
             logger.warning("official_provider series=%s status=error error_type=%s", series_id, type(exc).__name__)
             return points
+
+    @staticmethod
+    def _parse_eia_wti_html(raw: str, today: date) -> list[SeriesPoint]:
+        from html.parser import HTMLParser
+
+        class Rows(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.rows = []
+                self.row = None
+                self.cell = None
+
+            def handle_starttag(self, tag, attrs):
+                if tag == "tr":
+                    self.row = []
+                elif tag in {"td", "th"} and self.row is not None:
+                    self.cell = []
+
+            def handle_data(self, data):
+                if self.cell is not None:
+                    self.cell.append(data)
+
+            def handle_endtag(self, tag):
+                if tag in {"td", "th"} and self.cell is not None and self.row is not None:
+                    self.row.append(" ".join("".join(self.cell).split()))
+                    self.cell = None
+                elif tag == "tr" and self.row is not None:
+                    self.rows.append(self.row)
+                    self.row = None
+
+        plain = html.unescape(re.sub(r"<[^>]*>", " ", raw))
+        if not re.search(r"Cushing,?\s+OK\s+WTI\s+Spot\s+Price\s+FOB", plain, re.I):
+            raise ValueError("EIA WTI: HTML benchmark missing")
+        parser = Rows()
+        parser.feed(raw)
+        points = {}
+        for row in parser.rows:
+            if len(row) != 6:
+                continue
+            match = re.fullmatch(r"(\d{4})\s+([A-Za-z]{3})-\s*(\d{1,2})\s+to\s+([A-Za-z]{3})-\s*(\d{1,2})", row[0])
+            if not match:
+                continue
+            try:
+                monday = datetime.strptime(" ".join(match.groups()[:3]), "%Y %b %d").date()
+                friday = monday + timedelta(days=4)
+                if monday.weekday() != 0 or friday.strftime("%b").lower() != match[4].lower() or friday.day != int(match[5]):
+                    continue
+            except ValueError:
+                continue
+            for offset, cell in enumerate(row[1:]):
+                d = monday + timedelta(days=offset)
+                try:
+                    v = float(cell.replace(",", ""))
+                except ValueError:
+                    continue
+                if not (date(1986, 1, 1) <= d <= today and -100 < v < 300):
+                    continue
+                if d in points and points[d].value != v:
+                    raise ValueError("EIA WTI: conflicting HTML observation")
+                points[d] = SeriesPoint(d, v, "EIA Official")
+        if not points:
+            raise ValueError("EIA WTI: no valid HTML observations")
+        return [points[d] for d in sorted(points)]
 
     @staticmethod
     def _parse_eia_wti_workbook(raw: bytes, today: date) -> list[SeriesPoint]:
