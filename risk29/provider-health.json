@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-11-25T12:41:27.098705+00:00",
+  "providers": {
+    "DCOILWTICO": {
+      "provider": "EIA",
+      "series": "DCOILWTICO",
+      "releaseTimezone": "America/New_York",
+      "nextReleaseAt": null,
+      "releaseStatus": "RELEASE_DAY",
+      "sources": {
+        "xls": "HEALTHY",
+        "html": "HEALTHY"
+      },
+      "nextReleaseDate": "2026-11-25",
+      "providerHealth": "HEALTHY",
+      "lastObservation": "2026-11-17",
+      "mergeStatus": "no_new_data",
+      "dataFreshness": "stale"
+    }
+  }
+}
