@@ -15,9 +15,12 @@ def health(brief, latest, now=None):
         age=(now-btime).total_seconds()
         signals=latest["signals"]
         if not isinstance(signals,list) or not signals: raise ValueError("signals absent")
+        ids=[s.get("id") for s in signals]
+        distinct_ids={value for value in ids if isinstance(value,str) and value.strip()}
         out.update(generatedAt=brief["generatedAt"],payloadAgeSeconds=round(age),
                    freshnessPass=0<=age<=86400,confidence=brief.get("confidence","unknown"),
-                   totalSignals=len(signals))
+                   totalSignals=len(signals),distinctSignals=len(distinct_ids),
+                   schemaPass=len(signals)==29 and len(distinct_ids)==29)
         counts={k:sum(s.get("freshness")==k for s in signals) for k in ("fresh","delayed","stale","missing","unavailable","error")}
         out.update(counts)
         bad=[s for s in signals if s.get("freshness") in ("stale","missing","unavailable","error")]
@@ -25,6 +28,7 @@ def health(brief, latest, now=None):
         usable=sum(s.get("freshness") in ("fresh","delayed") for s in signals)
         out["usableCoveragePct"]=round(100*usable/len(signals),2)
         if not out["freshnessPass"]:out["warnings"].append("DATA HEALTH WARNING: payload outside 24h")
+        if not out["schemaPass"]:out["warnings"].append("SCHEMA WARNING: exactly 29 distinct signal ids required")
         if abs((btime-ltime).total_seconds())>1 or brief.get("score")!=latest.get("score") or brief.get("state")!=latest.get("state"):
             out["warnings"].append("CONSISTENCY WARNING: brief/latest mismatch")
         if bad:out["warnings"].append("DEGRADED: stale/missing/error signals; never interpret as zero risk")
