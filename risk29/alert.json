@@ -1,13 +1,10 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-11-25T05:34:31.190502+00:00",
-  "shouldNotify": true,
-  "severity": "review",
-  "score": 49.09,
+  "generatedAt": "2026-11-25T09:37:06.010405+00:00",
+  "shouldNotify": false,
+  "severity": "clear",
+  "score": 49.06,
   "state": "watch",
-  "reasons": [
-    "หมวด Global เปลี่ยน -8.3 จุด",
-    "data-health issue ฟื้นตัว 2 รายการ"
-  ],
-  "messageThai": "Risk29 WATCH 49.1 — หมวด Global เปลี่ยน -8.3 จุด · data-health issue ฟื้นตัว 2 รายการ"
+  "reasons": [],
+  "messageThai": "Risk29 WATCH 49.1 — ไม่มี Material Change"
 }
