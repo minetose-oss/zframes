@@ -1,12 +1,10 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-11-26T05:16:39.588779+00:00",
-  "shouldNotify": true,
-  "severity": "review",
-  "score": 50.73,
+  "generatedAt": "2026-11-26T16:06:01.305655+00:00",
+  "shouldNotify": false,
+  "severity": "clear",
+  "score": 50.67,
   "state": "watch",
-  "reasons": [
-    "มี material signal change 1 รายการ"
-  ],
-  "messageThai": "Risk29 WATCH 50.7 — มี material signal change 1 รายการ"
+  "reasons": [],
+  "messageThai": "Risk29 WATCH 50.7 — ไม่มี Material Change"
 }
