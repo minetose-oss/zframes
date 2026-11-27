@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-11-26T16:06:01.305655+00:00",
+  "generatedAt": "2026-11-27T00:37:02.370236+00:00",
   "shouldNotify": false,
   "severity": "clear",
-  "score": 50.67,
+  "score": 50.45,
   "state": "watch",
   "reasons": [],
-  "messageThai": "Risk29 WATCH 50.7 — ไม่มี Material Change"
+  "messageThai": "Risk29 WATCH 50.5 — ไม่มี Material Change"
 }
