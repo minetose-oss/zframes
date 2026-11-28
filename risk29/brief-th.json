@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1",
-  "generatedAt": "2026-11-27T15:53:38.902964+00:00",
-  "score": 50.71,
+  "generatedAt": "2026-11-28T00:04:19.652685+00:00",
+  "score": 50.55,
   "state": "watch",
   "posture": "เลือกลงทุนและคุมความเสี่ยง",
-  "whatChanged": "Risk29 เพิ่มขึ้น 0.3 จุดจากรอบก่อน",
-  "why": "หมวดความเสี่ยงสูงสุด: Technical 81, Valuation 59 · ตัวขับเคลื่อนหลัก: 10Y TIPS Real Yield (risk 84, impact 3.8 จุด), CAPE / Long-Term Valuation (risk 88, impact 3.5 จุด), CCC-BB Stress Spread (risk 84, impact 3.0 จุด)",
+  "whatChanged": "Risk29 ลดลง 0.2 จุดจากรอบก่อน",
+  "why": "หมวดความเสี่ยงสูงสุด: Technical 81, Valuation 59 · ตัวขับเคลื่อนหลัก: 10Y TIPS Real Yield (risk 83, impact 3.7 จุด), CAPE / Long-Term Valuation (risk 88, impact 3.5 จุด), CCC-BB Stress Spread (risk 85, impact 3.0 จุด)",
   "actionToday": "หลีกเลี่ยงการไล่ราคา ลดสถานะที่ conviction ต่ำ และเก็บสภาพคล่องไว้สำหรับจังหวะที่ดีกว่า",
   "confidence": "normal",
   "topDrivers": [
-    "10Y TIPS Real Yield (risk 84, impact 3.8 จุด)",
+    "10Y TIPS Real Yield (risk 83, impact 3.7 จุด)",
     "CAPE / Long-Term Valuation (risk 88, impact 3.5 จุด)",
-    "CCC-BB Stress Spread (risk 84, impact 3.0 จุด)"
+    "CCC-BB Stress Spread (risk 85, impact 3.0 จุด)"
   ]
 }
